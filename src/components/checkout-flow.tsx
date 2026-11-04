@@ -34,11 +34,11 @@ export function CheckoutFlow() {
               }`}
             >
               <span className="flex items-baseline gap-5">
-                <span className="font-serif text-lg italic text-palco-500">
-                  {["i", "ii", "iii"][i]}.
+                <span className="font-display text-sm font-semibold tabular-nums text-palco-500">
+                  0{i + 1}
                 </span>
                 <span>
-                  <span className="block font-serif text-4xl sm:text-5xl">{s.title}</span>
+                  <span className="block font-display text-3xl font-semibold tracking-tight sm:text-4xl">{s.title}</span>
                   <span className="mt-1 block text-palco-950/70">{s.text}</span>
                 </span>
               </span>
@@ -91,7 +91,7 @@ function StepChoose() {
   return (
     <div className="flex h-full flex-col">
       <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
-      <p className="mt-1 font-serif text-2xl leading-tight">Función de gala</p>
+      <p className="mt-1 font-display text-2xl font-semibold tracking-tight leading-tight">Función de gala</p>
       <p className="text-xs text-black/50">Sábado 14 · 21:00</p>
       <div className="mx-auto mt-6 h-2 w-2/3 rounded-b-full bg-palco-800/20" />
       <div className="mt-4 flex flex-col items-center gap-1.5">
@@ -129,7 +129,7 @@ function StepPay() {
   return (
     <div className="flex h-full flex-col">
       <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
-      <p className="mt-1 font-serif text-2xl">Pago</p>
+      <p className="mt-1 font-display text-2xl font-semibold tracking-tight">Pago</p>
       <div className="mt-6 space-y-2 text-sm">
         <Row l="2 × Platea" r="$ 44.000" />
         <Row l="Cargo de servicio" r="$ 2.200" />
@@ -155,13 +155,13 @@ function StepReceive() {
       <span className="mt-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white">
         <Check className="h-6 w-6" />
       </span>
-      <p className="mt-3 font-serif text-2xl">¡Listo!</p>
+      <p className="mt-3 font-display text-2xl font-semibold tracking-tight">¡Listo!</p>
       <p className="flex items-center gap-1.5 text-xs text-black/50">
         <Mail className="h-3.5 w-3.5" /> Te enviamos tus entradas
       </p>
       <div className="mt-6 w-full rounded-2xl bg-palco-800 p-4 text-left text-white">
         <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Función de gala</p>
-        <p className="font-serif text-lg">Platea · Fila D · 6</p>
+        <p className="font-display text-lg font-medium">Platea · Fila D · 6</p>
         <div className="mt-3 flex justify-center rounded-lg bg-white p-3 text-black">
           <FakeQr seed={5} className="h-32 w-32" />
         </div>

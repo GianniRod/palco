@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Outfit } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { site } from "@/lib/site";
-
-const bodoni = Bodoni_Moda({
-  variable: "--font-bodoni",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-});
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -37,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${bodoni.variable} ${outfit.variable} h-full antialiased`}
+      className={`${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>

@@ -120,7 +120,7 @@ export function DoorScanner() {
             const isPending = offlineAt !== -1 && s.n > offlineAt;
             return (
               <li key={s.n} className="entra-log flex items-center gap-4 py-3">
-                <span className="w-12 font-serif text-sm italic text-white/45 tabular-nums">{s.time}</span>
+                <span className="w-12 font-display text-sm text-white/45 tabular-nums">{s.time}</span>
                 <span className="flex-1">{s.seat}</span>
                 {isPending && (
                   <span className={`text-[11px] ${synced ? "text-emerald-300/80" : "text-amber-300/80"}`}>
