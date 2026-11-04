@@ -1,0 +1,14 @@
+{
+  "name": "palco-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/db.mjs",
+    "db:seed": "node --env-file-if-exists=.env.local scripts/db.mjs seed",
+    "test": "node --env-file-if-exists=.env.local --test tests/seats.test.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  }
+}
