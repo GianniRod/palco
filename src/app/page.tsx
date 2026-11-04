@@ -5,11 +5,13 @@ import { BrandTicket } from "@/components/brand-ticket";
 import { CheckoutFlow } from "@/components/checkout-flow";
 import { DoorScanner } from "@/components/door-scanner";
 import { RotatingChip } from "@/components/rotating-chip";
+import { SiteBuilder } from "@/components/site-builder";
 import { Reveal } from "@/components/reveal";
 import { Logo } from "@/components/logo";
 import { contactHref, site } from "@/lib/site";
 
 const nav = [
+  { label: "Editor", href: "#editor" },
   { label: "Marca propia", href: "#marca" },
   { label: "Venta", href: "#venta" },
   { label: "Acceso", href: "#acceso" },
@@ -120,8 +122,22 @@ export default function Home() {
           </div>
         </div>
 
+        {/* ---------------- Editor ---------------- */}
+        <section id="editor" className="papel scroll-mt-4">
+          <div className="mx-auto max-w-6xl px-6 py-24">
+            <SectionTitle eyebrow="Editor" title="Tu web de venta, armada por vos.">
+              Elegí una de las tres plantillas, poné el título, dibujá el plano
+              con tu campo, tribunas o plateas, cargá los precios y publicá.
+              Sin programadores.
+            </SectionTitle>
+            <Reveal className="mt-16">
+              <SiteBuilder />
+            </Reveal>
+          </div>
+        </section>
+
         {/* ---------------- Marca propia ---------------- */}
-        <section id="marca" className="papel scroll-mt-4">
+        <section id="marca" className="scroll-mt-4 border-t border-tinta/10 papel">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Marca propia" title="Tu marca en cada entrada.">
               El público compra en tu sitio, con tus colores y tu logo. La entrada
