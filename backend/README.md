@@ -1,6 +1,6 @@
 # Backend de Palco
 
-Base de datos y reserva de butacas. Es independiente de la landing: tiene sus propias dependencias y no entra en su build.
+Base de datos, reserva de butacas y la lógica del panel (login, clientes, auditoría). Tiene sus propias dependencias; el panel en `src/app/dashboard` importa `src/` directamente.
 
 ## Uso
 
@@ -11,6 +11,7 @@ cd backend
 npm install
 npm run db:migrate   # aplica lo pendiente de db/migrations
 npm run db:seed      # carga una función de prueba
+npm run admin:create -- nombre@palcotickets.com   # crea un admin y muestra su contraseña inicial
 ```
 
 ## Pruebas

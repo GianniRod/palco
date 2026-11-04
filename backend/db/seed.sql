@@ -1,8 +1,18 @@
 -- Función inventada para probar: misma sala que el plano de la landing (124 butacas).
 -- Se puede correr varias veces sin duplicar nada.
 
-insert into venues (id, slug, name, primary_color)
-values ('00000000-0000-4000-8000-000000000001', 'teatro-demo', 'Teatro Demo', '#7A1428')
+insert into organizations (id, slug, name, commission_percent)
+values ('00000000-0000-4000-8000-000000000005', 'cliente-demo', 'Cliente Demo', 5)
+on conflict (id) do nothing;
+
+insert into venues (id, organization_id, slug, name, primary_color)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000005',
+  'teatro-demo',
+  'Teatro Demo',
+  '#7A1428'
+)
 on conflict (id) do nothing;
 
 insert into events (id, venue_id, title, starts_at)
