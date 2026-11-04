@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-outfit);
+
+  /* Bordó de la marca (fondo del logo: #480A17) */
+  --color-palco-50: #fbf3f4;
+  --color-palco-100: #f5e3e6;
+  --color-palco-200: #e9c2c9;
+  --color-palco-300: #d896a2;
+  --color-palco-400: #bf5f71;
+  --color-palco-500: #a13a4f;
+  --color-palco-600: #82263b;
+  --color-palco-700: #66182c;
+  --color-palco-800: #480a17;
+  --color-palco-900: #330610;
+  --color-palco-950: #1f030a;
+
+  --color-crema: #faf6f0;
+  --color-dorado: #d9b26f;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-crema);
+  color: var(--color-palco-950);
+}
+
+::selection {
+  background: var(--color-palco-800);
+  color: white;
+}
