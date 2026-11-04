@@ -9,7 +9,7 @@ const STEP_MS = 3200;
 
 const steps = [
   { title: "Elige", text: "Su butaca en el plano de tu sala, desde tu sitio." },
-  { title: "Paga", text: "Con Mercado Pago. El dinero se acredita en tu cuenta." },
+  { title: "Paga", text: "Con tarjeta o Mercado Pago. El dinero se acredita en tu cuenta." },
   { title: "Recibe", text: "Su entrada con QR por email, al instante." },
 ];
 
@@ -137,12 +137,12 @@ function StepPay() {
           <Row l="Total" r="$ 46.200" bold />
         </div>
       </div>
-      <div className="mt-8 rounded-xl border border-black/10 p-4">
-        <p className="text-xs text-black/50">Medio de pago</p>
-        <p className="mt-1 font-medium">Mercado Pago</p>
-        <p className="text-xs text-black/50">Tarjeta, débito o dinero en cuenta</p>
+      <p className="mt-6 text-xs text-black/50">Medio de pago</p>
+      <div className="mt-2 space-y-2">
+        <PayOption selected title="Tarjeta de crédito o débito" sub="Visa · Mastercard · Amex · Cabal" />
+        <PayOption title="Mercado Pago" sub="Dinero en cuenta o tarjetas guardadas" />
       </div>
-      <div className="mt-auto rounded-xl bg-[#009EE3] py-3 text-center text-sm font-medium text-white">
+      <div className="mt-auto rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
         Pagar $ 46.200
       </div>
     </div>
@@ -167,6 +167,28 @@ function StepReceive() {
         </div>
       </div>
       <p className="mt-auto text-xs text-black/40">Mostrá este QR en la entrada</p>
+    </div>
+  );
+}
+
+function PayOption({ title, sub, selected }: { title: string; sub: string; selected?: boolean }) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl border p-3 ${
+        selected ? "border-palco-800 bg-palco-50" : "border-black/10"
+      }`}
+    >
+      <span
+        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+          selected ? "border-palco-800" : "border-black/25"
+        }`}
+      >
+        {selected && <span className="h-1.5 w-1.5 rounded-full bg-palco-800" />}
+      </span>
+      <span>
+        <span className="block text-sm font-medium">{title}</span>
+        <span className="block text-[11px] text-black/50">{sub}</span>
+      </span>
     </div>
   );
 }

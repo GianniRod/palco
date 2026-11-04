@@ -26,6 +26,7 @@ const cinta = [
   "Campo general",
   "Preventas",
   "Entradas con QR",
+  "Tarjetas",
   "Mercado Pago",
   "Control de acceso",
   "Tu marca",
@@ -38,7 +39,7 @@ const faqs = [
   },
   {
     q: "¿Quién cobra?",
-    a: "Vos. Los pagos se procesan con tu propia cuenta de Mercado Pago y el dinero se acredita ahí.",
+    a: "Vos. Tu público paga con tarjeta de crédito o débito, o con Mercado Pago, y el dinero se acredita en tu cuenta.",
   },
   {
     q: "¿Sirve para una sala chica?",
@@ -89,8 +90,8 @@ export default function Home() {
             >
               <p className="max-w-xl text-lg leading-relaxed text-white/65">
                 Palco es la plataforma de venta de entradas con marca propia
-                para teatros, salas y productoras. El dinero va directo a tu
-                Mercado Pago.
+                para teatros, salas y productoras. Cobrás con tarjeta o Mercado
+                Pago, y el dinero va directo a tu cuenta.
               </p>
               <a
                 href={demoHref}
@@ -154,8 +155,9 @@ export default function Home() {
         <section id="venta" className="scroll-mt-4 bg-white">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Venta" title="Comprar lleva un minuto.">
-              Tres pasos para tu público, sin salir de tu marca. El dinero va
-              directo a tu cuenta de Mercado Pago.
+              Tres pasos para tu público, sin salir de tu marca. Paga con
+              tarjeta de crédito, débito o Mercado Pago, y el dinero va directo
+              a tu cuenta.
             </SectionTitle>
             <Reveal className="mt-16">
               <CheckoutFlow />
