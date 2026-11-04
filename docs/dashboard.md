@@ -60,9 +60,18 @@ Configura su sitio público de venta. **No diseña desde cero**: elige una de nu
 Es exactamente lo que muestra la animación de la sección "Editor" de la landing
 (`src/components/site-builder.tsx`): sirve como referencia visual.
 
-**Dónde vive la página pública del cliente** **[A definir]**:
-- Por defecto: `slug.palcotickets.com` (ej. `teatrocolon.palcotickets.com`).
-- Opcional más adelante: dominio propio del cliente (`entradas.teatrocolon.com`), apuntando un CNAME a nosotros.
+**Dónde vive la página pública del cliente**: la idea es que quede **integrada en la web
+del cliente**, por ejemplo `moscubuenosaires.com/tickets`. Formas de lograrlo (ver
+`docs/negocio.md`, sección 3.1):
+- **Ruta propia** (`suweb.com/tickets`): el hosting del cliente hace de proxy de `/tickets/*`
+  hacia Palco. Palco tiene que poder servir el sitio del cliente bajo un **prefijo de ruta
+  configurable** (`basePath` por cliente) y con URLs relativas a ese prefijo.
+- **Widget embebido**: un `<script>` que inserta la compra en un iframe dentro de su web.
+- **Subdominio propio** (`tickets.suweb.com`): CNAME hacia nosotros; Palco resuelve el cliente por el `Host`.
+- **Por defecto / mientras tanto**: `slug.palcotickets.com`.
+
+En el panel conviene una pantalla **"Conectar a mi web"** que muestre el estado de cada
+opción y las instrucciones (registro DNS a crear, código del widget, etc.).
 
 ### 3.2 Salas y mapas
 Una organización puede tener una o varias salas físicas. Para cada sala, un

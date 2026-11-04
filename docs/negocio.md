@@ -11,9 +11,11 @@ datos, son propuestas para charlar.
 Palco es una **plataforma de venta de entradas con marca propia** para teatros, salas,
 boliches y productoras.
 
-El cliente vende **con su nombre, su logo y sus colores**, en su propia página
-(`teatro.palcotickets.com` o su dominio). El público compra ahí, elige su butaca o su
-sector, paga y recibe una entrada con QR. En la puerta, su equipo valida el QR con el
+El cliente vende **con su nombre, su logo y sus colores, dentro de su propia web**.
+Por ejemplo, un boliche como Moscú vende en **`moscubuenosaires.com/tickets`**: el público
+nunca sale de la web del boliche, pero la venta, el mapa, el cobro y las entradas los
+resuelve Palco por detrás. El público elige su butaca o su sector, paga y recibe una
+entrada con QR. En la puerta, su equipo valida el QR con el
 celular, aunque no haya internet.
 
 **No somos una ticketera.** No vendemos entradas a nuestro nombre ni nos quedamos con el
@@ -47,13 +49,31 @@ del cliente y sin necesitar programadores.
 
 ## 3. Qué recibe el cliente
 
-1. **Su página de venta** armada con una de nuestras 3 plantillas, con su logo, colores y tipografía.
+1. **Venta integrada en su propia web** (`suweb.com/tickets`), armada con una de nuestras
+   3 plantillas, con su logo, colores y tipografía (ver sección 3.1).
 2. **Mapa de su sala**: butacas numeradas, plateas, palcos, pasillos, o sectores de campo general.
 3. **Eventos y funciones** con precios por sector y lotes de preventa.
 4. **Cobro con tarjeta de crédito, débito y Mercado Pago**: la plata va a **su** cuenta.
 5. **Entradas con QR** enviadas por email.
 6. **Control de acceso**: app de puerta que valida cada QR una sola vez y funciona sin internet.
 7. **Panel de ventas**: ocupación, recaudación, compradores, reembolsos, exportar.
+
+### 3.1 Cómo se integra Palco a la web del cliente
+
+El objetivo es que, después de la demo, el cliente **conecte Palco a su web** y venda desde
+su propio dominio. Hay tres formas, de la más integrada a la más simple:
+
+| Forma | Cómo se ve | Qué tiene que hacer el cliente | Para quién |
+|---|---|---|---|
+| **Ruta propia** | `moscubuenosaires.com/tickets` | Su web o su hosting redirige internamente `/tickets` a Palco (Cloudflare, Vercel, nginx, etc.). Lo configuramos con su programador o lo hacemos nosotros si nos dan acceso. | Clientes con web propia y alguien técnico |
+| **Widget embebido** | Botón o sección de compra dentro de cualquier página de su web | Pegar un código corto que les damos (funciona en WordPress, Wix y similares). | Clientes con web armada en constructores |
+| **Subdominio propio** | `tickets.moscubuenosaires.com` | Agregar **un** registro DNS (CNAME) que les pasamos. | Clientes que quieren algo rápido y prolijo |
+
+Mientras el cliente lo conecta, o si no tiene web, puede vender igual desde
+**`moscu.palcotickets.com`**, que funciona desde el primer día.
+
+En todos los casos el público ve la marca del cliente, y las entradas, los emails y los
+datos de los compradores son del cliente.
 
 ---
 
@@ -94,7 +114,7 @@ Se puede ofrecer cualquiera de las dos según el cliente.
 
 ### Ingresos adicionales posibles **[A definir, no para el lanzamiento]**
 - **Abono mensual** para clientes grandes, a cambio de una comisión por entrada más baja.
-- **Dominio propio** del cliente (`entradas.suteatro.com`) como extra.
+- **Integración a medida** en la web del cliente cuando requiere trabajo técnico nuestro.
 - **Configuración inicial** (carga de un plano complejo, migración desde otra ticketera).
 - **Eventos gratuitos**: entradas sin cargo con un costo fijo bajo o gratis, para captar clientes.
 
@@ -112,10 +132,12 @@ Se puede ofrecer cualquiera de las dos según el cliente.
 3. **Alta**: desde nuestro panel de administrador creamos su organización y su usuario.
 4. **Configuración**: el cliente (o nosotros con él) elige plantilla, sube logo y colores,
    carga el mapa de su sala y conecta su Mercado Pago.
-5. **Primer evento**: crea la función, precios y lotes, y publica.
-6. **Venta**: comparte su link; el público compra y recibe el QR.
-7. **Día del evento**: sus porteros validan con la app.
-8. **Después**: ve sus ventas y asistencia en el panel. Nosotros cobramos la comisión automáticamente.
+5. **Integración a su web**: conectamos Palco a su sitio (`suweb.com/tickets`, widget o
+   subdominio, ver 3.1). Hasta que esté listo, vende desde `suweb.palcotickets.com`.
+6. **Primer evento**: crea la función, precios y lotes, y publica.
+7. **Venta**: el público compra desde la web del cliente y recibe el QR.
+8. **Día del evento**: sus porteros validan con la app.
+9. **Después**: ve sus ventas y asistencia en el panel. Nosotros cobramos la comisión automáticamente.
 
 ---
 
@@ -158,7 +180,7 @@ eso lo hace Mercado Pago.
 
 **Próximos pasos** (detalle técnico en [`docs/dashboard.md`](dashboard.md))
 1. Dashboard con login: panel admin y panel cliente.
-2. Página pública del cliente con las plantillas.
+2. Página pública del cliente con las plantillas, integrable a su web (`suweb.com/tickets`).
 3. Editor de mapas y eventos.
 4. Cobro con Mercado Pago Marketplace.
 5. Entradas con QR y app de puerta.
@@ -172,6 +194,6 @@ eso lo hace Mercado Pago.
 - [ ] Quién absorbe la comisión de Mercado Pago.
 - [ ] ¿Abono mensual para clientes grandes?
 - [ ] Política para eventos gratuitos.
-- [ ] Subdominio vs dominio propio del cliente (y si el dominio propio se cobra).
+- [ ] Qué formas de integración ofrecemos al lanzar (ruta `/tickets`, widget, subdominio) y si la integración tiene costo.
 - [ ] Forma societaria y facturación (consultar contador).
 - [ ] Primeros clientes piloto y condiciones especiales para ellos.
