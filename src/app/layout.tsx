@@ -8,12 +8,9 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(site.url),
+  alternates: { canonical: "/" },
   title: {
     default: "Palco — Venta de entradas con tu marca",
     template: "%s · Palco",
@@ -22,6 +19,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Palco — Venta de entradas con tu marca",
     description: site.description,
+    url: site.url,
+    siteName: site.name,
     locale: "es_AR",
     type: "website",
   },
