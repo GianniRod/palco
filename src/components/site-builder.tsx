@@ -8,41 +8,22 @@ import { useInView, useReducedMotion } from "./hooks";
 /* Datos                                                               */
 /* ------------------------------------------------------------------ */
 
-type TemplateId = "clasica" | "nocturna" | "minimal";
+// Las plantillas son estructuras de diseño; los colores los elige el cliente.
+type TemplateId = "dividida" | "portada" | "cartelera";
+const templateList: { id: TemplateId; name: string; hint: string }[] = [
+  { id: "dividida", name: "Dividida", hint: "Info y plano lado a lado" },
+  { id: "portada", name: "Portada", hint: "Banner grande para un evento" },
+  { id: "cartelera", name: "Cartelera", hint: "Varias funciones o fechas" },
+];
 
-const templates: Record<
-  TemplateId,
-  { name: string; bg: string; fg: string; muted: string; accent: string; onAccent: string; title: string }
-> = {
-  clasica: {
-    name: "Clásica",
-    bg: "#F6EFE3",
-    fg: "#2A0A12",
-    muted: "rgba(42,10,18,0.55)",
-    accent: "#7A1428",
-    onAccent: "#FFFFFF",
-    title: "font-serif",
-  },
-  nocturna: {
-    name: "Nocturna",
-    bg: "#0E0B1A",
-    fg: "#F4F0FF",
-    muted: "rgba(244,240,255,0.55)",
-    accent: "#FF4FA3",
-    onAccent: "#0E0B1A",
-    title: "font-sans font-black uppercase tracking-tight",
-  },
-  minimal: {
-    name: "Minimal",
-    bg: "#FFFFFF",
-    fg: "#111111",
-    muted: "rgba(17,17,17,0.5)",
-    accent: "#2F5BFF",
-    onAccent: "#FFFFFF",
-    title: "font-sans font-semibold tracking-tight",
-  },
+const swatches = ["#7A1428", "#2F5BFF", "#0F766E", "#F59E0B", "#111111"];
+const CUSTOM_HEX = "#FF4FA3";
+
+type Font = "clasica" | "moderna";
+const fontClass: Record<Font, string> = {
+  clasica: "font-serif",
+  moderna: "font-sans font-black uppercase tracking-tight",
 };
-const templateOrder: TemplateId[] = ["clasica", "nocturna", "minimal"];
 
 type Group = "campo" | "tribuna" | "vip";
 type SectorId = "escenario" | "campo" | "oeste" | "este" | "vip";
@@ -74,10 +55,11 @@ const palette: { group: Group; label: string }[] = [
 const TITLE = "Festival de Primavera";
 const DATE = "Sáb 21 de septiembre · 20:00";
 
-type Tab = "plantilla" | "contenido" | "mapa" | "precios";
+type Tab = "plantilla" | "colores" | "contenido" | "mapa" | "precios";
 const tabs: { id: Tab; label: string }[] = [
-  { id: "plantilla", label: "Plantilla" },
-  { id: "contenido", label: "Contenido" },
+  { id: "plantilla", label: "Diseño" },
+  { id: "colores", label: "Colores" },
+  { id: "contenido", label: "Textos" },
   { id: "mapa", label: "Mapa" },
   { id: "precios", label: "Precios" },
 ];
@@ -89,6 +71,10 @@ const tabs: { id: Tab; label: string }[] = [
 type State = {
   tab: Tab;
   template: TemplateId;
+  dark: boolean;
+  accent: string;
+  hex: string;
+  font: Font;
   title: string;
   date: string;
   placed: SectorId[];
@@ -103,7 +89,11 @@ type State = {
 
 const initial: State = {
   tab: "plantilla",
-  template: "clasica",
+  template: "dividida",
+  dark: false,
+  accent: swatches[0],
+  hex: swatches[0],
+  font: "clasica",
   title: "",
   date: "",
   placed: ["escenario"],
@@ -133,27 +123,40 @@ const type = (text: string, set: (s: State, v: string) => State, speed = 55): St
 
 function buildScript(): Step[] {
   const steps: Step[] = [];
-  const pickTemplate = (id: TemplateId) => [
-    move(`tpl-${id}`),
-    ...click((s) => ({ ...s, template: id })),
+  const tap = (target: string, fn: (s: State) => State, wait?: number) => [
+    move(target, wait),
+    ...click(fn),
   ];
-  const openTab = (id: Tab) => [
-    move(`tab-${id}`),
-    ...click((s) => ({ ...s, tab: id, focus: null })),
-  ];
+  const openTab = (id: Tab) => tap(`tab-${id}`, (s) => ({ ...s, tab: id, focus: null }));
 
-  // 1. Plantilla: prueba las tres y se queda con Nocturna
+  // 1. Diseño: prueba las tres plantillas y se queda con Portada
   steps.push({ wait: 700, apply: (s) => s });
-  steps.push(...pickTemplate("nocturna"), ...pickTemplate("minimal"), ...pickTemplate("nocturna"));
+  for (const id of ["portada", "cartelera", "portada"] as TemplateId[]) {
+    steps.push(...tap(`tpl-${id}`, (s) => ({ ...s, template: id })));
+  }
 
-  // 2. Contenido
+  // 2. Colores: fondo oscuro, un color de la muestra y después uno propio
+  steps.push(...openTab("colores"));
+  steps.push(...tap("bg-dark", (s) => ({ ...s, dark: true })));
+  steps.push(...tap("sw-2", (s) => ({ ...s, accent: swatches[2], hex: swatches[2] })));
+  steps.push(...tap("in-hex", (s) => ({ ...s, focus: "in-hex", hex: "#" }), 600));
+  steps.push(
+    ...type(
+      CUSTOM_HEX.slice(1),
+      (s, v) => ({ ...s, hex: `#${v}`, accent: v.length === 6 ? `#${v}` : s.accent }),
+      120,
+    ),
+  );
+  steps.push(...tap("font-moderna", (s) => ({ ...s, focus: null, font: "moderna" })));
+
+  // 3. Textos
   steps.push(...openTab("contenido"));
-  steps.push(move("in-title"), ...click((s) => ({ ...s, focus: "in-title" })));
+  steps.push(...tap("in-title", (s) => ({ ...s, focus: "in-title" })));
   steps.push(...type(TITLE, (s, v) => ({ ...s, title: v })));
-  steps.push(move("in-date", 500), ...click((s) => ({ ...s, focus: "in-date" })));
+  steps.push(...tap("in-date", (s) => ({ ...s, focus: "in-date" }), 500));
   steps.push(...type(DATE, (s, v) => ({ ...s, date: v }), 40));
 
-  // 3. Mapa: arrastrar sectores
+  // 4. Mapa: arrastrar sectores
   steps.push(...openTab("mapa"));
   const drops: [SectorId, string][] = [
     ["campo", "Campo"],
@@ -164,7 +167,7 @@ function buildScript(): Step[] {
   for (const [id, label] of drops) {
     const group = sectors[id].group!;
     steps.push(move(`pal-${group}`, 600));
-    steps.push({ wait: 300, apply: (s) => ({ ...s, pressed: true, dragging: label }) });
+    steps.push({ wait: 750, apply: (s) => ({ ...s, pressed: true, dragging: label }) });
     steps.push(move(`drop-${id}`, 120));
     steps.push({
       wait: 850,
@@ -172,29 +175,60 @@ function buildScript(): Step[] {
     });
   }
 
-  // 4. Precios
+  // 5. Precios
   steps.push(...openTab("precios"));
   for (const g of groups) {
-    steps.push(move(`in-price-${g.id}`, 550), ...click((s) => ({ ...s, focus: `in-price-${g.id}` })));
-    steps.push(
-      ...type(g.price, (s, v) => ({ ...s, prices: { ...s.prices, [g.id]: v } }), 90),
-    );
+    steps.push(...tap(`in-price-${g.id}`, (s) => ({ ...s, focus: `in-price-${g.id}` }), 550));
+    steps.push(...type(g.price, (s, v) => ({ ...s, prices: { ...s.prices, [g.id]: v } }), 90));
   }
 
-  // 5. Publicar
-  steps.push(move("btn-publicar", 700));
-  steps.push(...click((s) => ({ ...s, focus: null, publishing: true })));
+  // 6. Publicar
+  steps.push(...tap("btn-publicar", (s) => ({ ...s, focus: null, publishing: true }), 700));
   steps.push({ wait: 1100, apply: (s) => ({ ...s, publishing: false, published: true, cursor: null }) });
   steps.push({ wait: 4200, apply: () => initial });
   return steps;
 }
 
 const script = buildScript();
-
-const finalState: State = script.reduce((s, step, i) => (i === script.length - 1 ? s : step.apply(s)), initial);
+const finalState: State = script.slice(0, -1).reduce((s, step) => step.apply(s), initial);
 
 const pesos = (digits?: string) =>
   digits ? `$ ${Number(digits).toLocaleString("es-AR")}` : "";
+
+/* ------------------------------------------------------------------ */
+/* Colores derivados de lo que eligió el cliente                       */
+/* ------------------------------------------------------------------ */
+
+type Look = {
+  bg: string;
+  fg: string;
+  muted: string;
+  line: string;
+  accent: string;
+  onAccent: string;
+  title: string;
+};
+
+function luminance(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function lookOf(s: State): Look {
+  return {
+    bg: s.dark ? "#0E0C14" : "#FAF8F4",
+    fg: s.dark ? "#F5F3FA" : "#16141C",
+    muted: s.dark ? "rgba(245,243,250,0.5)" : "rgba(22,20,28,0.5)",
+    line: s.dark ? "rgba(245,243,250,0.14)" : "rgba(22,20,28,0.12)",
+    accent: s.accent,
+    onAccent: luminance(s.accent) > 0.45 ? "#111111" : "#FFFFFF",
+    title: fontClass[s.font],
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /* Componente                                                          */
@@ -261,10 +295,10 @@ export function SiteBuilder() {
           </button>
         </div>
 
-        <div className="grid md:grid-cols-[300px_1fr]">
+        <div className="grid md:grid-cols-[310px_1fr]">
           {/* ---------- Panel del cliente ---------- */}
           <div className="flex flex-col border-b border-tinta/10 bg-papel/30 p-4 md:border-b-0 md:border-r">
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-tinta/5 p-1 text-[11px] font-medium">
+            <div className="grid grid-cols-5 gap-0.5 rounded-lg bg-tinta/5 p-1 text-[11px] font-medium">
               {tabs.map((tab) => (
                 <span
                   key={tab.id}
@@ -278,8 +312,9 @@ export function SiteBuilder() {
               ))}
             </div>
 
-            <div className="relative mt-4 min-h-[300px] flex-1">
+            <div className="relative mt-4 min-h-[330px] flex-1">
               {s.tab === "plantilla" && <PanelTemplates current={s.template} />}
+              {s.tab === "colores" && <PanelColors s={s} />}
               {s.tab === "contenido" && <PanelContent s={s} />}
               {s.tab === "mapa" && <PanelMap s={s} />}
               {s.tab === "precios" && <PanelPrices s={s} />}
@@ -330,10 +365,7 @@ export function SiteBuilder() {
                 s.pressed ? "scale-100" : "scale-0"
               }`}
             />
-            <MousePointer2
-              className="relative h-5 w-5 fill-tinta text-white drop-shadow-md"
-              strokeWidth={1.5}
-            />
+            <MousePointer2 className="relative h-5 w-5 fill-tinta text-white drop-shadow-md" strokeWidth={1.5} />
             {s.dragging && (
               <span className="absolute left-4 top-4 whitespace-nowrap rounded-md bg-palco-800 px-2.5 py-1 text-[11px] font-medium text-white shadow-lg">
                 {s.dragging}
@@ -354,46 +386,169 @@ function Label({ children }: { children: ReactNode }) {
   return <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-tinta/45">{children}</p>;
 }
 
+/** Miniatura en gris: muestra solo la estructura de la plantilla. */
+function Wireframe({ id }: { id: TemplateId }) {
+  const block = "rounded-[2px] bg-tinta/20";
+  const strong = "rounded-[2px] bg-tinta/45";
+  return (
+    <span className="flex h-12 w-16 shrink-0 flex-col gap-[3px] overflow-hidden rounded-md border border-tinta/10 bg-white p-1.5">
+      {id === "dividida" && (
+        <span className="flex flex-1 gap-[3px]">
+          <span className="flex w-1/2 flex-col gap-[3px]">
+            <span className={`h-1.5 w-full ${strong}`} />
+            <span className={`h-1 w-2/3 ${block}`} />
+            <span className={`mt-auto h-1.5 w-1/2 ${strong}`} />
+          </span>
+          <span className={`flex-1 ${block}`} />
+        </span>
+      )}
+      {id === "portada" && (
+        <>
+          <span className={`flex h-1/2 items-center justify-center ${strong}`}>
+            <span className="h-1 w-1/2 rounded-full bg-white/80" />
+          </span>
+          <span className="flex flex-1 gap-[3px]">
+            <span className={`flex-1 ${block}`} />
+            <span className={`w-1/3 ${block}`} />
+          </span>
+        </>
+      )}
+      {id === "cartelera" && (
+        <>
+          <span className="grid flex-1 grid-cols-3 gap-[3px]">
+            <span className={strong} />
+            <span className={block} />
+            <span className={block} />
+          </span>
+          <span className="flex h-1/3 gap-[3px]">
+            <span className={`flex-1 ${block}`} />
+            <span className={`w-1/3 ${block}`} />
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
 function PanelTemplates({ current }: { current: TemplateId }) {
   return (
     <div>
-      <Label>Elegí una plantilla</Label>
+      <Label>Elegí un diseño</Label>
       <div className="space-y-2">
-        {templateOrder.map((id) => {
-          const tp = templates[id];
-          const active = id === current;
+        {templateList.map((tp) => {
+          const active = tp.id === current;
           return (
             <div
-              key={id}
-              data-t={`tpl-${id}`}
+              key={tp.id}
+              data-t={`tpl-${tp.id}`}
               className={`flex items-center gap-3 rounded-lg border bg-white p-2 transition ${
                 active ? "border-palco-700 ring-2 ring-palco-700/20" : "border-tinta/10"
               }`}
             >
-              <span
-                className="flex h-12 w-16 shrink-0 flex-col justify-between overflow-hidden rounded-md p-1.5"
-                style={{ background: tp.bg }}
-              >
-                <span className="h-1.5 w-8 rounded-full" style={{ background: tp.fg, opacity: 0.8 }} />
-                <span className="flex gap-0.5">
-                  <span className="h-3 flex-1 rounded-sm" style={{ background: tp.accent, opacity: 0.7 }} />
-                  <span className="h-3 w-3 rounded-sm" style={{ background: tp.accent }} />
-                </span>
+              <Wireframe id={tp.id} />
+              <span className="flex-1">
+                <span className="block text-sm font-medium">{tp.name}</span>
+                <span className="block text-[11px] text-tinta/45">{tp.hint}</span>
               </span>
-              <span className="flex-1 text-sm font-medium">{tp.name}</span>
               {active && <Check className="h-4 w-4 text-palco-700" />}
             </div>
           );
         })}
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-tinta/45">
-        Tres plantillas pensadas para teatros, fiestas y eventos. Los colores y el logo son los tuyos.
+        Tres diseños base. Colores, tipografía y logo los elegís vos.
       </p>
     </div>
   );
 }
 
-function FakeInput({ id, value, placeholder, focus }: { id: string; value: string; placeholder: string; focus: string | null }) {
+function Segmented({ options }: { options: { target: string; label: ReactNode; active: boolean }[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-1 rounded-lg bg-tinta/5 p-1 text-xs font-medium">
+      {options.map((o) => (
+        <span
+          key={o.target}
+          data-t={o.target}
+          className={`rounded-md py-1.5 text-center transition ${
+            o.active ? "bg-white text-tinta shadow-sm" : "text-tinta/50"
+          }`}
+        >
+          {o.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function PanelColors({ s }: { s: State }) {
+  const hexFocused = s.focus === "in-hex";
+  return (
+    <div className="space-y-5">
+      <div>
+        <Label>Fondo</Label>
+        <Segmented
+          options={[
+            { target: "bg-light", label: "Claro", active: !s.dark },
+            { target: "bg-dark", label: "Oscuro", active: s.dark },
+          ]}
+        />
+      </div>
+      <div>
+        <Label>Color principal</Label>
+        <div className="flex items-center gap-2">
+          {swatches.map((c, i) => (
+            <span
+              key={c}
+              data-t={`sw-${i}`}
+              className={`h-7 w-7 rounded-full transition ${s.accent === c ? "ring-2 ring-tinta ring-offset-2" : ""}`}
+              style={{ background: c }}
+            />
+          ))}
+        </div>
+        <div
+          data-t="in-hex"
+          className={`mt-2.5 flex h-9 items-center gap-2 rounded-lg border bg-white px-2 text-sm transition ${
+            hexFocused ? "border-palco-700 ring-2 ring-palco-700/15" : "border-tinta/15"
+          }`}
+        >
+          <span className="h-5 w-5 rounded-md border border-tinta/10" style={{ background: s.accent }} />
+          <span className="font-mono text-xs uppercase">{s.hex}</span>
+          {hexFocused && <span className="-ml-1.5 h-4 w-px animate-pulse bg-tinta" />}
+          <span className="ml-auto text-[10px] text-tinta/40">o el de tu marca</span>
+        </div>
+      </div>
+      <div>
+        <Label>Tipografía de títulos</Label>
+        <Segmented
+          options={[
+            {
+              target: "font-clasica",
+              label: <span className="font-serif text-[13px]">Clásica</span>,
+              active: s.font === "clasica",
+            },
+            {
+              target: "font-moderna",
+              label: <span className="font-black uppercase tracking-tight">Moderna</span>,
+              active: s.font === "moderna",
+            },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
+function FakeInput({
+  id,
+  value,
+  placeholder,
+  focus,
+}: {
+  id: string;
+  value: string;
+  placeholder: string;
+  focus: string | null;
+}) {
   const focused = focus === id;
   return (
     <div
@@ -513,84 +668,18 @@ function PanelPrices({ s }: { s: State }) {
 /* ------------------------------------------------------------------ */
 
 function Preview({ s }: { s: State }) {
-  const t = templates[s.template];
+  const l = lookOf(s);
   return (
-    <div className="relative transition-colors duration-500" style={{ background: t.bg, color: t.fg }}>
+    <div className="relative min-h-[390px] transition-colors duration-500" style={{ background: l.bg, color: l.fg }}>
       <div className="flex items-center justify-between px-5 py-3 text-xs">
-        <span className={`text-sm ${t.title}`}>Tu Productora</span>
-        <span style={{ color: t.muted }}>Eventos · Contacto</span>
+        <span className={`text-sm transition-all ${l.title}`}>Tu Productora</span>
+        <span style={{ color: l.muted }}>Eventos · Contacto</span>
       </div>
 
-      <div className="grid gap-5 px-5 pb-6 pt-3 lg:grid-cols-[1fr_1.1fr]">
-        <div className="flex flex-col">
-          <p className="text-[11px] uppercase tracking-[0.2em]" style={{ color: t.accent }}>
-            {s.date || "Fecha a confirmar"}
-          </p>
-          <p
-            className={`mt-2 min-h-[2.4em] text-3xl leading-[1.05] transition-all duration-500 ${t.title}`}
-            style={{ opacity: s.title ? 1 : 0.3 }}
-          >
-            {s.title || "Título del evento"}
-          </p>
-
-          <ul className="mt-5 space-y-1.5 text-sm">
-            {groups.map((g) => {
-              const shown = s.placed.some((id) => sectors[id].group === g.id);
-              return (
-                <li
-                  key={g.id}
-                  className={`flex justify-between border-b pb-1.5 transition-all duration-500 ${
-                    shown ? "opacity-100" : "opacity-0"
-                  }`}
-                  style={{ borderColor: t.muted }}
-                >
-                  <span>{g.label}</span>
-                  <span className="tabular-nums" style={{ color: s.prices[g.id] ? t.fg : t.muted }}>
-                    {pesos(s.prices[g.id]) || "—"}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-
-          <span
-            className="mt-5 self-start rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-500"
-            style={{ background: t.accent, color: t.onAccent }}
-          >
-            Comprar entradas
-          </span>
-        </div>
-
-        {/* Plano en la web */}
-        <div className="relative aspect-[4/3] rounded-lg" style={{ background: `color-mix(in srgb, ${t.fg} 5%, transparent)` }}>
-          {s.placed.map((id) => {
-            const sc = sectors[id];
-            const price = sc.group ? s.prices[sc.group] : undefined;
-            const strength = sc.group === "vip" ? 85 : sc.group === "campo" ? 55 : 35;
-            return (
-              <span
-                key={id}
-                className="absolute flex flex-col items-center justify-center rounded-md text-center text-[10px] font-semibold leading-tight [animation:subir_0.5s_ease-out_both] transition-colors duration-500"
-                style={{
-                  left: `${sc.x}%`,
-                  top: `${sc.y}%`,
-                  width: `${sc.w}%`,
-                  height: `${sc.h}%`,
-                  background:
-                    id === "escenario" ? t.fg : `color-mix(in srgb, ${t.accent} ${strength}%, transparent)`,
-                  color: id === "escenario" ? t.bg : sc.group === "vip" ? t.onAccent : t.fg,
-                }}
-              >
-                <span
-                  className={`flex flex-col items-center ${id === "oeste" || id === "este" ? "[writing-mode:vertical-rl]" : ""}`}
-                >
-                  <span>{sc.label}</span>
-                  {price && <span className="mt-0.5 font-normal opacity-80">{pesos(price)}</span>}
-                </span>
-              </span>
-            );
-          })}
-        </div>
+      <div key={s.template} className="[animation:subir_0.5s_ease-out_both]">
+        {s.template === "dividida" && <LayoutDividida s={s} l={l} />}
+        {s.template === "portada" && <LayoutPortada s={s} l={l} />}
+        {s.template === "cartelera" && <LayoutCartelera s={s} l={l} />}
       </div>
 
       {s.published && (
@@ -600,6 +689,183 @@ function Preview({ s }: { s: State }) {
           </span>
         </div>
       )}
+    </div>
+  );
+}
+
+type LP = { s: State; l: Look };
+
+function Title({ s, l, className = "" }: LP & { className?: string }) {
+  return (
+    <p
+      className={`leading-[1.05] transition-all duration-500 ${l.title} ${className}`}
+      style={{ opacity: s.title ? 1 : 0.35 }}
+    >
+      {s.title || "Título del evento"}
+    </p>
+  );
+}
+
+function BuyButton({ l, className = "" }: { l: Look; className?: string }) {
+  return (
+    <span
+      className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-500 ${className}`}
+      style={{ background: l.accent, color: l.onAccent }}
+    >
+      Comprar entradas
+    </span>
+  );
+}
+
+function PriceList({ s, l }: LP) {
+  return (
+    <ul className="space-y-1.5 text-sm">
+      {groups.map((g) => {
+        const shown = s.placed.some((id) => sectors[id].group === g.id);
+        return (
+          <li
+            key={g.id}
+            className={`flex justify-between border-b pb-1.5 transition-all duration-500 ${
+              shown ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ borderColor: l.line }}
+          >
+            <span>{g.label}</span>
+            <span className="tabular-nums" style={{ color: s.prices[g.id] ? l.fg : l.muted }}>
+              {pesos(s.prices[g.id]) || "—"}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
+  return (
+    <div
+      className={`relative aspect-[4/3] rounded-lg ${className}`}
+      style={{ background: `color-mix(in srgb, ${l.fg} 5%, transparent)` }}
+    >
+      {s.placed.map((id) => {
+        const sc = sectors[id];
+        const price = sc.group ? s.prices[sc.group] : undefined;
+        const strength = sc.group === "vip" ? 90 : sc.group === "campo" ? 55 : 32;
+        const vertical = id === "oeste" || id === "este";
+        return (
+          <span
+            key={id}
+            className="absolute flex items-center justify-center rounded-md text-center text-[10px] font-semibold leading-tight transition-colors duration-500 [animation:subir_0.5s_ease-out_both]"
+            style={{
+              left: `${sc.x}%`,
+              top: `${sc.y}%`,
+              width: `${sc.w}%`,
+              height: `${sc.h}%`,
+              background: id === "escenario" ? l.fg : `color-mix(in srgb, ${l.accent} ${strength}%, transparent)`,
+              color: id === "escenario" ? l.bg : sc.group === "vip" ? l.onAccent : l.fg,
+            }}
+          >
+            <span className={`flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
+              <span>{sc.label}</span>
+              {price && <span className="mt-0.5 font-normal opacity-80">{pesos(price)}</span>}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function DateLine({ s, l }: LP) {
+  return (
+    <p className="text-[11px] uppercase tracking-[0.2em] transition-colors duration-500" style={{ color: l.accent }}>
+      {s.date || "Fecha a confirmar"}
+    </p>
+  );
+}
+
+function LayoutDividida({ s, l }: LP) {
+  return (
+    <div className="grid gap-5 px-5 pb-6 pt-3 lg:grid-cols-[1fr_1.1fr]">
+      <div className="flex flex-col">
+        <DateLine s={s} l={l} />
+        <Title s={s} l={l} className="mt-2 min-h-[2.2em] text-3xl" />
+        <div className="mt-5">
+          <PriceList s={s} l={l} />
+        </div>
+        <BuyButton l={l} className="mt-5 self-start" />
+      </div>
+      <VenueMap s={s} l={l} />
+    </div>
+  );
+}
+
+function LayoutPortada({ s, l }: LP) {
+  return (
+    <div className="pb-6">
+      <div
+        className="mx-5 flex flex-col items-center rounded-xl px-6 py-7 text-center transition-colors duration-500"
+        style={{ background: l.accent, color: l.onAccent }}
+      >
+        <p className="text-[11px] uppercase tracking-[0.2em] opacity-75">{s.date || "Fecha a confirmar"}</p>
+        <Title s={s} l={l} className="mt-2 text-4xl" />
+        <span
+          className="mt-4 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-500"
+          style={{ background: l.onAccent, color: l.accent }}
+        >
+          Comprar entradas
+        </span>
+      </div>
+      <div className="mt-5 grid items-start gap-5 px-5 lg:grid-cols-[1.2fr_1fr]">
+        <VenueMap s={s} l={l} className="mx-auto max-h-44 w-full max-w-[16rem]" />
+        <PriceList s={s} l={l} />
+      </div>
+    </div>
+  );
+}
+
+function LayoutCartelera({ s, l }: LP) {
+  const others = [
+    { t: "Otra función", d: "Vie 27" },
+    { t: "Próximamente", d: "Octubre" },
+  ];
+  return (
+    <div className="px-5 pb-6 pt-1">
+      <p className="text-[11px] uppercase tracking-[0.2em]" style={{ color: l.muted }}>
+        Cartelera
+      </p>
+      <div className="mt-2 grid grid-cols-3 gap-3">
+        <div
+          className="flex aspect-[4/3] flex-col justify-end rounded-lg p-3 transition-colors duration-500"
+          style={{ background: l.accent, color: l.onAccent }}
+        >
+          <p className="text-[9px] uppercase tracking-widest opacity-75">
+            {s.date ? s.date.split("·")[0] : "Fecha"}
+          </p>
+          <Title s={s} l={l} className="mt-1 text-sm" />
+        </div>
+        {others.map((o) => (
+          <div
+            key={o.t}
+            className="flex aspect-[4/3] flex-col justify-end rounded-lg p-3"
+            style={{ background: `color-mix(in srgb, ${l.fg} 7%, transparent)` }}
+          >
+            <p className="text-[9px] uppercase tracking-widest" style={{ color: l.muted }}>
+              {o.d}
+            </p>
+            <p className={`mt-1 text-sm leading-tight ${l.title}`} style={{ color: l.muted }}>
+              {o.t}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid items-center gap-4 lg:grid-cols-[1fr_1fr]">
+        <VenueMap s={s} l={l} className="mx-auto max-h-36 w-full max-w-[13rem]" />
+        <div className="flex flex-col gap-3">
+          <PriceList s={s} l={l} />
+          <BuyButton l={l} className="self-start" />
+        </div>
+      </div>
     </div>
   );
 }

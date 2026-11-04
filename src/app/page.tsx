@@ -126,9 +126,9 @@ export default function Home() {
         <section id="editor" className="papel scroll-mt-4">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Editor" title="Tu web de venta, armada por vos.">
-              Elegí una de las tres plantillas, poné el título, dibujá el plano
-              con tu campo, tribunas o plateas, cargá los precios y publicá.
-              Sin programadores.
+              Elegí uno de los tres diseños y ponele tus colores, tu
+              tipografía y tu logo. Dibujá el plano con tu campo, tribunas o
+              plateas, cargá los precios y publicá. Sin programadores.
             </SectionTitle>
             <Reveal className="mt-16">
               <SiteBuilder />
