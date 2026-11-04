@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Outfit } from "next/font/google";
+import { Bodoni_Moda, Outfit } from "next/font/google";
 import "./globals.css";
 import { site } from "@/lib/site";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const bodoni = Bodoni_Moda({
+  variable: "--font-bodoni",
   subsets: ["latin"],
+  style: ["normal", "italic"],
 });
 
 const outfit = Outfit({
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${outfit.variable} h-full antialiased`}
+      className={`${bodoni.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>

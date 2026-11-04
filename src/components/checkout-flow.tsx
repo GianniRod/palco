@@ -1,0 +1,181 @@
+"use client";
+
+import { useState, type CSSProperties, type ReactNode } from "react";
+import { Check, Mail } from "lucide-react";
+import { FakeQr } from "./qr";
+import { useInView, useInterval, useReducedMotion } from "./hooks";
+
+const STEP_MS = 3200;
+
+const steps = [
+  { title: "Elige", text: "Su butaca en el plano de tu sala, desde tu sitio." },
+  { title: "Paga", text: "Con Mercado Pago. El dinero se acredita en tu cuenta." },
+  { title: "Recibe", text: "Su entrada con QR por email, al instante." },
+];
+
+export function CheckoutFlow() {
+  const [ref, inView] = useInView<HTMLDivElement>();
+  const reduced = useReducedMotion();
+  const [step, setStep] = useState(0);
+  const running = inView && !reduced;
+
+  useInterval(() => setStep((s) => (s + 1) % steps.length), STEP_MS, running);
+
+  return (
+    <div ref={ref} className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
+      <ol className="space-y-2">
+        {steps.map((s, i) => (
+          <li key={s.title}>
+            <button
+              type="button"
+              onClick={() => setStep(i)}
+              className={`group relative w-full overflow-hidden py-5 text-left transition-opacity ${
+                i === step ? "opacity-100" : "opacity-40 hover:opacity-70"
+              }`}
+            >
+              <span className="flex items-baseline gap-5">
+                <span className="font-serif text-lg italic text-palco-500">
+                  {["i", "ii", "iii"][i]}.
+                </span>
+                <span>
+                  <span className="block font-serif text-4xl sm:text-5xl">{s.title}</span>
+                  <span className="mt-1 block text-palco-950/70">{s.text}</span>
+                </span>
+              </span>
+              <span className="absolute inset-x-0 bottom-0 h-px bg-palco-800/15" />
+              {i === step && (
+                <span
+                  key={`${step}-${running}`}
+                  className={`absolute inset-x-0 bottom-0 h-px origin-left bg-palco-800 ${running ? "progreso" : ""}`}
+                  style={{ "--dur": `${STEP_MS}ms` } as CSSProperties}
+                />
+              )}
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      {/* Teléfono */}
+      <div className="mx-auto w-[280px] rounded-[2.6rem] border-[10px] border-tinta bg-tinta shadow-[0_40px_80px_-20px_rgba(31,3,10,0.55)]">
+        <div className="relative h-[500px] overflow-hidden rounded-[1.9rem] bg-white">
+          <div className="absolute left-1/2 top-2 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-tinta" />
+          <Screen active={step === 0}>
+            <StepChoose />
+          </Screen>
+          <Screen active={step === 1}>
+            <StepPay />
+          </Screen>
+          <Screen active={step === 2}>
+            <StepReceive />
+          </Screen>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Screen({ active, children }: { active: boolean; children: ReactNode }) {
+  return (
+    <div
+      aria-hidden={!active}
+      className={`absolute inset-0 px-5 pb-6 pt-12 transition-all duration-700 ${
+        active ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-8 opacity-0"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StepChoose() {
+  return (
+    <div className="flex h-full flex-col">
+      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
+      <p className="mt-1 font-serif text-2xl leading-tight">Función de gala</p>
+      <p className="text-xs text-black/50">Sábado 14 · 21:00</p>
+      <div className="mx-auto mt-6 h-2 w-2/3 rounded-b-full bg-palco-800/20" />
+      <div className="mt-4 flex flex-col items-center gap-1.5">
+        {[8, 10, 10, 12, 12, 12].map((n, r) => (
+          <div key={r} className="flex gap-1">
+            {Array.from({ length: n }, (_, s) => {
+              const chosen = r === 3 && (s === 5 || s === 6);
+              const sold = (r * 5 + s * 3) % 7 < 3;
+              return (
+                <span
+                  key={s}
+                  className={`h-3 w-3 rounded-t-[4px] rounded-b-[1px] ${
+                    chosen ? "bg-dorado" : sold ? "bg-black/10" : "bg-palco-800/70"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto rounded-xl bg-papel p-3 text-sm">
+        <div className="flex justify-between">
+          <span>Platea · D6, D7</span>
+          <span className="font-medium">$ 44.000</span>
+        </div>
+      </div>
+      <div className="mt-3 rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
+        Continuar
+      </div>
+    </div>
+  );
+}
+
+function StepPay() {
+  return (
+    <div className="flex h-full flex-col">
+      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
+      <p className="mt-1 font-serif text-2xl">Pago</p>
+      <div className="mt-6 space-y-2 text-sm">
+        <Row l="2 × Platea" r="$ 44.000" />
+        <Row l="Cargo de servicio" r="$ 2.200" />
+        <div className="border-t border-black/10 pt-2">
+          <Row l="Total" r="$ 46.200" bold />
+        </div>
+      </div>
+      <div className="mt-8 rounded-xl border border-black/10 p-4">
+        <p className="text-xs text-black/50">Medio de pago</p>
+        <p className="mt-1 font-medium">Mercado Pago</p>
+        <p className="text-xs text-black/50">Tarjeta, débito o dinero en cuenta</p>
+      </div>
+      <div className="mt-auto rounded-xl bg-[#009EE3] py-3 text-center text-sm font-medium text-white">
+        Pagar $ 46.200
+      </div>
+    </div>
+  );
+}
+
+function StepReceive() {
+  return (
+    <div className="flex h-full flex-col items-center text-center">
+      <span className="mt-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white">
+        <Check className="h-6 w-6" />
+      </span>
+      <p className="mt-3 font-serif text-2xl">¡Listo!</p>
+      <p className="flex items-center gap-1.5 text-xs text-black/50">
+        <Mail className="h-3.5 w-3.5" /> Te enviamos tus entradas
+      </p>
+      <div className="mt-6 w-full rounded-2xl bg-palco-800 p-4 text-left text-white">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Función de gala</p>
+        <p className="font-serif text-lg">Platea · Fila D · 6</p>
+        <div className="mt-3 flex justify-center rounded-lg bg-white p-3 text-black">
+          <FakeQr seed={5} className="h-32 w-32" />
+        </div>
+      </div>
+      <p className="mt-auto text-xs text-black/40">Mostrá este QR en la entrada</p>
+    </div>
+  );
+}
+
+function Row({ l, r, bold }: { l: string; r: string; bold?: boolean }) {
+  return (
+    <div className={`flex justify-between ${bold ? "font-semibold" : "text-black/70"}`}>
+      <span>{l}</span>
+      <span>{r}</span>
+    </div>
+  );
+}
