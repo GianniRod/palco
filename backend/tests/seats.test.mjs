@@ -11,6 +11,7 @@ if (!url) throw new Error("Falta TEST_DATABASE_URL");
 const db = new pg.Pool({ connectionString: url, max: 20 });
 const email = "prueba@example.com";
 
+let clientId;
 let venueId;
 let eventId;
 let otherEventId;
@@ -39,9 +40,14 @@ const countOrders = async () =>
   (await db.query("select count(*)::int as n from orders where event_id = $1", [eventId])).rows[0].n;
 
 before(async () => {
-  const { rows } = await db.query(
-    "insert into venues (slug, name) values ($1, 'Sala de prueba') returning id",
+  const { rows: [client] } = await db.query(
+    "insert into organizations (slug, name, commission_percent) values ($1, 'Cliente de prueba', 5) returning id",
     [`test-${crypto.randomUUID()}`],
+  );
+  clientId = client.id;
+  const { rows } = await db.query(
+    "insert into venues (organization_id, slug, name) values ($1, $2, 'Sala de prueba') returning id",
+    [clientId, `test-${crypto.randomUUID()}`],
   );
   venueId = rows[0].id;
 });
@@ -55,7 +61,7 @@ beforeEach(async () => {
 });
 
 after(async () => {
-  await db.query("delete from venues where id = $1", [venueId]);
+  await db.query("delete from organizations where id = $1", [clientId]);
   await db.end();
 });
 
@@ -68,6 +74,32 @@ test("reservar crea la orden con el total correcto", async () => {
 
   const seats = await listSeats(db, eventId);
   assert.equal(seats.filter((s) => !s.available).length, 2);
+});
+
+test("la orden guarda la comisión del cliente", async () => {
+  const orderId = await holdSeats(db, { eventId, seatIds: seatIds.slice(0, 2), buyerEmail: email });
+
+  const { rows: [order] } = await db.query("select * from orders where id = $1", [orderId]);
+  assert.equal(Number(order.commission_percent), 5);
+  assert.equal(order.commission_amount, 2200);
+  assert.equal(order.total, 44000);
+});
+
+test("cambiar la comisión del cliente no altera órdenes viejas", async () => {
+  const oldOrderId = await holdSeats(db, { eventId, seatIds: [seatIds[0]], buyerEmail: email });
+  await db.query("update organizations set commission_percent = 10 where id = $1", [clientId]);
+
+  try {
+    const newOrderId = await holdSeats(db, { eventId, seatIds: [seatIds[1]], buyerEmail: email });
+    const { rows } = await db.query(
+      "select id, commission_amount from orders where id = any ($1::uuid[])",
+      [[oldOrderId, newOrderId]],
+    );
+    assert.equal(rows.find((o) => o.id === oldOrderId).commission_amount, 1100);
+    assert.equal(rows.find((o) => o.id === newOrderId).commission_amount, 2200);
+  } finally {
+    await db.query("update organizations set commission_percent = 5 where id = $1", [clientId]);
+  }
 });
 
 test("una butaca reservada no se puede volver a reservar", async () => {
