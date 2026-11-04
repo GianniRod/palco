@@ -8,7 +8,8 @@ import { RotatingChip } from "@/components/rotating-chip";
 import { SiteBuilder } from "@/components/site-builder";
 import { Reveal } from "@/components/reveal";
 import { Logo } from "@/components/logo";
-import { contactHref, site } from "@/lib/site";
+import { DemoDialog } from "@/components/demo-dialog";
+import { contactHref, demoHref, site } from "@/lib/site";
 
 const nav = [
   { label: "Editor", href: "#editor" },
@@ -69,7 +70,7 @@ export default function Home() {
               ))}
             </nav>
             <a
-              href={contactHref}
+              href={demoHref}
               className="rounded-full bg-white px-4 py-2 text-sm font-medium text-palco-900 transition hover:bg-dorado"
             >
               Pedir demo
@@ -92,7 +93,7 @@ export default function Home() {
                 Mercado Pago.
               </p>
               <a
-                href={contactHref}
+                href={demoHref}
                 className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-dorado px-6 py-3 font-medium text-palco-950 transition hover:bg-white md:self-auto"
               >
                 Pedir una demo
@@ -194,7 +195,7 @@ export default function Home() {
         <section className="papel px-6 pb-28">
           <Reveal>
             <a
-              href={contactHref}
+              href={demoHref}
               className="group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(31,3,10,0.3)]"
             >
               <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-800 p-8 text-white sm:p-12">
@@ -232,6 +233,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <DemoDialog />
     </>
   );
 }
