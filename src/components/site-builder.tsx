@@ -345,7 +345,7 @@ export function SiteBuilder() {
             <div className="overflow-hidden rounded-xl border border-tinta/10 shadow-sm">
               <div className="flex items-center gap-2 border-b border-black/5 bg-white px-3 py-2">
                 <span className="flex-1 truncate rounded-md bg-tinta/5 px-3 py-1 text-center text-[11px] text-tinta/50">
-                  entradas.tuproductora.com
+                  tuproductora.com/tickets
                 </span>
               </div>
               <Preview s={s} />

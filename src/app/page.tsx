@@ -38,6 +38,10 @@ const faqs = [
     a: "No. No vendemos entradas a nuestro nombre: ponemos la tecnología para que vos vendas con tu marca y te quedes con la relación con tu público.",
   },
   {
+    q: "¿Puedo vender desde mi propia web?",
+    a: "Sí, esa es la idea. Conectamos Palco a tu sitio y vendés en tusitio.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en palcotickets.com.",
+  },
+  {
     q: "¿Quién cobra?",
     a: "Vos. Tu público paga con tarjeta de crédito o débito, o con Mercado Pago, y el dinero se acredita en tu cuenta.",
   },
