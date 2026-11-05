@@ -339,13 +339,25 @@ const slides: Slide[] = [
         <div className="space-y-6">
           {[
             { n: "Nightowl", pay: 16200, pct: 0.08, ours: true },
-            { n: "Passline", pay: 17250, pct: 0.15 },
-            { n: "Passify", pay: 17250, pct: 0.15 },
+            { n: "Passline", pay: 17250, pct: 0.15, logo: { src: "/presentacion/passline.png", ratio: "690 / 136" } },
+            { n: "Passify", pay: 17250, pct: 0.15, logo: { src: "/presentacion/passify.png", ratio: "475 / 141" } },
           ].map((r, i) => (
             <In key={r.n} d={0.3 + i * 0.15}>
               <div className="flex items-baseline justify-between">
                 {r.ours ? (
                   <Logo className="h-6" color="#ffffff" />
+                ) : r.logo ? (
+                  // Logo de la otra ticketera, en blanco para que combine con el resto
+                  <span
+                    role="img"
+                    aria-label={r.n}
+                    className="inline-block h-6 bg-white/70"
+                    style={{
+                      WebkitMask: `url(${r.logo.src}) left center / contain no-repeat`,
+                      mask: `url(${r.logo.src}) left center / contain no-repeat`,
+                      aspectRatio: r.logo.ratio,
+                    }}
+                  />
                 ) : (
                   <span className="text-lg font-semibold text-white/70">{r.n}</span>
                 )}
