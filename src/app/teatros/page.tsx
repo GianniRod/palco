@@ -11,6 +11,7 @@ import { Reveal } from "@/components/reveal";
 import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { SegmentSwitch } from "@/components/segment-switch";
+import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
 
 // Versión de la landing para teatros y salas (diseño original, en bordó).
@@ -255,7 +256,7 @@ export default function TeatrosPage() {
               © <CurrentYear /> {site.name}
             </p>
             {/* Temporal: sacar el día del lanzamiento */}
-            <p className="mt-1 text-xs">Que en paz descanses Palco 💔 4 noviembre 2026 – 5 noviembre 2026</p>
+            <PalcoMemorial />
           </div>
         </div>
       </footer>

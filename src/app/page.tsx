@@ -10,6 +10,7 @@ import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { AudienceGate } from "@/components/audience-gate";
 import { SegmentSwitch } from "@/components/segment-switch";
+import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
 
 const nav = [
@@ -234,7 +235,7 @@ export default function Home() {
               © <CurrentYear /> {site.name}
             </p>
             {/* Temporal: sacar el día del lanzamiento */}
-            <p className="mt-1 text-xs">Que en paz descanses Palco 💔 4 noviembre 2026 – 5 noviembre 2026</p>
+            <PalcoMemorial />
           </div>
         </div>
       </footer>
