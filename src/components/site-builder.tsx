@@ -406,6 +406,7 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
   const [state, setState] = useState<State>(initial);
   const [stepIdx, setStepIdx] = useState(0);
   const [run, setRun] = useState(0); // se incrementa al tocar "Repetir" (reinicia la barra)
+  const [speed, setSpeed] = useState(1); // velocidad de reproducción
   const boxRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
@@ -419,15 +420,15 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
     const id = setTimeout(() => {
       setState(step.apply);
       setStepIdx((i) => i + 1);
-    }, step.wait);
+    }, step.wait / speed);
     return () => clearTimeout(id);
-  }, [stepIdx, inView, reduced, done, script]);
+  }, [stepIdx, inView, reduced, done, script, speed]);
 
   // Barra de progreso: mientras corre un paso, avanza linealmente hasta el final de ese paso
   const total = cum[cum.length - 1];
   const playing = inView && !reduced && !done;
   const progress = reduced || done ? 1 : (playing ? cum[stepIdx + 1] : cum[stepIdx]) / total;
-  const progressMs = playing ? script[stepIdx].wait : 0;
+  const progressMs = playing ? script[stepIdx].wait / speed : 0;
 
   // Ubica el cursor sobre el elemento objetivo
   useLayoutEffect(() => {
@@ -458,6 +459,22 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
           <span className="h-2.5 w-2.5 rounded-full bg-tinta/15" />
           <span className="h-2.5 w-2.5 rounded-full bg-tinta/15" />
           <span className="ml-3 text-xs font-medium text-tinta/60">Nightowl · Editor de tu web</span>
+          {/* Velocidad de reproducción */}
+          <div className="ml-auto flex items-center rounded-md bg-tinta/5 p-0.5 text-[11px] tabular-nums">
+            {[1, 1.25, 1.5].map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setSpeed(v)}
+                aria-pressed={speed === v}
+                className={`rounded px-1.5 py-0.5 transition ${
+                  speed === v ? "bg-white font-medium text-tinta shadow-sm" : "text-tinta/45 hover:text-tinta"
+                }`}
+              >
+                x{String(v)}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -465,9 +482,9 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
               setStepIdx(0);
               setRun((r) => r + 1);
             }}
-            className="ml-auto flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-tinta/50 transition hover:bg-tinta/5 hover:text-tinta"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-tinta/50 transition hover:bg-tinta/5 hover:text-tinta"
           >
-            <RotateCcw className="h-3 w-3" /> Repetir
+            <RotateCcw className="h-3 w-3" /> <span className="hidden sm:inline">Repetir</span>
           </button>
         </div>
 
