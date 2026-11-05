@@ -90,7 +90,7 @@ export default function Home() {
                 href={demoHref}
                 className="asoma relative hidden overflow-hidden rounded-full border border-tinta/20 px-4 py-2 text-sm font-medium transition-colors duration-300 hover:bg-tinta hover:text-white sm:inline-flex"
               >
-                <span aria-hidden className="buho-asoma pointer-events-none absolute -top-1 right-1 block h-16 w-[46px] bg-white/25" />
+                <span aria-hidden className="buho-asoma pointer-events-none absolute -top-1 right-1 block h-16 w-[46px] bg-white/40" />
                 <span className="relative z-10">Pedir demo</span>
               </a>
             </div>
