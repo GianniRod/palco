@@ -716,6 +716,13 @@ export function PitchDeck() {
   const [i, setI] = useState(0);
   const n = slides.length;
   const go = useCallback((d: number) => setI((v) => Math.min(n - 1, Math.max(0, v + d))), [n]);
+  const [askFullscreen, setAskFullscreen] = useState(false);
+
+  // Al entrar, sugerir pantalla completa (solo si el navegador la permite y no está activa)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- depende de APIs del navegador, solo al montar
+    if (document.fullscreenEnabled && !document.fullscreenElement) setAskFullscreen(true);
+  }, []);
 
   // La diapositiva actual queda en la URL (#3), así se puede compartir o recargar
   useEffect(() => {
@@ -760,6 +767,42 @@ export function PitchDeck() {
       }`}
       onClick={onTap}
     >
+      {askFullscreen && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="subir w-full max-w-sm rounded-2xl bg-white p-6 text-center text-[#09090b] shadow-2xl">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-black text-white">
+              <Maximize2 className="h-5 w-5" />
+            </span>
+            <p className="mt-4 text-lg font-semibold tracking-tight">Mirala en pantalla completa</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-black/55">
+              Recomendamos usar la pantalla completa para una mejor experiencia.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAskFullscreen(false);
+                  document.documentElement.requestFullscreen?.();
+                }}
+                className="rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80"
+              >
+                Pantalla completa
+              </button>
+              <button
+                type="button"
+                onClick={() => setAskFullscreen(false)}
+                className="rounded-full px-5 py-2.5 text-sm text-black/55 transition hover:text-black"
+              >
+                Seguir así
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progreso */}
       <div className={`h-[3px] w-full ${dark ? "bg-white/10" : "bg-black/10"}`}>
         <div
