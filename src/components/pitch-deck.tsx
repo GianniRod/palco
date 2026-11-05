@@ -510,7 +510,7 @@ const slides: Slide[] = [
                 className="rounded-2xl bg-black p-5 text-white"
                 style={{ width: `${s.w}%`, minWidth: "min(100%, 18rem)", opacity: 1 - i * 0.15 }}
               >
-                <p className="text-xs tabular-nums text-white/40">Etapa {i + 1}</p>
+                <p className="text-xs tabular-nums text-white/40">Fase {i + 1}</p>
                 <p className="mt-1 font-semibold">{s.t}</p>
                 <p className="mt-1 text-sm text-white/55">{s.x}</p>
               </div>
