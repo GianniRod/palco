@@ -9,6 +9,24 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Portada: recorte automático de bordes negros** al subirla (capturas de Instagram o de video con franjas).
+  Una fila o columna es borde si casi no tiene píxeles con luz; nunca recorta más del 35% por lado.
+  El aviso ahora explica que se recortó y pide la foto original (no una captura) de al menos 1920 px.
+  Archivo: `src/app/dashboard/panel/mi-pagina/_editor.tsx`.
+- **Portada de la web del cliente con más calidad.** La de Moscu se veía mal porque la imagen subida mide 725×311 px.
+  - El editor ahora la guarda hasta 2400 px de ancho, en WebP (o JPG) con calidad 0.9, y solo la achica si no entra.
+  - Avisa cuando la imagen mide menos de 1600 px de ancho y pide una de al menos 1920 px.
+  - Límite de portada en el servidor: de 900 KB a 1,6 MB (`backend/src/sites.mjs`, con su test actualizado).
+    `bodySizeLimit` de las Server Actions: de 2 MB a 4 MB (`next.config.ts`).
+  Archivos: `src/app/dashboard/panel/mi-pagina/_editor.tsx`, `backend/src/sites.mjs`, `backend/tests/sites.test.mjs`, `next.config.ts`.
+  **Lorenzo:** no pude correr los tests del backend (no tengo `TEST_DATABASE_URL`); conviene correrlos.
+- **Web pública del cliente (plantillas de Lorenzo) más prolija**, en `src/components/public-site.tsx`:
+  - Header: la marca es clickeable (vuelve al inicio), botón "Entradas" con el color del cliente,
+    fondo semitransparente con desenfoque y se sacó la franja de color de abajo (con colores claros parecía una línea gris).
+  - Títulos de sección más grandes con una barrita del color del cliente; más aire entre secciones;
+    el aviso de "sin fechas" pasó a recuadro punteado.
+  - Footer: franja final con "© año + nombre" y **"Tecnología de [logo Nightowl]"** que lleva a www.palcotickets.com.
+  Afecta a las 3 plantillas y a la vista previa del editor de Mi página.
 - **Tamaño del logo editable**: en la animación del editor (pestaña Textos) el cliente sube su logo y lo agranda
   con un deslizador "Tamaño"; en la vista previa el logo crece en vivo. Especificado para "Mi página" en
   `docs/dashboard.md` (3.1, Identidad). Archivo: `src/components/site-builder.tsx`.
