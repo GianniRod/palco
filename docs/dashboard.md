@@ -68,7 +68,7 @@ Configura su sitio público de venta. **No diseña desde cero**: elige una de nu
   - **Dividida**: info del evento a un lado, plano y precios al otro.
   - **Portada**: banner grande con el evento principal.
   - **Cartelera**: grilla con varias funciones/fechas (teatros con temporada).
-- **Identidad**: nombre, logo, color principal (muestra o código hex), fondo claro/oscuro, tipografía de títulos.
+- **Identidad**: nombre, logo (con **tamaño ajustable** con un deslizador, de chico a grande, y vista previa en vivo), color principal (muestra o código hex), fondo claro/oscuro, tipografía de títulos.
 - **Contenido**: textos de presentación, redes, contacto, dirección.
 - **Vista previa en vivo** mientras edita, y botón **Publicar**.
 

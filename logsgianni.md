@@ -9,6 +9,9 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Tamaño del logo editable**: en la animación del editor (pestaña Textos) el cliente sube su logo y lo agranda
+  con un deslizador "Tamaño"; en la vista previa el logo crece en vivo. Especificado para "Mi página" en
+  `docs/dashboard.md` (3.1, Identidad). Archivo: `src/components/site-builder.tsx`.
 - **"Base de datos" y "Estadísticas" también en el panel del cliente** (como "Pronto"), con solo sus datos.
   Docs: `docs/dashboard.md` secciones 3.7 y 3.8 (Equipo pasó a 3.9) y `docs/negocio.md`. Archivo: `src/app/dashboard/panel/layout.tsx`.
 - **Panel admin: "Base de datos" y "Estadísticas" en el menú como "Pronto"** (todavía no abren nada).

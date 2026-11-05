@@ -201,6 +201,8 @@ type State = {
   pen: boolean; // herramienta pluma activa
   shape: number; // 0 = sector rectangular, 1 = forma editada con la pluma
   image: boolean; // imagen del evento cargada
+  logo: boolean; // logo del cliente cargado
+  logoSize: number; // 0 = chico, 1 = grande (deslizador de tamaño)
   seats: Record<string, number>; // butacas cargadas por sector
   seatEdit: string | null; // sector abierto para ver/cargar butacas
   seatValue: string;
@@ -228,6 +230,8 @@ function initialState(sc: Scenario): State {
     pen: false,
     shape: 0,
     image: false,
+    logo: false,
+    logoSize: 0.3,
     seats: {},
     seatEdit: null,
     seatValue: "",
@@ -295,6 +299,14 @@ function buildScript(sc: Scenario): Step[] {
   steps.push(...tap(`day-${sc.cal.pick}`, (s) => ({ ...s, date: sc.date }), 700));
   steps.push({ wait: 650, apply: (s) => ({ ...s, calendar: false, focus: null }) });
   steps.push(...tap("in-image", (s) => ({ ...s, image: true }), 600));
+  // Logo: lo sube y lo agranda con el deslizador de tamaño
+  steps.push(...tap("in-logo", (s) => ({ ...s, logo: true }), 600));
+  steps.push(move("logo-handle", 650));
+  steps.push({ wait: 600, apply: (s) => ({ ...s, pressed: true }) });
+  for (let k = 1; k <= 8; k++) {
+    steps.push({ wait: 70, apply: (s) => ({ ...s, logoSize: 0.3 + (0.85 - 0.3) * (k / 8) }) });
+  }
+  steps.push({ wait: 350, apply: (s) => ({ ...s, pressed: false }) });
   steps.push({ wait: 700, apply: (s) => s });
 
   // 4. Mapa: arrastrar sectores
@@ -867,8 +879,36 @@ function PanelContent({ s }: { s: State }) {
       </div>
       <div>
         <Label>Logo</Label>
-        <div className="flex h-9 items-center gap-2 rounded-lg border border-dashed border-tinta/20 px-3 text-xs text-tinta/50">
-          <span className="h-5 w-5 rounded bg-tinta/10" /> tu-logo.png
+        <div className="flex items-center gap-3">
+          <div
+            data-t="in-logo"
+            className={`flex h-9 w-32 shrink-0 items-center gap-2 rounded-lg border px-2 text-xs transition ${
+              s.logo ? "border-tinta/15 bg-white text-tinta/70" : "border-dashed border-tinta/20 text-tinta/50"
+            }`}
+          >
+            {s.logo ? (
+              <>
+                <LogoMark size={20} accent={s.accent} />
+                <span className="flex-1 truncate">tu-logo.png</span>
+              </>
+            ) : (
+              <>
+                <ImagePlus className="h-4 w-4 shrink-0 text-tinta/40" /> Subí tu logo
+              </>
+            )}
+          </div>
+          {/* Tamaño del logo */}
+          <div className={`flex flex-1 items-center gap-2 transition ${s.logo ? "opacity-100" : "opacity-35"}`}>
+            <span className="text-[10px] text-tinta/45">Tamaño</span>
+            <div className="relative h-1 flex-1 rounded-full bg-tinta/10">
+              <div className="absolute inset-y-0 left-0 rounded-full bg-palco-700" style={{ width: `${s.logoSize * 100}%` }} />
+              <span
+                data-t="logo-handle"
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-palco-700 bg-white shadow"
+                style={{ left: `${s.logoSize * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1108,12 +1148,33 @@ function PanelPrices({ s }: { s: State }) {
 /* Vista previa de la web del cliente                                  */
 /* ------------------------------------------------------------------ */
 
+/** Logo de ejemplo del cliente: un monograma con su color. */
+function LogoMark({ size, accent }: { size: number; accent: string }) {
+  const onAccent = luminance(accent) > 0.45 ? "#111111" : "#FFFFFF";
+  const initials = useScenario()
+    .venue.split(" ")
+    .map((w) => w[0])
+    .join("");
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center rounded-[28%] font-bold tracking-tight"
+      style={{ width: size, height: size, fontSize: size * 0.42, background: accent, color: onAccent }}
+    >
+      {initials}
+    </span>
+  );
+}
+
 function Preview({ s }: { s: State }) {
   const l = lookOf(s);
+  const logoPx = 18 + s.logoSize * 26;
   return (
     <div className="relative min-h-[390px] transition-colors duration-500" style={{ background: l.bg, color: l.fg }}>
       <div className="flex items-center justify-between px-5 py-3 text-xs">
-        <span className={`text-sm transition-all ${l.title}`}>{useScenario().venue}</span>
+        <span className={`flex items-center gap-2 text-sm transition-all ${l.title}`}>
+          {s.logo && <LogoMark size={logoPx} accent={l.accent} />}
+          {useScenario().venue}
+        </span>
         <span style={{ color: l.muted }}>Eventos · Contacto</span>
       </div>
 
