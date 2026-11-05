@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Check, Loader2, MousePointer2, RotateCcw } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Loader2, MousePointer2, RotateCcw } from "lucide-react";
 import { useInView, useReducedMotion } from "./hooks";
 
 /* ------------------------------------------------------------------ */
@@ -54,6 +54,8 @@ type Scenario = {
   palette: { group: string; label: string }[];
   drops: [string, string][]; // [sector, etiqueta que se arrastra]
   others: { t: string; d: string }[]; // otras fechas en la plantilla Cartelera
+  /** Calendario desplegable para elegir la fecha (semana empieza el lunes: 0 = lunes). */
+  cal: { month: string; firstWeekday: number; days: number; pick: number; time: string };
 };
 
 export type ScenarioId = "boliche" | "teatro";
@@ -63,7 +65,7 @@ const scenarios: Record<ScenarioId, Scenario> = {
     venue: "Tu Boliche",
     url: "tuboliche.com/tickets",
     title: "Fiesta Aniversario",
-    date: "Sáb 21 de septiembre · 00:30",
+    date: "Sáb 19 de septiembre · 00:30",
     titlePlaceholder: "Ej. Fiesta de los jueves",
     templates: ["portada", "cartelera", "portada"],
     swatches: ["#111111", "#52525B", "#A1A1AA", "#7A1428", "#1E3A8A"],
@@ -96,9 +98,10 @@ const scenarios: Record<ScenarioId, Scenario> = {
       ["vip", "VIP"],
     ],
     others: [
-      { t: "Jueves universitario", d: "Jue 26" },
+      { t: "Jueves universitario", d: "Jue 24" },
       { t: "Próxima fiesta", d: "Octubre" },
     ],
+    cal: { month: "Septiembre 2026", firstWeekday: 1, days: 30, pick: 19, time: "00:30" },
   },
   teatro: {
     venue: "Tu Teatro",
@@ -140,6 +143,7 @@ const scenarios: Record<ScenarioId, Scenario> = {
       { t: "Temporada de otoño", d: "Vie 20" },
       { t: "Próximo estreno", d: "Abril" },
     ],
+    cal: { month: "Marzo 2026", firstWeekday: 6, days: 31, pick: 14, time: "21:00" },
   },
 };
 
@@ -168,6 +172,7 @@ type State = {
   font: Font;
   title: string;
   date: string;
+  calendar: boolean; // calendario de la fecha desplegado
   placed: string[];
   prices: Record<string, string>;
   cursor: string | null;
@@ -188,6 +193,7 @@ function initialState(sc: Scenario): State {
     font: sc.initialFont,
     title: "",
     date: "",
+    calendar: false,
     placed: ["escenario"],
     prices: {},
     cursor: null,
@@ -248,8 +254,10 @@ function buildScript(sc: Scenario): Step[] {
   steps.push(...openTab("contenido"));
   steps.push(...tap("in-title", (s) => ({ ...s, focus: "in-title" })));
   steps.push(...type(sc.title, (s, v) => ({ ...s, title: v })));
-  steps.push(...tap("in-date", (s) => ({ ...s, focus: "in-date" }), 500));
-  steps.push(...type(sc.date, (s, v) => ({ ...s, date: v }), 40));
+  // La fecha se elige en un calendario desplegable; al tocar el día queda escrita
+  steps.push(...tap("in-date", (s) => ({ ...s, focus: "in-date", calendar: true }), 500));
+  steps.push(...tap(`day-${sc.cal.pick}`, (s) => ({ ...s, date: sc.date }), 700));
+  steps.push({ wait: 650, apply: (s) => ({ ...s, calendar: false, focus: null }) });
 
   // 4. Mapa: arrastrar sectores
   steps.push(...openTab("mapa"));
@@ -664,6 +672,53 @@ function FakeInput({
   );
 }
 
+const weekdays = ["L", "M", "M", "J", "V", "S", "D"];
+
+/** Calendario desplegable, como el selector de fecha de una app. */
+function DatePicker({ s }: { s: State }) {
+  const { cal, date } = useScenario();
+  const picked = s.date === date;
+  return (
+    <div className="absolute inset-x-0 top-full z-30 mt-1.5 rounded-xl border border-tinta/10 bg-white p-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.3)] [animation:subir_0.25s_ease-out_both]">
+      <div className="flex items-center justify-between px-1 text-sm font-semibold">
+        <ChevronLeft className="h-4 w-4 text-tinta/35" />
+        {cal.month}
+        <ChevronRight className="h-4 w-4 text-tinta/35" />
+      </div>
+      <div className="mt-2 grid grid-cols-7 text-center text-[10px] text-tinta/40">
+        {weekdays.map((d, i) => (
+          <span key={i}>{d}</span>
+        ))}
+      </div>
+      <div className="mt-1 grid grid-cols-7 gap-y-0.5 text-center text-[11px] tabular-nums">
+        {Array.from({ length: cal.firstWeekday }, (_, i) => (
+          <span key={`b${i}`} />
+        ))}
+        {Array.from({ length: cal.days }, (_, i) => {
+          const day = i + 1;
+          const selected = picked && day === cal.pick;
+          return (
+            <span key={day} className="flex justify-center">
+              <span
+                data-t={`day-${day}`}
+                className={`flex h-6 w-6 items-center justify-center rounded-full transition ${
+                  selected ? "bg-palco-700 font-semibold text-white" : "text-tinta/75"
+                }`}
+              >
+                {day}
+              </span>
+            </span>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex items-center justify-between border-t border-tinta/10 px-1 pt-2 text-[11px] text-tinta/55">
+        <span>Hora</span>
+        <span className="rounded-md bg-tinta/5 px-2 py-0.5 font-medium tabular-nums text-tinta">{cal.time}</span>
+      </div>
+    </div>
+  );
+}
+
 function PanelContent({ s }: { s: State }) {
   const scn = useScenario();
   return (
@@ -672,9 +727,18 @@ function PanelContent({ s }: { s: State }) {
         <Label>Título del evento</Label>
         <FakeInput id="in-title" value={s.title} placeholder={scn.titlePlaceholder} focus={s.focus} />
       </div>
-      <div>
+      <div className="relative">
         <Label>Fecha y hora</Label>
-        <FakeInput id="in-date" value={s.date} placeholder="Elegí una fecha" focus={s.focus} />
+        <div
+          data-t="in-date"
+          className={`flex h-9 items-center justify-between rounded-lg border bg-white px-3 text-sm transition ${
+            s.focus === "in-date" ? "border-palco-700 ring-2 ring-palco-700/15" : "border-tinta/15"
+          }`}
+        >
+          {s.date ? <span className="truncate">{s.date}</span> : <span className="text-tinta/35">Elegí una fecha</span>}
+          <CalendarDays className="h-4 w-4 shrink-0 text-tinta/40" />
+        </div>
+        {s.calendar && <DatePicker s={s} />}
       </div>
       <div>
         <Label>Logo</Label>

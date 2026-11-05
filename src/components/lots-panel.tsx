@@ -91,7 +91,7 @@ export function LotsPanel() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
           </span>
           <span className="font-medium">Fiesta Aniversario</span>
-          <span className="text-white/40">Sáb 21 · 00:30</span>
+          <span className="text-white/40">Sáb 19 · 00:30</span>
         </div>
         <span className="rounded-md border border-white/10 px-2 py-0.5 text-[11px] text-white/40">Simulación</span>
       </div>
