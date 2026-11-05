@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -510,7 +519,7 @@ const slides: Slide[] = [
           <H className="mt-4">Producto en construcción, listo para pilotos.</H>
         </In>
         <div className="relative mt-14">
-          <span className="absolute left-0 right-0 top-[11px] h-px bg-white/15" aria-hidden />
+          <span className="absolute left-0 right-0 top-[11px] hidden h-px bg-white/15 md:block" aria-hidden />
           <div className="grid gap-8 md:grid-cols-4">
             {[
               { t: "Hecho", x: "Web con demo del producto, formulario de demos y marca nueva.", s: "done" },
@@ -647,9 +656,49 @@ const slides: Slide[] = [
 /* Presentación                                                        */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Hace entrar la diapositiva entera en el espacio disponible: si es más alta, la achica
+ * (y la ensancha en la misma proporción para que el texto use todo el ancho).
+ */
+function FitToScreen({ children, slideKey }: { children: ReactNode; slideKey: number }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const o = outer.current;
+    const el = inner.current;
+    if (!o || !el) return;
+    const fit = () => {
+      const W = o.clientWidth;
+      const H = o.clientHeight;
+      let scale = 1;
+      for (let k = 0; k < 5; k++) {
+        el.style.width = `${W / scale}px`;
+        const next = Math.min(1, H / el.offsetHeight);
+        if (Math.abs(next - scale) < 0.005) break;
+        scale = next;
+      }
+      el.style.width = `${W / scale}px`;
+      el.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(o);
+    document.fonts?.ready.then(fit);
+    return () => ro.disconnect();
+  }, [slideKey]);
+
+  return (
+    <div ref={outer} className="relative h-full w-full">
+      <div ref={inner} className="absolute left-1/2 top-1/2 origin-center" style={{ transform: "translate(-50%, -50%)" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function PitchDeck() {
   const [i, setI] = useState(0);
-  const touchX = useRef<number | null>(null);
   const n = slides.length;
   const go = useCallback((d: number) => setI((v) => Math.min(n - 1, Math.max(0, v + d))), [n]);
 
@@ -682,18 +731,19 @@ export function PitchDeck() {
   const slide = slides[i];
   const dark = !!slide.dark;
 
+  // Tocar a los costados: el tercio izquierdo vuelve, el resto avanza (como las historias)
+  function onTap(e: MouseEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    const x = e.clientX / window.innerWidth;
+    go(x < 1 / 3 ? -1 : 1);
+  }
+
   return (
     <div
       className={`relative flex h-dvh w-full select-none flex-col overflow-hidden transition-[background-color] duration-500 ${
         dark ? "bg-[#050505] text-white" : "bg-[#f4f4f5] text-[#09090b]"
       }`}
-      onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
-      onTouchEnd={(e) => {
-        if (touchX.current === null) return;
-        const dx = e.changedTouches[0].clientX - touchX.current;
-        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
-        touchX.current = null;
-      }}
+      onClick={onTap}
     >
       {/* Progreso */}
       <div className={`h-[3px] w-full ${dark ? "bg-white/10" : "bg-black/10"}`}>
@@ -719,22 +769,28 @@ export function PitchDeck() {
         </div>
       </div>
 
-      {/* Diapositiva */}
-      {/* my-auto centra sin cortar el principio cuando la diapositiva es más alta que la pantalla (celular) */}
-      <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-24 sm:px-10">
-        <div key={i} className="mx-auto my-auto w-full max-w-6xl py-4">
-          {slide.render()}
-        </div>
+      {/* Diapositiva: siempre entra entera, sin scroll */}
+      <main className="min-h-0 flex-1 px-5 pb-14 sm:px-10 sm:pb-24">
+        <FitToScreen slideKey={i}>
+          <div key={i} className="mx-auto w-full max-w-6xl py-2">
+            {slide.render()}
+          </div>
+        </FitToScreen>
       </main>
 
       {/* Navegación */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-6 pb-6 sm:px-10">
+      {i === 0 && (
+        <p className="pointer-events-none absolute inset-x-0 bottom-12 text-center text-xs text-white/35 sm:hidden">
+          Tocá a los costados para avanzar o volver
+        </p>
+      )}
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center px-6 pb-5 sm:justify-between sm:px-10 sm:pb-6">
         <button
           type="button"
           onClick={() => go(-1)}
           disabled={i === 0}
           aria-label="Anterior"
-          className={`flex h-11 w-11 items-center justify-center rounded-full border transition disabled:opacity-0 ${
+          className={`hidden h-11 w-11 items-center justify-center rounded-full border transition disabled:opacity-0 sm:flex ${
             dark ? "border-white/20 hover:bg-white hover:text-black" : "border-black/15 hover:bg-black hover:text-white"
           }`}
         >
@@ -758,7 +814,7 @@ export function PitchDeck() {
           onClick={() => go(1)}
           disabled={i === n - 1}
           aria-label="Siguiente"
-          className={`flex h-11 w-11 items-center justify-center rounded-full transition disabled:opacity-0 ${
+          className={`hidden h-11 w-11 items-center justify-center rounded-full transition disabled:opacity-0 sm:flex ${
             dark ? "bg-white text-black hover:bg-white/80" : "bg-black text-white hover:bg-black/80"
           }`}
         >
