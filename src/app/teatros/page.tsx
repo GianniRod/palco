@@ -45,7 +45,11 @@ const cinta = [
 const faqs = [
   {
     q: "¿Nightowl es una ticketera?",
-    a: "No. No vendemos entradas a nuestro nombre: ponemos la tecnología para que vos vendas con tu marca y te quedes con la relación con tu público.",
+    a: "No. Somos una plataforma white label: no vendemos entradas a nuestro nombre, ponemos la tecnología para que vos vendas con tu marca y te quedes con la relación con tu público.",
+  },
+  {
+    q: "¿Qué significa que sea white label?",
+    a: "Que la tecnología es nuestra pero la marca es tuya. Tu público ve tu logo, tus colores y tu dominio en la web, el pago, la entrada y los emails. Nightowl no aparece en ningún lado.",
   },
   {
     q: "¿Puedo vender desde mi propia web?",
@@ -159,8 +163,8 @@ export default function TeatrosPage() {
         {/* ---------------- Marca propia ---------------- */}
         <section id="marca" className="scroll-mt-4 border-t border-tinta/10 papel">
           <div className="mx-auto max-w-6xl px-6 py-24">
-            <SectionTitle eyebrow="Marca propia" title="Tu marca en cada entrada.">
-              El público compra en tu sitio, con tus colores y tu logo. La entrada
+            <SectionTitle eyebrow="Marca propia · White label" title="Tu marca en cada entrada.">
+              Es white label: el público compra en tu sitio, con tus colores y tu logo. La entrada
               que recibe es tuya, no de una ticketera.
             </SectionTitle>
             <Reveal className="mt-16">

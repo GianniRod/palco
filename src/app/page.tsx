@@ -33,15 +33,19 @@ const nightFeatures = [
     text: "Vendé entradas generales, sectores VIP y mesas con cupo de personas en el mismo lugar.",
   },
   {
-    title: "Tu web, tu marca",
-    text: "La venta queda en tuboliche.com/tickets, con tu logo y tus colores. Tu público nunca sale de tu sitio.",
+    title: "White label: tu web, tu marca",
+    text: "La venta queda en tuboliche.com/tickets, con tu logo y tus colores. Nightowl no aparece y tu público nunca sale de tu sitio.",
   },
 ];
 
 const faqs = [
   {
     q: "¿Nightowl es una ticketera?",
-    a: "No. No vendemos entradas a nuestro nombre: ponemos la tecnología para que vos vendas con tu marca y te quedes con tu público.",
+    a: "No. Somos una plataforma white label: no vendemos entradas a nuestro nombre, ponemos la tecnología para que vos vendas con tu marca y te quedes con tu público.",
+  },
+  {
+    q: "¿Qué significa que sea white label?",
+    a: "Que la tecnología es nuestra pero la marca es tuya. Tu público ve tu logo, tus colores y tu dominio en la web, el pago, la entrada y los emails. Nightowl no aparece en ningún lado.",
   },
   {
     q: "¿Puedo vender desde mi propia web?",
