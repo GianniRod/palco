@@ -147,23 +147,60 @@ async function logoToDataUrl(file: File) {
 // Ancho mínimo para que la portada se vea nítida en una computadora.
 const COVER_GOOD_WIDTH = 1600;
 
+/**
+ * Recorta los bordes lisos y oscuros (las franjas negras de una captura de Instagram o de un video).
+ * Una fila o columna es borde si casi ningún píxel tiene luz. Nunca deja menos del 30% de la imagen.
+ */
+function trimDarkBorders(bitmap: ImageBitmap) {
+  const { width: w, height: h } = bitmap;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  ctx.drawImage(bitmap, 0, 0);
+  const data = ctx.getImageData(0, 0, w, h).data;
+  const lit = (x: number, y: number) => {
+    const i = (y * w + x) * 4;
+    return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2] > 28;
+  };
+  const step = Math.max(1, Math.floor(Math.max(w, h) / 600));
+  const rowDark = (y: number) => {
+    let n = 0, total = 0;
+    for (let x = 0; x < w; x += step, total++) if (lit(x, y)) n++;
+    return n / total < 0.02;
+  };
+  const colDark = (x: number) => {
+    let n = 0, total = 0;
+    for (let y = top; y < bottom; y += step, total++) if (lit(x, y)) n++;
+    return n / total < 0.02;
+  };
+  let top = 0, bottom = h;
+  while (top < h * 0.35 && rowDark(top)) top++;
+  while (bottom > h * 0.65 && rowDark(bottom - 1)) bottom--;
+  let left = 0, right = w;
+  while (left < w * 0.35 && colDark(left)) left++;
+  while (right > w * 0.65 && colDark(right - 1)) right--;
+  return { sx: left, sy: top, sw: right - left, sh: bottom - top };
+}
+
 // La portada ocupa todo el ancho: se guarda lo más grande y nítida posible (WebP si el navegador
 // lo soporta, que pesa menos con la misma calidad) y se achica solo si no entra en el límite del servidor.
 async function coverToDataUrl(file: File) {
   const bitmap = await createImageBitmap(file);
   try {
+    const { sx, sy, sw, sh } = trimDarkBorders(bitmap);
     const steps: [number, number][] = [[2400, 0.9], [2000, 0.86], [1600, 0.82], [1280, 0.78]];
     for (const [maxWidth, quality] of steps) {
-      const scale = Math.min(1, maxWidth / bitmap.width);
+      const scale = Math.min(1, maxWidth / sw);
       const canvas = document.createElement("canvas");
-      canvas.width = Math.round(bitmap.width * scale);
-      canvas.height = Math.round(bitmap.height * scale);
+      canvas.width = Math.round(sw * scale);
+      canvas.height = Math.round(sh * scale);
       const ctx = canvas.getContext("2d")!;
       ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
       const webp = canvas.toDataURL("image/webp", quality);
       const dataUrl = webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", quality);
-      if (dataUrl.length <= 2_100_000) return { dataUrl, width: bitmap.width };
+      if (dataUrl.length <= 2_100_000) return { dataUrl, width: sw, trimmed: sw < bitmap.width || sh < bitmap.height };
     }
     throw new Error("Imagen demasiado pesada");
   } finally {
@@ -290,13 +327,16 @@ export function SiteEditor({
     setCoverError("");
     setCoverNotice("");
     try {
-      const { dataUrl, width } = await coverToDataUrl(file);
+      const { dataUrl, width, trimmed } = await coverToDataUrl(file);
       set("cover", dataUrl);
+      const notes = [];
+      if (trimmed) notes.push("Le sacamos los bordes negros a la imagen.");
       if (width < COVER_GOOD_WIDTH) {
-        setCoverNotice(
-          `Tu imagen mide ${width} px de ancho: en pantallas grandes se va a ver borrosa. Para que se vea bien, subí una de al menos 1920 px.`,
+        notes.push(
+          `La foto mide ${width} px de ancho: en pantallas grandes se va a ver borrosa. Para que se vea bien, subí la foto original (no una captura) de al menos 1920 px.`,
         );
       }
+      setCoverNotice(notes.join(" "));
     } catch {
       setCoverError("No pudimos usar esa imagen. Probá con un JPG más liviano.");
     }

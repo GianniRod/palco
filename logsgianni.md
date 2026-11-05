@@ -9,6 +9,10 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Portada: recorte automático de bordes negros** al subirla (capturas de Instagram o de video con franjas).
+  Una fila o columna es borde si casi no tiene píxeles con luz; nunca recorta más del 35% por lado.
+  El aviso ahora explica que se recortó y pide la foto original (no una captura) de al menos 1920 px.
+  Archivo: `src/app/dashboard/panel/mi-pagina/_editor.tsx`.
 - **Portada de la web del cliente con más calidad.** La de Moscu se veía mal porque la imagen subida mide 725×311 px.
   - El editor ahora la guarda hasta 2400 px de ancho, en WebP (o JPG) con calidad 0.9, y solo la achica si no entra.
   - Avisa cuando la imagen mide menos de 1600 px de ancho y pide una de al menos 1920 px.
