@@ -61,7 +61,7 @@ export function CreateOrganizationForm() {
           hint="Va a ser la dirección de su página: slug.palcotickets.com. No se puede cambiar después."
         />
         <Field
-          label="Comisión de Palco (%)"
+          label="Comisión de Nightowl (%)"
           name="commissionPercent"
           inputMode="decimal"
           required

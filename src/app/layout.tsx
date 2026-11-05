@@ -12,12 +12,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   alternates: { canonical: "/" },
   title: {
-    default: "Palco — Venta de entradas con tu marca",
-    template: "%s · Palco",
+    default: "Nightowl — Venta de entradas con tu marca",
+    template: "%s · Nightowl",
   },
   description: site.description,
   openGraph: {
-    title: "Palco — Venta de entradas con tu marca",
+    title: "Nightowl — Venta de entradas con tu marca",
     description: site.description,
     url: site.url,
     siteName: site.name,

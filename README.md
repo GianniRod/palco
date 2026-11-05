@@ -1,8 +1,8 @@
-# Palco
+# Nightowl
 
 https://www.palcotickets.com
 
-Sitio público de Palco: venta de entradas y control de acceso con marca propia para teatros, salas y productoras.
+Sitio público de Nightowl: venta de entradas y control de acceso con marca propia para teatros, salas y productoras.
 
 ## Desarrollo
 
@@ -14,4 +14,4 @@ npm run build
 
 - Next.js 16 (App Router) + Tailwind CSS 4
 - Textos y email de contacto: `src/lib/site.ts`
-- Logos originales: `assets/` (el sitio usa `public/logo-palco.png`)
+- Logos originales: `assets/` (el sitio usa `public/logo-nightowl.png`)

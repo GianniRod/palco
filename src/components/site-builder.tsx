@@ -379,7 +379,7 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
           <span className="h-2.5 w-2.5 rounded-full bg-tinta/15" />
           <span className="h-2.5 w-2.5 rounded-full bg-tinta/15" />
           <span className="h-2.5 w-2.5 rounded-full bg-tinta/15" />
-          <span className="ml-3 text-xs font-medium text-tinta/60">Palco · Editor de tu web</span>
+          <span className="ml-3 text-xs font-medium text-tinta/60">Nightowl · Editor de tu web</span>
           <button
             type="button"
             onClick={() => {

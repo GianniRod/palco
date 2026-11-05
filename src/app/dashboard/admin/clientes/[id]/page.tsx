@@ -122,7 +122,7 @@ async function Content({ params }: { params: Props["params"] }) {
             <EditOrganizationForm organization={organization} />
           </Card>
         </div>
-        <Card title="Comisión de Palco">
+        <Card title="Comisión de Nightowl">
           <CommissionForm id={organization.id} percent={Number(organization.commissionPercent)} />
         </Card>
       </div>

@@ -1,4 +1,4 @@
-# Dashboard de Palco: cómo tiene que ser
+# Dashboard de Nightowl: cómo tiene que ser
 
 Documento para quien construya el panel. Resume lo que definimos para el producto y propone
 cómo encararlo técnicamente. Lo marcado con **[A definir]** es una decisión que
@@ -13,7 +13,7 @@ Según quién sea, ve uno de dos paneles:
 
 | Rol | Quién es | Qué ve |
 |---|---|---|
-| **Admin de Palco** | Nosotros, el equipo de Palco | Panel de administración: clientes, usuarios, todo el sistema |
+| **Admin de Nightowl** | Nosotros, el equipo de Nightowl | Panel de administración: clientes, usuarios, todo el sistema |
 | **Cliente** | Un teatro, sala, boliche, productora | Su panel: su página, sus eventos, sus ventas. **Nunca** ve datos de otro cliente |
 
 - **No hay registro público.** Las cuentas de clientes las creamos nosotros desde el panel admin.
@@ -34,7 +34,7 @@ Lo mínimo para operar:
    - Resetear contraseña, desactivar usuario.
 3. **Ver como el cliente** (soporte): entrar al panel de un cliente para ayudarlo.
    Queda registrado en la auditoría quién entró y cuándo.
-4. **Comisión de Palco por cliente** (el % que cobramos en cada venta, ver sección 6).
+4. **Comisión de Nightowl por cliente** (el % que cobramos en cada venta, ver sección 6).
 5. **Auditoría**: registro de acciones importantes (creación de clientes, cambios de precios, reembolsos, ingresos como otro usuario).
 
 Los admins deberían tener **doble factor (2FA)** porque pueden ver todo. **[A definir]**
@@ -64,10 +64,10 @@ Es exactamente lo que muestra la animación de la sección "Editor" de la landin
 del cliente**, por ejemplo `moscubuenosaires.com/tickets`. Formas de lograrlo (ver
 `docs/negocio.md`, sección 3.1):
 - **Ruta propia** (`suweb.com/tickets`): el hosting del cliente hace de proxy de `/tickets/*`
-  hacia Palco. Palco tiene que poder servir el sitio del cliente bajo un **prefijo de ruta
+  hacia Nightowl. Nightowl tiene que poder servir el sitio del cliente bajo un **prefijo de ruta
   configurable** (`basePath` por cliente) y con URLs relativas a ese prefijo.
 - **Widget embebido**: un `<script>` que inserta la compra en un iframe dentro de su web.
-- **Subdominio propio** (`tickets.suweb.com`): CNAME hacia nosotros; Palco resuelve el cliente por el `Host`.
+- **Subdominio propio** (`tickets.suweb.com`): CNAME hacia nosotros; Nightowl resuelve el cliente por el `Host`.
 - **Por defecto / mientras tanto**: `slug.palcotickets.com`.
 
 En el panel conviene una pantalla **"Conectar a mi web"** que muestre el estado de cada
@@ -92,7 +92,7 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
 
 ### 3.4 Medios de pago
 - Botón **"Conectar Mercado Pago"**: el cliente vincula **su propia** cuenta (OAuth de Mercado Pago).
-- Con eso su público paga con **tarjeta de crédito, débito o Mercado Pago**, y el dinero entra a la cuenta del cliente. Palco cobra su comisión automáticamente (ver sección 6).
+- Con eso su público paga con **tarjeta de crédito, débito o Mercado Pago**, y el dinero entra a la cuenta del cliente. Nightowl cobra su comisión automáticamente (ver sección 6).
 
 ### 3.5 Ventas
 - Órdenes y entradas vendidas, ocupación por función, recaudación.
@@ -186,8 +186,8 @@ Cada etapa se puede mostrar a un cliente real antes de pasar a la siguiente.
 
 - **Mercado Pago en modo Marketplace (split de pagos)**: cada cliente conecta su cuenta;
   el comprador paga con tarjeta de crédito, débito o Mercado Pago; el dinero va al cliente
-  y la comisión de Palco se descuenta sola (`marketplace_fee`).
-- Palco **no toca la plata** de las entradas ni guarda datos de tarjetas.
+  y la comisión de Nightowl se descuenta sola (`marketplace_fee`).
+- Nightowl **no toca la plata** de las entradas ni guarda datos de tarjetas.
 - Más adelante se pueden sumar otros procesadores (Payway, Mobbex) detrás de la misma interfaz.
 
 ---

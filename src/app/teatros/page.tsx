@@ -15,7 +15,7 @@ import { contactHref, demoHref, site } from "@/lib/site";
 
 // Versión de la landing para teatros y salas (diseño original, en bordó).
 export const metadata: Metadata = {
-  title: "Palco para teatros y salas",
+  title: "Nightowl para teatros y salas",
   description:
     "Venta de entradas con tu marca para teatros y salas: butacas numeradas, funciones, cobro con tarjeta o Mercado Pago y control de acceso con QR.",
   alternates: { canonical: "/teatros" },
@@ -44,12 +44,12 @@ const cinta = [
 
 const faqs = [
   {
-    q: "¿Palco es una ticketera?",
+    q: "¿Nightowl es una ticketera?",
     a: "No. No vendemos entradas a nuestro nombre: ponemos la tecnología para que vos vendas con tu marca y te quedes con la relación con tu público.",
   },
   {
     q: "¿Puedo vender desde mi propia web?",
-    a: "Sí, esa es la idea. Conectamos Palco a tu sitio y vendés en tusitio.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en palcotickets.com.",
+    a: "Sí, esa es la idea. Conectamos Nightowl a tu sitio y vendés en tusitio.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en palcotickets.com.",
   },
   {
     q: "¿Quién cobra?",
@@ -74,7 +74,7 @@ export default function TeatrosPage() {
           <div className="pointer-events-none absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-palco-600/30 blur-3xl" />
 
           <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 pt-8">
-            <a href="#" aria-label="Palco, inicio">
+            <a href="#" aria-label="Nightowl, inicio">
               <Logo className="h-7 sm:h-8" />
             </a>
             <nav className="hidden items-center gap-8 text-sm text-white/60 md:flex">
@@ -107,7 +107,7 @@ export default function TeatrosPage() {
               style={{ animationDelay: "0.15s" }}
             >
               <p className="max-w-xl text-lg leading-relaxed text-white/65">
-                Palco es la plataforma de venta de entradas con marca propia
+                Nightowl es la plataforma de venta de entradas con marca propia
                 para teatros, salas y productoras. Cobrás con tarjeta o Mercado
                 Pago, y el dinero va directo a tu cuenta.
               </p>
@@ -223,7 +223,7 @@ export default function TeatrosPage() {
                   Demo personalizada
                 </p>
                 <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-                  Veamos Palco con el plano de <span className="text-dorado">tu sala.</span>
+                  Veamos Nightowl con el plano de <span className="text-dorado">tu sala.</span>
                 </p>
                 <p className="mt-5 max-w-md text-white/65">
                   Escribinos, contanos cómo es tu sala y te armamos una demo con

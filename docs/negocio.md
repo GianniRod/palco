@@ -1,4 +1,4 @@
-# Cómo funciona el negocio de Palco
+# Cómo funciona el negocio de Nightowl
 
 Documento interno para socios y equipo. Explica qué vendemos, a quién, cómo ganamos
 plata y cómo operamos. Lo marcado **[A definir]** son decisiones pendientes: no son
@@ -6,15 +6,15 @@ datos, son propuestas para charlar.
 
 ---
 
-## 1. Qué es Palco
+## 1. Qué es Nightowl
 
-Palco es una **plataforma de venta de entradas con marca propia** para teatros, salas,
+Nightowl es una **plataforma de venta de entradas con marca propia** para teatros, salas,
 boliches y productoras.
 
 El cliente vende **con su nombre, su logo y sus colores, dentro de su propia web**.
 Por ejemplo, un boliche como Moscú vende en **`moscubuenosaires.com/tickets`**: el público
 nunca sale de la web del boliche, pero la venta, el mapa, el cobro y las entradas los
-resuelve Palco por detrás. El público elige su butaca o su sector, paga y recibe una
+resuelve Nightowl por detrás. El público elige su butaca o su sector, paga y recibe una
 entrada con QR. En la puerta, su equipo valida el QR con el
 celular, aunque no haya internet.
 
@@ -35,7 +35,7 @@ Volumen esperado al inicio: **bajo/medio por cliente** (de decenas a miles de en
 Por eso no hace falta, por ahora, infraestructura para recitales masivos (fila virtual, etc.).
 
 ### Dónde nos paramos
-| | Ticketeras de consumo (Passline y similares) | **Palco** | Infraestructura para ticketeras grandes (Crowder y similares) |
+| | Ticketeras de consumo (Passline y similares) | **Nightowl** | Infraestructura para ticketeras grandes (Crowder y similares) |
 |---|---|---|---|
 | Marca que ve el público | La de la ticketera | **La del cliente** | La del cliente |
 | Para quién | Cualquier organizador | **Teatros, salas, boliches, productoras** | Ticketeras y eventos masivos |
@@ -58,14 +58,14 @@ del cliente y sin necesitar programadores.
 6. **Control de acceso**: app de puerta que valida cada QR una sola vez y funciona sin internet.
 7. **Panel de ventas**: ocupación, recaudación, compradores, reembolsos, exportar.
 
-### 3.1 Cómo se integra Palco a la web del cliente
+### 3.1 Cómo se integra Nightowl a la web del cliente
 
-El objetivo es que, después de la demo, el cliente **conecte Palco a su web** y venda desde
+El objetivo es que, después de la demo, el cliente **conecte Nightowl a su web** y venda desde
 su propio dominio. Hay tres formas, de la más integrada a la más simple:
 
 | Forma | Cómo se ve | Qué tiene que hacer el cliente | Para quién |
 |---|---|---|---|
-| **Ruta propia** | `moscubuenosaires.com/tickets` | Su web o su hosting redirige internamente `/tickets` a Palco (Cloudflare, Vercel, nginx, etc.). Lo configuramos con su programador o lo hacemos nosotros si nos dan acceso. | Clientes con web propia y alguien técnico |
+| **Ruta propia** | `moscubuenosaires.com/tickets` | Su web o su hosting redirige internamente `/tickets` a Nightowl (Cloudflare, Vercel, nginx, etc.). Lo configuramos con su programador o lo hacemos nosotros si nos dan acceso. | Clientes con web propia y alguien técnico |
 | **Widget embebido** | Botón o sección de compra dentro de cualquier página de su web | Pegar un código corto que les damos (funciona en WordPress, Wix y similares). | Clientes con web armada en constructores |
 | **Subdominio propio** | `tickets.moscubuenosaires.com` | Agregar **un** registro DNS (CNAME) que les pasamos. | Clientes que quieren algo rápido y prolijo |
 
@@ -87,13 +87,13 @@ Mercado Pago (Marketplace / split de pagos)
         │
         ├──► Cuenta de Mercado Pago del CLIENTE  → precio de la entrada (menos comisión de MP)
         │
-        └──► Cuenta de Mercado Pago de PALCO      → comisión de Palco (marketplace_fee)
+        └──► Cuenta de Mercado Pago de NIGHTOWL      → comisión de Nightowl (marketplace_fee)
 ```
 
-- **Palco nunca tiene en su poder la plata de las entradas.** Cada cliente conecta su
+- **Nightowl nunca tiene en su poder la plata de las entradas.** Cada cliente conecta su
   propia cuenta de Mercado Pago y cobra directo. Esto nos ahorra riesgo, regulaciones de
   manejo de fondos de terceros y conflictos por pagos demorados.
-- La **comisión de Palco** se separa sola en cada venta.
+- La **comisión de Nightowl** se separa sola en cada venta.
 - La **comisión de Mercado Pago** la cobra Mercado Pago sobre cada pago. Quién la absorbe
   (cliente o comprador) se define por cliente. **[A definir]**
 - Reembolsos y contracargos se gestionan desde Mercado Pago, sobre la cuenta del cliente.
@@ -107,7 +107,7 @@ Cobramos un **porcentaje o monto fijo por entrada** a través del split de Merca
 
 Dos formas de presentarlo al cliente **[A definir]**:
 - **A cargo del comprador**: se suma como "cargo de servicio" al precio de la entrada. Para
-  el cliente, Palco es "gratis". Es lo habitual en el mercado.
+  el cliente, Nightowl es "gratis". Es lo habitual en el mercado.
 - **A cargo del cliente**: se descuenta de lo que cobra. Precio final más limpio para el público.
 
 Se puede ofrecer cualquiera de las dos según el cliente.
@@ -119,20 +119,20 @@ Se puede ofrecer cualquiera de las dos según el cliente.
 - **Eventos gratuitos**: entradas sin cargo con un costo fijo bajo o gratis, para captar clientes.
 
 ### Ejemplo para entender la mecánica (números inventados, solo ilustrativos)
-> Entrada de $20.000 con un cargo de servicio de Palco del X% a cargo del comprador:
+> Entrada de $20.000 con un cargo de servicio de Nightowl del X% a cargo del comprador:
 > el comprador paga $20.000 + cargo; el teatro recibe $20.000 menos la comisión de Mercado Pago;
-> Palco recibe el cargo de servicio. Los porcentajes reales se definen al cerrar precios.
+> Nightowl recibe el cargo de servicio. Los porcentajes reales se definen al cerrar precios.
 
 ---
 
 ## 6. Cómo trabajamos con un cliente nuevo
 
 1. **Contacto**: el teatro completa "Pedir demo" en palcotickets.com → llega a `contacto@palcotickets.com`.
-2. **Demo**: le mostramos Palco con el plano de su sala y su marca.
+2. **Demo**: le mostramos Nightowl con el plano de su sala y su marca.
 3. **Alta**: desde nuestro panel de administrador creamos su organización y su usuario.
 4. **Configuración**: el cliente (o nosotros con él) elige plantilla, sube logo y colores,
    carga el mapa de su sala y conecta su Mercado Pago.
-5. **Integración a su web**: conectamos Palco a su sitio (`suweb.com/tickets`, widget o
+5. **Integración a su web**: conectamos Nightowl a su sitio (`suweb.com/tickets`, widget o
    subdominio, ver 3.1). Hasta que esté listo, vende desde `suweb.palcotickets.com`.
 6. **Primer evento**: crea la función, precios y lotes, y publica.
 7. **Venta**: el público compra desde la web del cliente y recibe el QR.
@@ -149,7 +149,7 @@ Se puede ofrecer cualquiera de las dos según el cliente.
 | Base de datos (Neon / Postgres) | Eventos, butacas, órdenes, entradas | Bajo al principio |
 | Emails (Resend) | Entradas, avisos, formulario | Gratis hasta 3.000 mails/mes, después pago |
 | Dominio y DNS (Cloudflare) | palcotickets.com | Bajo, anual |
-| Comisiones de Mercado Pago | Por cada pago | Las paga cliente o comprador, no Palco **[A definir]** |
+| Comisiones de Mercado Pago | Por cada pago | Las paga cliente o comprador, no Nightowl **[A definir]** |
 | Personas | Desarrollo, ventas, soporte | El costo más grande |
 
 No tenemos costos de procesamiento de pagos propios ni de guardar datos de tarjetas:
@@ -167,7 +167,7 @@ eso lo hace Mercado Pago.
 | **Un cliente ve datos de otro** | Aislamiento estricto por organización en todo el sistema. |
 | **Dependencia de Mercado Pago** | Arquitectura preparada para sumar otro procesador (Payway, Mobbex). |
 | **Picos de demanda (evento muy pedido)** | Al inicio no esperamos volúmenes masivos. Si aparece, se suma una fila virtual tercerizada (Queue-it), no se construye. |
-| **Facturación e impuestos** | Palco factura su comisión; cada cliente factura sus entradas. Validar con contador. **[A definir]** |
+| **Facturación e impuestos** | Nightowl factura su comisión; cada cliente factura sus entradas. Validar con contador. **[A definir]** |
 
 ---
 
@@ -190,7 +190,7 @@ eso lo hace Mercado Pago.
 
 ## 10. Decisiones pendientes (resumen)
 
-- [ ] Comisión de Palco: porcentaje, monto fijo o mixto; ¿a cargo del comprador o del cliente?
+- [ ] Comisión de Nightowl: porcentaje, monto fijo o mixto; ¿a cargo del comprador o del cliente?
 - [ ] Quién absorbe la comisión de Mercado Pago.
 - [ ] ¿Abono mensual para clientes grandes?
 - [ ] Política para eventos gratuitos.

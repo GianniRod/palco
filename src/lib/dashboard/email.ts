@@ -2,7 +2,7 @@ import "server-only";
 import { DASHBOARD_URL } from "./config";
 
 // Remitente de un dominio verificado en Resend, igual que el formulario de demo.
-const DEFAULT_FROM = "Palco <no-responder@palcotickets.com>";
+const DEFAULT_FROM = "Nightowl <no-responder@palcotickets.com>";
 
 export async function sendPasswordResetEmail(email: string, token: string) {
   const link = `${DASHBOARD_URL}/restablecer?token=${encodeURIComponent(token)}`;
@@ -23,7 +23,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     body: JSON.stringify({
       from: process.env.DASHBOARD_FROM || DEFAULT_FROM,
       to: [email],
-      subject: "Restablecer tu contraseña de Palco",
+      subject: "Restablecer tu contraseña de Nightowl",
       text: `Para elegir una contraseña nueva entrá a este link (vence en una hora):\n\n${link}\n\nSi no lo pediste, ignorá este mail.`,
       html: `
         <div style="font-family:Arial,sans-serif;color:#1f030a;max-width:560px">

@@ -4,9 +4,9 @@ import type { CSSProperties } from "react";
 export function Logo({ className = "", color = "white" }: { className?: string; color?: string }) {
   const style: CSSProperties = {
     backgroundColor: color,
-    WebkitMask: "url(/logo-palco.png) center / contain no-repeat",
-    mask: "url(/logo-palco.png) center / contain no-repeat",
-    aspectRatio: "906 / 264",
+    WebkitMask: "url(/logo-nightowl.png) center / contain no-repeat",
+    mask: "url(/logo-nightowl.png) center / contain no-repeat",
+    aspectRatio: "1200 / 255",
   };
-  return <span role="img" aria-label="Palco" className={`inline-block ${className}`} style={style} />;
+  return <span role="img" aria-label="Nightowl" className={`inline-block ${className}`} style={style} />;
 }

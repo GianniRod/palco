@@ -92,7 +92,7 @@ export function DemoDialog() {
             Pedí tu demo
           </h2>
           <p className="mt-1 text-sm text-tinta/60">
-            Contanos sobre tu espacio y te mostramos Palco con tu plano y tu marca.
+            Contanos sobre tu espacio y te mostramos Nightowl con tu plano y tu marca.
           </p>
         </div>
         <button

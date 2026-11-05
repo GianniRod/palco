@@ -5,10 +5,10 @@ import { parseDemoRequest, type DemoRequest } from "@/lib/demo-request";
 //   RESEND_API_KEY  (obligatoria)
 //   DEMO_TO         destino, por defecto contacto@palcotickets.com
 //   DEMO_FROM       remitente de un dominio verificado en Resend,
-//                   por defecto "Palco Web <web@palcotickets.com>"
+//                   por defecto "Nightowl Web <web@palcotickets.com>"
 
 const DEFAULT_TO = "contacto@palcotickets.com";
-const DEFAULT_FROM = "Palco Web <web@palcotickets.com>";
+const DEFAULT_FROM = "Nightowl Web <web@palcotickets.com>";
 
 // Límite simple por IP. En serverless vive por instancia: frena abusos básicos,
 // no reemplaza un rate limit distribuido.

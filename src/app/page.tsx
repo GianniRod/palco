@@ -40,12 +40,12 @@ const nightFeatures = [
 
 const faqs = [
   {
-    q: "¿Palco es una ticketera?",
+    q: "¿Nightowl es una ticketera?",
     a: "No. No vendemos entradas a nuestro nombre: ponemos la tecnología para que vos vendas con tu marca y te quedes con tu público.",
   },
   {
     q: "¿Puedo vender desde mi propia web?",
-    a: "Sí, esa es la idea. Conectamos Palco a tu sitio y vendés en tuboliche.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en palcotickets.com.",
+    a: "Sí, esa es la idea. Conectamos Nightowl a tu sitio y vendés en tuboliche.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en palcotickets.com.",
   },
   {
     q: "¿Quién cobra?",
@@ -68,7 +68,7 @@ export default function Home() {
         {/* ---------------- Hero ---------------- */}
         <section className="relative overflow-hidden bg-white text-tinta">
           <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 pt-8">
-            <a href="#" aria-label="Palco, inicio">
+            <a href="#" aria-label="Nightowl, inicio">
               <Logo className="h-7 sm:h-8" color="var(--color-tinta)" />
             </a>
             <nav className="hidden items-center gap-8 text-sm text-tinta/55 md:flex">
@@ -203,7 +203,7 @@ export default function Home() {
               <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-900 p-8 text-white sm:p-12">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Demo personalizada</p>
                 <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-                  Veamos Palco con tu próxima fiesta.
+                  Veamos Nightowl con tu próxima fiesta.
                 </p>
                 <p className="mt-5 max-w-md text-white/55">
                   Contanos cómo vendés hoy y te armamos una demo con tu marca, tus lotes y tu web.
