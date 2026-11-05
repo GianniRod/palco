@@ -12,6 +12,7 @@ import { DemoDialog } from "@/components/demo-dialog";
 import { AudienceGate } from "@/components/audience-gate";
 import { SegmentSwitch } from "@/components/segment-switch";
 import { RefNote } from "@/components/ref-note";
+import { CustomDevNote } from "@/components/custom-dev-note";
 import { OwlPeek } from "@/components/owl-peek";
 import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
@@ -142,11 +143,13 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Editor" title="Tu web de entradas, armada por vos.">
               Elegí uno de los tres diseños, poné tu logo y tus colores, armá la pista, el VIP y las
-              mesas, cargá los precios y publicá. Queda en tuboliche.com/tickets.
+              mesas, cargá los precios y publicá. Queda en tuboliche.com/tickets. Y si querés algo a medida, lo
+              desarrollamos nosotros.
             </SectionTitle>
             <Reveal className="mt-16">
               <SiteBuilder />
               <RefNote />
+              <CustomDevNote />
             </Reveal>
           </div>
         </section>

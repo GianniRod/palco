@@ -291,7 +291,11 @@ const slides: Slide[] = [
             <span className="block h-full origin-left bg-black" style={{ animation: "crecer 1.8s ease-out 0.4s both" }} />
           </span>
           {[
-            { Icon: Palette, t: "Arma su web", x: "3 diseños, su logo y colores, el mapa con pista, VIP y mesas." },
+            {
+              Icon: Palette,
+              t: "Arma su web",
+              x: "3 diseños con su logo y colores, o una web a medida hecha por nuestro equipo (costo adicional).",
+            },
             { Icon: Ticket, t: "Vende", x: "Lotes de preventa que se abren solos y un link por cada RRPP." },
             { Icon: Wallet, t: "Cobra", x: "Tarjeta de crédito, débito o Mercado Pago, directo a su cuenta." },
             { Icon: QrCode, t: "Valida en la puerta", x: "QR de un solo uso. Funciona aunque se caiga la señal." },
@@ -420,11 +424,12 @@ const slides: Slide[] = [
             </In>
           </div>
         </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             "Nunca tocamos la plata de las entradas: Mercado Pago la reparte en el momento.",
             "Sin costo fijo para el boliche: el cargo lo paga el público, o se reparte.",
             "Ingresos que crecen con cada boliche y cada noche, sin vender más horas de trabajo.",
+            "Ingreso extra: desarrollo de webs a medida por nuestro equipo, con costo adicional.",
           ].map((x, i) => (
             <In key={x} d={1 + i * 0.12}>
               <p className="border-t border-black/15 pt-4 leading-relaxed text-black/60">{x}</p>

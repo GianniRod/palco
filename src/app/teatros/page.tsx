@@ -12,6 +12,7 @@ import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { SegmentSwitch } from "@/components/segment-switch";
 import { RefNote } from "@/components/ref-note";
+import { CustomDevNote } from "@/components/custom-dev-note";
 import { OwlPeek } from "@/components/owl-peek";
 import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
@@ -165,6 +166,7 @@ export default function TeatrosPage() {
             <Reveal className="mt-16">
               <SiteBuilder scenario="teatro" />
               <RefNote />
+              <CustomDevNote />
             </Reveal>
           </div>
         </section>
