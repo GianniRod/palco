@@ -570,7 +570,7 @@ const slides: Slide[] = [
         </div>
         <In d={1.1}>
           <p className="mt-14 flex items-center gap-2 text-white/45">
-            <Globe className="h-4 w-4" /> Se puede ver la demo animada del producto en {site.url.replace("https://", "")}
+            <Globe className="h-4 w-4 shrink-0" /> En {site.url.replace("https://", "")} hay una demo animada del producto, de referencia: el producto final puede variar.
           </p>
         </In>
       </div>

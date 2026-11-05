@@ -11,6 +11,7 @@ import { Reveal } from "@/components/reveal";
 import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { SegmentSwitch } from "@/components/segment-switch";
+import { RefNote } from "@/components/ref-note";
 import { OwlPeek } from "@/components/owl-peek";
 import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
@@ -133,6 +134,7 @@ export default function TeatrosPage() {
             <div className="subir mt-14" style={{ animationDelay: "0.3s" }}>
               <SeatMap />
             </div>
+            <RefNote />
           </div>
         </section>
 
@@ -162,6 +164,7 @@ export default function TeatrosPage() {
             </SectionTitle>
             <Reveal className="mt-16">
               <SiteBuilder scenario="teatro" />
+              <RefNote />
             </Reveal>
           </div>
         </section>
@@ -189,6 +192,7 @@ export default function TeatrosPage() {
             </SectionTitle>
             <Reveal className="mt-16">
               <CheckoutFlow variant="teatro" />
+              <RefNote />
             </Reveal>
           </div>
         </section>
@@ -202,6 +206,7 @@ export default function TeatrosPage() {
             </SectionTitle>
             <Reveal className="mt-16">
               <DoorScanner variant="teatro" />
+              <RefNote />
             </Reveal>
           </div>
         </section>

@@ -11,6 +11,7 @@ import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { AudienceGate } from "@/components/audience-gate";
 import { SegmentSwitch } from "@/components/segment-switch";
+import { RefNote } from "@/components/ref-note";
 import { OwlPeek } from "@/components/owl-peek";
 import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
@@ -132,6 +133,7 @@ export default function Home() {
             <div className="subir mt-14 rounded-2xl bg-palco-900" style={{ animationDelay: "0.3s" }}>
               <LotsPanel />
             </div>
+            <RefNote />
           </div>
         </section>
 
@@ -144,6 +146,7 @@ export default function Home() {
             </SectionTitle>
             <Reveal className="mt-16">
               <SiteBuilder />
+              <RefNote />
             </Reveal>
           </div>
         </section>
@@ -177,6 +180,7 @@ export default function Home() {
             </SectionTitle>
             <Reveal className="mt-16">
               <CheckoutFlow />
+              <RefNote />
             </Reveal>
           </div>
         </section>
@@ -203,6 +207,7 @@ export default function Home() {
             </SectionTitle>
             <Reveal className="mt-16">
               <DoorScanner />
+              <RefNote />
             </Reveal>
           </div>
         </section>
