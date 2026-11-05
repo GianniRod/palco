@@ -51,7 +51,9 @@ export default function AdminLayout({ children }: LayoutProps<"/dashboard/admin"
       <Suspense fallback={<Loading />}>
         <Guard>{children}</Guard>
       </Suspense>
-      <ScanFab />
+      <Suspense>
+        <ScanFab />
+      </Suspense>
     </Shell>
   );
 }
