@@ -9,6 +9,8 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Puerta (prueba): la pantalla de la compu se actualiza sola** cada 2 s mientras está a la vista, así al escanear
+  desde el celular el QR pasa a "Usada" sin recargar. Archivo: `src/app/dashboard/admin/puerta/_auto-refresh.tsx`.
 - **Sistema de prueba de QR (escaneo con control de duplicados)**: panel admin → "Puerta (prueba)".
   - Compu: crear entradas de prueba (con nombre opcional), ver sus QR reales, marcarlas sin usar o borrarlas.
   - Celular (solo celu): botón grande "Escanear QR" (también flotante en todo el admin). Abre la cámara (`qr-scanner`),

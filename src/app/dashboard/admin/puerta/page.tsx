@@ -10,6 +10,7 @@ import { SubmitButton } from "../../_components/ui";
 import { deleteTestTicketsAction, resetTestTicketsAction } from "./actions";
 import { CreateTestTicketsForm } from "./_forms";
 import { Scanner } from "./_scanner";
+import { AutoRefresh } from "./_auto-refresh";
 
 export const metadata: Metadata = { title: "Puerta (prueba)" };
 
@@ -69,6 +70,7 @@ async function Content() {
 
       {/* ---------- Computadora: crear entradas y mostrar los QR ---------- */}
       <div className="hidden space-y-6 md:block">
+        <AutoRefresh />
         <Card title="Cómo probar">
           <ol className="list-decimal space-y-1.5 pl-5 text-sm text-palco-700">
             <li>Creá algunas entradas de prueba acá abajo: cada una tiene un QR real y firmado.</li>
