@@ -65,7 +65,7 @@ export function CreateOrganizationForm() {
           name="commissionPercent"
           inputMode="decimal"
           required
-          defaultValue={state.values?.commissionPercent ?? "5"}
+          defaultValue={state.values?.commissionPercent ?? "8"}
         />
       </div>
       <ContactFields submitted={state.values} />
