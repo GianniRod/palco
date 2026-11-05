@@ -185,8 +185,9 @@ eso lo hace Mercado Pago.
 3. Editor de mapas y eventos.
 4. Cobro con Mercado Pago Marketplace.
 5. Entradas con QR y app de puerta.
-6. Panel admin: **Base de datos** (ver y exportar los datos del sistema) y **Estadísticas**
-   (ventas, comisión cobrada, clientes activos). Ya figuran en el menú como "Pronto".
+6. **Base de datos** y **Estadísticas** en los dos paneles (ya figuran en el menú como "Pronto"):
+   el admin ve todo el sistema (ventas, comisión cobrada, clientes activos) y el cliente solo lo suyo
+   (su público, órdenes, ventas y ocupación).
 7. Primeros clientes piloto: 2 o 3 teatros/salas para usarlo en eventos reales y ajustar.
 
 ---

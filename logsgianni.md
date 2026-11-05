@@ -9,6 +9,8 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **"Base de datos" y "Estadísticas" también en el panel del cliente** (como "Pronto"), con solo sus datos.
+  Docs: `docs/dashboard.md` secciones 3.7 y 3.8 (Equipo pasó a 3.9) y `docs/negocio.md`. Archivo: `src/app/dashboard/panel/layout.tsx`.
 - **Panel admin: "Base de datos" y "Estadísticas" en el menú como "Pronto"** (todavía no abren nada).
   Qué va a tener cada una, en `docs/dashboard.md` (sección 2, puntos 6 y 7, y orden de trabajo punto 8)
   y en los próximos pasos de `docs/negocio.md`. Archivo: `src/app/dashboard/admin/layout.tsx`.

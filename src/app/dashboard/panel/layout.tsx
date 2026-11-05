@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { CalendarDays, CreditCard, Globe, Home, Map, QrCode, Receipt } from "lucide-react";
+import { BarChart3, CalendarDays, CreditCard, Database, Globe, Home, Map, QrCode, Receipt } from "lucide-react";
 import { requireTenant } from "@/lib/dashboard/session";
 import { stopImpersonationAction } from "../admin/actions";
 import { NavLink } from "../_components/nav-link";
@@ -14,6 +14,8 @@ const upcoming = [
   { label: "Medios de pago", icon: CreditCard },
   { label: "Ventas", icon: Receipt },
   { label: "Puerta", icon: QrCode },
+  { label: "Base de datos", icon: Database },
+  { label: "Estadísticas", icon: BarChart3 },
 ];
 
 function Nav() {

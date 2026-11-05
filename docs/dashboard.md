@@ -118,7 +118,19 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
 - Crear usuarios "portero" que solo pueden escanear QR de ese cliente.
 - La app de escaneo funciona sin internet y sincroniza después (ver la conversación sobre QR: token firmado + `checked_in_at` atómico).
 
-### 3.7 Equipo **[A definir, puede ir en una segunda etapa]**
+### 3.7 Base de datos *(Pronto, ya aparece en el menú)*
+Los datos propios del cliente, solo de su organización:
+- Su público: compradores con email, entradas compradas y eventos a los que fue.
+- Órdenes y entradas, con búsqueda y filtros (evento, fecha, estado).
+- Exportar a Excel/CSV (por ejemplo, para mandar novedades a su público).
+- Siempre filtrado por el `organization_id` de la sesión.
+
+### 3.8 Estadísticas *(Pronto, ya aparece en el menú)*
+- Entradas vendidas, recaudación y ocupación por evento y por función.
+- Evolución de ventas por día, lotes que más venden y cuánto falta para agotar.
+- Comparación entre eventos.
+
+### 3.9 Equipo **[A definir, puede ir en una segunda etapa]**
 Que el cliente sume usuarios propios con roles: dueño, editor, solo ventas, portero.
 
 ---
@@ -192,7 +204,8 @@ Un cliente **jamás** puede ver ni tocar datos de otro.
 5. **Pagos**: conectar Mercado Pago (Marketplace / split), checkout, webhooks, idempotencia.
 6. **Entradas y puerta**: QR firmado, envío por email, app de escaneo offline.
 7. **Ventas y reportes** (del cliente).
-8. **Base de datos y Estadísticas** (panel admin): ya están en el menú como "Pronto";
+8. **Base de datos y Estadísticas** (en los dos paneles: admin ve todo el sistema, cliente solo lo suyo):
+   ya están en el menú como "Pronto";
    se completan cuando haya ventas reales (después de las etapas 5 y 6).
 
 Cada etapa se puede mostrar a un cliente real antes de pasar a la siguiente.
