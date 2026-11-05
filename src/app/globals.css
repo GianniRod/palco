@@ -27,8 +27,7 @@
 
 /*
  * Tema minimalista de la landing (enfoque boliches): blanco, negro y grises.
- * Redefine los mismos tokens solo dentro de .minimal, así el dashboard
- * mantiene sus colores.
+ * Redefine los mismos tokens solo dentro de .minimal (landing, dashboard, presentación).
  */
 .minimal {
   --color-palco-50: #fafafa;

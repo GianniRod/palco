@@ -42,7 +42,7 @@ async function ImpersonationBanner() {
   const { impersonating, organization } = await requireTenant();
   if (!impersonating) return null;
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 bg-dorado px-4 py-2 text-sm text-palco-950 md:px-10">
+    <div className="flex flex-wrap items-center justify-between gap-2 bg-palco-100 px-4 py-2 text-sm text-palco-950 md:px-10">
       <p>
         Estás viendo el panel de <strong>{organization.name}</strong> como soporte. Queda registrado en la auditoría.
       </p>

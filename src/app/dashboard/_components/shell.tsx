@@ -87,7 +87,7 @@ export function AuthCard({ title, intro, children }: { title: string; intro?: st
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-palco-950 p-4">
       <Logo className="mb-8 h-8" />
-      <div className="w-full max-w-sm rounded-xl bg-papel p-6 shadow-xl">
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
         <h1 className="text-xl font-semibold text-palco-900">{title}</h1>
         {intro && <p className="mt-1 text-sm text-palco-600">{intro}</p>}
         <div className="mt-5">{children}</div>
