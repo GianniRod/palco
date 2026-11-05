@@ -209,15 +209,73 @@ export async function getPublicSite(db, slug) {
   return { content: { cover: "", ...site.content }, events: await upcomingEvents(db, site.organizationId) };
 }
 
+// El precio que paga hoy el público: el del primer lote vigente o, si no hay, el del sector.
+const CURRENT_PRICE = `coalesce(
+  (select l.price from price_lots l
+   where l.sector_id = sectors.id
+     and (l.starts_at is null or l.starts_at <= now())
+     and (l.ends_at is null or l.ends_at > now())
+   order by l.position limit 1),
+  sectors.price
+)`;
+
+const imageUrl = (event) => (event.hasImage ? `/api/event-images/${event.id}?v=${new Date(event.updatedAt).getTime()}` : null);
+
 async function upcomingEvents(db, organizationId) {
   const { rows } = await db.query(
-    `select events.id, events.title, events.starts_at as "startsAt", venues.name as venue
+    `select
+       events.id, events.title, events.updated_at as "updatedAt", venues.name as venue,
+       events.image is not null as "hasImage",
+       next.starts_at as "startsAt", next.remaining,
+       (select min(${CURRENT_PRICE}) from sectors where sectors.event_id = events.id) as "fromPrice"
      from events
      join venues on venues.id = events.venue_id
-     where venues.organization_id = $1 and events.starts_at >= now()
-     order by events.starts_at
+     cross join lateral (
+       select min(starts_at) as starts_at, count(*)::int as remaining
+       from performances where event_id = events.id and starts_at >= now()
+     ) as next
+     where events.organization_id = $1 and events.status = 'published' and next.starts_at is not null
+     order by next.starts_at
      limit 24`,
     [organizationId],
   );
-  return rows;
+  return rows.map(({ hasImage, updatedAt, remaining, ...event }) => ({
+    ...event,
+    moreDates: remaining - 1,
+    image: imageUrl({ id: event.id, hasImage, updatedAt }),
+  }));
+}
+
+// La página de un evento: el sitio que lo enmarca, sus funciones y los precios por sector.
+export async function getPublicEvent(db, slug, eventId) {
+  const site = await getPublicSite(db, slug);
+  if (!site) return null;
+
+  const { rows: [event] } = await db.query(
+    `select
+       events.id, events.title, events.description, events.map, events.updated_at as "updatedAt",
+       events.image is not null as "hasImage", venues.name as venue, venues.address
+     from events
+     join venues on venues.id = events.venue_id
+     join organizations on organizations.id = events.organization_id
+     where events.id = $1 and organizations.slug = $2 and events.status = 'published'`,
+    [eventId, slug],
+  );
+  if (!event) return null;
+
+  const { rows: performances } = await db.query(
+    `select id, starts_at as "startsAt" from performances
+     where event_id = $1 and starts_at >= now() order by starts_at`,
+    [eventId],
+  );
+  const { rows: sectors } = await db.query(
+    `select map_key as "mapKey", name, kind, ${CURRENT_PRICE} as price
+     from sectors where event_id = $1 order by position, name`,
+    [eventId],
+  );
+  const { hasImage, updatedAt, ...rest } = event;
+  return {
+    content: site.content,
+    event: { ...rest, image: imageUrl({ id: event.id, hasImage, updatedAt }), performances, sectors },
+  };
 }

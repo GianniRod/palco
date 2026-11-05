@@ -24,12 +24,29 @@ const ACTION_LABELS: Record<string, string> = {
   "password.reset": "Recuperó su contraseña por email",
   "site.published": "Publicó la página",
   "site.unpublished": "Despublicó la página",
+  "venue.created": "Creó una sala",
+  "venue.deleted": "Borró una sala",
+  "event.created": "Creó un evento",
+  "event.published": "Publicó un evento",
+  "event.finished": "Finalizó un evento",
+  "event.cancelled": "Canceló un evento",
+  "event.performance_added": "Agregó una función",
+  "event.performance_removed": "Quitó una función",
+  "event.price_changed": "Cambió un precio",
+  "event.seats_blocked": "Bloqueó butacas",
+  "event.seats_released": "Liberó butacas",
 };
 
 function describe(details: Record<string, unknown>) {
   if (typeof details.from === "number" && typeof details.to === "number") {
     return `${details.from}% → ${details.to}%`;
   }
+  if (typeof details.sector === "string") {
+    return `${details.title}: ${details.sector}, $${details.from ?? "—"} → $${details.to ?? "—"}`;
+  }
+  if (typeof details.count === "number") return `${details.title}: ${details.count} butacas`;
+  if (typeof details.title === "string") return details.title;
+  if (typeof details.name === "string") return details.name;
   return typeof details.email === "string" ? details.email : "";
 }
 
