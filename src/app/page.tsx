@@ -204,7 +204,11 @@ export default function Home() {
         {/* ---------------- Cierre ---------------- */}
         <section className="bg-white px-6 pb-28">
           <Reveal>
-            <a href={demoHref} className="group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
+            <a href={demoHref} className="group relative mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
+              {/* Búho que se asoma por detrás del talón al pasar el cursor (solo en compu) */}
+              <span aria-hidden className="pointer-events-none absolute right-0 top-0 flex w-32 justify-center sm:w-48">
+                <span className="buho-asoma block h-20 w-[58px] bg-palco-900" />
+              </span>
               <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-900 p-8 text-white sm:p-12">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Demo personalizada</p>
                 <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
@@ -214,7 +218,7 @@ export default function Home() {
                   Contanos cómo vendés hoy y te armamos una demo con tu marca, tus lotes y tu web.
                 </p>
               </div>
-              <div className="ticket-der talon relative flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-palco-200 p-4 text-black sm:w-48">
+              <div className="ticket-der talon relative z-10 flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-palco-200 p-4 text-black sm:w-48">
                 <span className="troquel absolute inset-y-6 left-0 w-0.5 text-black/30" />
                 <span className="text-center text-lg font-semibold sm:text-xl">Pedir demo</span>
                 <ArrowRight className="h-6 w-6 transition group-hover:translate-x-1" />
