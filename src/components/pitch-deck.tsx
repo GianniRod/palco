@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   ArrowLeft,
+  ArrowLeftRight,
   ArrowRight,
   Check,
   Clock,
@@ -30,6 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { FakeQr } from "@/components/qr";
 import { site } from "@/lib/site";
 
 /* ------------------------------------------------------------------ */
@@ -153,6 +155,67 @@ function BrowserMock() {
           ))}
         </div>
         <p className="mt-4 text-center text-[10px] text-black/35">Venta de entradas con tecnología de Nightowl</p>
+      </div>
+    </div>
+  );
+}
+
+/** Celular de mentira con la app de entradas para el público. */
+function PhoneMock() {
+  const tickets = [
+    { e: "Fiesta Aniversario", v: "Tu Boliche", d: "Sáb 19 sep · 00:30", tr: true },
+    { e: "Función de gala", v: "Tu Teatro", d: "Sáb 14 mar · 21:00", tr: false },
+    { e: "Jueves universitario", v: "Otro Boliche", d: "Jue 24 sep · 01:00", tr: true },
+  ];
+  return (
+    <div className="w-[270px] rounded-[2.4rem] bg-black p-2.5 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.55)]">
+      <div className="overflow-hidden rounded-[1.9rem] bg-[#fafafa] text-black">
+        <div className="flex items-center justify-between px-5 pb-2 pt-4">
+          <Logo className="h-4" color="#09090b" />
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-white">
+            M
+          </span>
+        </div>
+        <p className="px-5 text-lg font-semibold tracking-tight">Mis entradas</p>
+
+        {/* Entrada abierta */}
+        <div className="mx-4 mt-3 rounded-2xl bg-black p-4 text-white">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{tickets[0].v}</p>
+              <p className="mt-0.5 font-semibold">{tickets[0].e}</p>
+              <p className="text-[11px] text-white/55">{tickets[0].d}</p>
+            </div>
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-medium">Transferible</span>
+          </div>
+          <div className="mx-auto mt-3 w-28 rounded-lg bg-white p-2 text-black">
+            <FakeQr seed={7} className="h-full w-full" />
+          </div>
+          <span className="mt-3 flex items-center justify-center gap-1.5 rounded-full bg-white py-2 text-xs font-semibold text-black">
+            <ArrowLeftRight className="h-3.5 w-3.5" /> Transferir
+          </span>
+        </div>
+
+        {/* Otras entradas */}
+        <div className="space-y-2 px-4 pb-5 pt-3">
+          {tickets.slice(1).map((t) => (
+            <div key={t.e} className="flex items-center justify-between rounded-xl border border-black/10 bg-white px-3 py-2.5">
+              <div>
+                <p className="text-xs font-semibold">{t.e}</p>
+                <p className="text-[10px] text-black/45">
+                  {t.v} · {t.d}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[9px] font-medium ${
+                  t.tr ? "bg-black text-white" : "bg-black/5 text-black/45"
+                }`}
+              >
+                {t.tr ? "Transferible" : "No transferible"}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -535,11 +598,11 @@ const slides: Slide[] = [
           <Eyebrow dark>Dónde estamos</Eyebrow>
         </In>
         <In d={0.1}>
-          <H className="mt-4">Estamos en la etapa 2 de 4.</H>
+          <H className="mt-4">Estamos en la etapa 2 de 5.</H>
         </In>
         <div className="relative mt-14">
           <span className="absolute left-0 right-0 top-[11px] hidden h-px bg-white/15 md:block" aria-hidden />
-          <div className="grid gap-8 md:grid-cols-4">
+          <div className="grid gap-8 md:grid-cols-5">
             {[
               { t: "Hecho", x: "Web con demo del producto, formulario de demos y marca.", s: "done" },
               {
@@ -549,6 +612,7 @@ const slides: Slide[] = [
               },
               { t: "Próximo", x: "Cobro con Mercado Pago, entradas con QR y app de puerta.", s: "next" },
               { t: "Próximo", x: "Auditoría profesional de los sistemas y primeros pilotos en boliches.", s: "next" },
+              { t: "Después", x: "App de Nightowl para el público: todas sus entradas en un lugar.", s: "next" },
             ].map((m, i) => (
               <In key={m.x} d={0.3 + i * 0.18}>
                 <div className="relative">
@@ -582,7 +646,55 @@ const slides: Slide[] = [
     ),
   },
 
-  // 10. Equipo
+  // 10. Lo que viene: la app para el público
+  {
+    render: () => (
+      <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
+        <div>
+          <In>
+            <Eyebrow>Lo que viene · Etapa 5</Eyebrow>
+          </In>
+          <In d={0.1}>
+            <H className="mt-4">Una app con todas sus entradas.</H>
+          </In>
+          <In d={0.25}>
+            <p className="mt-6 max-w-lg text-lg leading-relaxed text-black/55">
+              El público inicia sesión con su cuenta y tiene a mano los QR de todos los eventos que usan
+              tecnología Nightowl, de cualquier boliche o teatro.
+            </p>
+          </In>
+          <div className="mt-8 space-y-3">
+            {[
+              { Icon: QrCode, t: "Todas las entradas juntas", x: "Sin buscar mails: cada QR queda en su cuenta." },
+              {
+                Icon: ArrowLeftRight,
+                t: "Transferencias",
+                x: "Pasar una entrada a un amigo, si el organizador del evento lo permite.",
+              },
+              { Icon: Users, t: "Un público que vuelve", x: "La app conecta a la gente con los próximos eventos de la red." },
+            ].map(({ Icon, t, x }, i) => (
+              <In key={t} d={0.4 + i * 0.12}>
+                <div className="flex gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black text-white">
+                    <Icon className="h-5 w-5" strokeWidth={1.7} />
+                  </span>
+                  <div>
+                    <p className="font-semibold">{t}</p>
+                    <p className="text-sm leading-relaxed text-black/55">{x}</p>
+                  </div>
+                </div>
+              </In>
+            ))}
+          </div>
+        </div>
+        <In d={0.3} className="flex justify-center">
+          <PhoneMock />
+        </In>
+      </div>
+    ),
+  },
+
+  // 11. Equipo
   {
     render: () => (
       <div>
@@ -615,7 +727,7 @@ const slides: Slide[] = [
     ),
   },
 
-  // 11. Qué buscamos
+  // 12. Qué buscamos
   {
     dark: true,
     render: () => (
@@ -664,7 +776,7 @@ const slides: Slide[] = [
     ),
   },
 
-  // 12. Cierre
+  // 13. Cierre
   {
     dark: true,
     render: () => (
