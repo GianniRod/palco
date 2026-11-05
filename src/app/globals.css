@@ -3,7 +3,10 @@
 @theme inline {
   --font-sans: var(--font-outfit);
   --font-display: var(--font-outfit);
+}
 
+/* Colores como variables (no inline) para poder redefinirlos por sección: ver .minimal */
+@theme {
   /* Bordó de la marca (fondo del logo: #480A17) */
   --color-palco-50: #fbf3f4;
   --color-palco-100: #f5e3e6;
@@ -22,6 +25,32 @@
   --color-dorado: #d9b26f;
 }
 
+/*
+ * Tema minimalista de la landing (enfoque boliches): blanco, negro y grises.
+ * Redefine los mismos tokens solo dentro de .minimal, así el dashboard
+ * mantiene sus colores.
+ */
+.minimal {
+  --color-palco-50: #fafafa;
+  --color-palco-100: #f4f4f5;
+  --color-palco-200: #e4e4e7;
+  --color-palco-300: #d4d4d8;
+  --color-palco-400: #a1a1aa;
+  --color-palco-500: #71717a;
+  --color-palco-600: #52525b;
+  --color-palco-700: #3f3f46;
+  --color-palco-800: #18181b;
+  --color-palco-900: #09090b;
+  --color-palco-950: #050505;
+
+  --color-papel: #fafafa;
+  --color-tinta: #09090b;
+  --color-dorado: #ffffff;
+
+  background: var(--color-papel);
+  color: var(--color-tinta);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -31,16 +60,18 @@ body {
   color: var(--color-tinta);
 }
 
+body:has(.minimal) {
+  background: #09090b;
+}
+
 ::selection {
   background: var(--color-palco-800);
   color: white;
 }
 
-/* Grano de papel sutil para las secciones claras */
+/* Superficie clara */
 .papel {
   background-color: var(--color-papel);
-  background-image: radial-gradient(rgba(72, 10, 23, 0.06) 1px, transparent 1px);
-  background-size: 4px 4px;
 }
 
 /* ---------- Entrada de títulos ---------- */
@@ -74,14 +105,6 @@ body {
   0% { transform: scale(1); background: var(--color-dorado); box-shadow: 0 0 0 0 rgba(217, 178, 111, 0.8); }
   40% { transform: scale(1.5); background: var(--color-dorado); box-shadow: 0 0 0 6px rgba(217, 178, 111, 0); }
   100% { transform: scale(1); }
-}
-
-/* ---------- Cinta de texto ---------- */
-.cinta {
-  animation: cinta 40s linear infinite;
-}
-@keyframes cinta {
-  to { transform: translateX(-50%); }
 }
 
 /* ---------- Escáner ---------- */

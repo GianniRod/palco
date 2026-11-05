@@ -3,7 +3,7 @@ export const site = {
   name: "Palco",
   url: "https://www.palcotickets.com",
   description:
-    "Plataforma de venta de entradas y control de acceso para teatros, salas y productoras. Vendé con tu propia marca, con butacas numeradas o ubicación general.",
+    "Plataforma de entradas para boliches y fiestas. Vendé desde tu propia web, con lotes de preventa, links por RRPP, VIP y mesas, y control de acceso con QR.",
   contactEmail: "contacto@palcotickets.com",
 } as const;
 

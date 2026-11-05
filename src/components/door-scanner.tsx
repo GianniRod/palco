@@ -12,14 +12,14 @@ type Event =
 
 // Guion de la demo: entradas válidas, un duplicado, un corte de internet y la resincronización.
 const script: Event[] = [
-  { kind: "scan", seat: "Platea D6", time: "20:41", ok: true },
-  { kind: "scan", seat: "Platea D7", time: "20:41", ok: true },
-  { kind: "scan", seat: "Pullman G12", time: "20:43", ok: true },
-  { kind: "scan", seat: "Platea D6", time: "20:44", ok: false, note: "Ya ingresó a las 20:41" },
+  { kind: "scan", seat: "Preventa 2 · #0412", time: "01:12", ok: true },
+  { kind: "scan", seat: "Preventa 2 · #0413", time: "01:12", ok: true },
+  { kind: "scan", seat: "VIP · #0087", time: "01:13", ok: true },
+  { kind: "scan", seat: "Preventa 2 · #0412", time: "01:14", ok: false, note: "Ya ingresó a las 01:12" },
   { kind: "offline" },
-  { kind: "scan", seat: "Platea B3", time: "20:46", ok: true },
-  { kind: "scan", seat: "Platea B4", time: "20:46", ok: true },
-  { kind: "scan", seat: "Platea B3", time: "20:47", ok: false, note: "Ya ingresó a las 20:46" },
+  { kind: "scan", seat: "General · #1031", time: "01:16", ok: true },
+  { kind: "scan", seat: "Mesa 4 · #0009", time: "01:16", ok: true },
+  { kind: "scan", seat: "General · #1031", time: "01:17", ok: false, note: "Ya ingresó a las 01:16" },
   { kind: "online" },
 ];
 const HOLD = 3; // ticks de pausa al final antes de reiniciar

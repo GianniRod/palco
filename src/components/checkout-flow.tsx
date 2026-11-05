@@ -8,7 +8,7 @@ import { useInView, useInterval, useReducedMotion } from "./hooks";
 const STEP_MS = 3200;
 
 const steps = [
-  { title: "Elige", text: "Su butaca en el plano de tu sala, desde tu sitio." },
+  { title: "Elige", text: "Su lote y cuántas entradas, desde tu web." },
   { title: "Paga", text: "Con tarjeta o Mercado Pago. El dinero se acredita en tu cuenta." },
   { title: "Recibe", text: "Su entrada con QR por email, al instante." },
 ];
@@ -88,39 +88,52 @@ function Screen({ active, children }: { active: boolean; children: ReactNode }) 
 }
 
 function StepChoose() {
+  const lots = [
+    { name: "Preventa 1", price: "$ 8.000", state: "Agotado" },
+    { name: "Preventa 2", price: "$ 11.000", state: "selected" },
+    { name: "General", price: "$ 15.000", state: "Próximamente" },
+    { name: "VIP", price: "$ 25.000", state: "" },
+  ];
   return (
     <div className="flex h-full flex-col">
-      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
-      <p className="mt-1 font-display text-2xl font-semibold tracking-tight leading-tight">Función de gala</p>
-      <p className="text-xs text-black/50">Sábado 14 · 21:00</p>
-      <div className="mx-auto mt-6 h-2 w-2/3 rounded-b-full bg-palco-800/20" />
-      <div className="mt-4 flex flex-col items-center gap-1.5">
-        {[8, 10, 10, 12, 12, 12].map((n, r) => (
-          <div key={r} className="flex gap-1">
-            {Array.from({ length: n }, (_, s) => {
-              const chosen = r === 3 && (s === 5 || s === 6);
-              const sold = (r * 5 + s * 3) % 7 < 3;
-              return (
-                <span
-                  key={s}
-                  className={`h-3 w-3 rounded-t-[4px] rounded-b-[1px] ${
-                    chosen ? "bg-dorado" : sold ? "bg-black/10" : "bg-palco-800/70"
-                  }`}
-                />
-              );
-            })}
-          </div>
-        ))}
+      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Boliche</p>
+      <p className="mt-1 font-display text-2xl font-semibold leading-tight tracking-tight">Fiesta Aniversario</p>
+      <p className="text-xs text-black/50">Sábado 21 · 00:30</p>
+      <div className="mt-6 space-y-2">
+        {lots.map((l) => {
+          const selected = l.state === "selected";
+          const off = l.state === "Agotado" || l.state === "Próximamente";
+          return (
+            <div
+              key={l.name}
+              className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm ${
+                selected ? "border-palco-800 bg-palco-50" : "border-black/10"
+              } ${off ? "opacity-45" : ""}`}
+            >
+              <span>
+                <span className={`block font-medium ${l.state === "Agotado" ? "line-through" : ""}`}>{l.name}</span>
+                <span className="block text-[11px] text-black/50">{off ? l.state : l.price}</span>
+              </span>
+              {selected ? (
+                <span className="flex items-center gap-2.5 text-sm font-semibold">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black/15">−</span>
+                  2
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-palco-800 text-white">+</span>
+                </span>
+              ) : (
+                !off && <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black/15 text-sm">+</span>
+              )}
+            </div>
+          );
+        })}
       </div>
       <div className="mt-auto rounded-xl bg-papel p-3 text-sm">
         <div className="flex justify-between">
-          <span>Platea · D6, D7</span>
-          <span className="font-medium">$ 44.000</span>
+          <span>2 × Preventa 2</span>
+          <span className="font-medium">$ 22.000</span>
         </div>
       </div>
-      <div className="mt-3 rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
-        Continuar
-      </div>
+      <div className="mt-3 rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">Continuar</div>
     </div>
   );
 }
@@ -128,13 +141,13 @@ function StepChoose() {
 function StepPay() {
   return (
     <div className="flex h-full flex-col">
-      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
+      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Boliche</p>
       <p className="mt-1 font-display text-2xl font-semibold tracking-tight">Pago</p>
       <div className="mt-6 space-y-2 text-sm">
-        <Row l="2 × Platea" r="$ 44.000" />
-        <Row l="Cargo de servicio" r="$ 2.200" />
+        <Row l="2 × Preventa 2" r="$ 22.000" />
+        <Row l="Cargo de servicio" r="$ 1.100" />
         <div className="border-t border-black/10 pt-2">
-          <Row l="Total" r="$ 46.200" bold />
+          <Row l="Total" r="$ 23.100" bold />
         </div>
       </div>
       <p className="mt-6 text-xs text-black/50">Medio de pago</p>
@@ -143,7 +156,7 @@ function StepPay() {
         <PayOption title="Mercado Pago" sub="Dinero en cuenta o tarjetas guardadas" />
       </div>
       <div className="mt-auto rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
-        Pagar $ 46.200
+        Pagar $ 23.100
       </div>
     </div>
   );
@@ -160,8 +173,8 @@ function StepReceive() {
         <Mail className="h-3.5 w-3.5" /> Te enviamos tus entradas
       </p>
       <div className="mt-6 w-full rounded-2xl bg-palco-800 p-4 text-left text-white">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Función de gala</p>
-        <p className="font-display text-lg font-medium">Platea · Fila D · 6</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Fiesta Aniversario</p>
+        <p className="font-display text-lg font-medium">Preventa 2 · Entrada 1 de 2</p>
         <div className="mt-3 flex justify-center rounded-lg bg-white p-3 text-black">
           <FakeQr seed={5} className="h-32 w-32" />
         </div>

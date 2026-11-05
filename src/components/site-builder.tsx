@@ -13,11 +13,11 @@ type TemplateId = "dividida" | "portada" | "cartelera";
 const templateList: { id: TemplateId; name: string; hint: string }[] = [
   { id: "dividida", name: "Dividida", hint: "Info y plano lado a lado" },
   { id: "portada", name: "Portada", hint: "Banner grande para un evento" },
-  { id: "cartelera", name: "Cartelera", hint: "Varias funciones o fechas" },
+  { id: "cartelera", name: "Cartelera", hint: "Todas tus fechas juntas" },
 ];
 
-const swatches = ["#7A1428", "#2F5BFF", "#0F766E", "#F59E0B", "#111111"];
-const CUSTOM_HEX = "#FF4FA3";
+const swatches = ["#111111", "#52525B", "#A1A1AA", "#7A1428", "#1E3A8A"];
+const CUSTOM_HEX = "#F4F4F5";
 
 type Font = "clasica" | "moderna";
 const fontClass: Record<Font, string> = {
@@ -25,35 +25,35 @@ const fontClass: Record<Font, string> = {
   moderna: "font-sans font-black uppercase tracking-tight",
 };
 
-type Group = "campo" | "tribuna" | "vip";
-type SectorId = "escenario" | "campo" | "oeste" | "este" | "vip";
+type Group = "pista" | "box" | "vip";
+type SectorId = "escenario" | "pista" | "oeste" | "este" | "vip";
 
 // Posiciones en % dentro del plano
 const sectors: Record<
   SectorId,
   { label: string; group: Group | null; x: number; y: number; w: number; h: number }
 > = {
-  escenario: { label: "Escenario", group: null, x: 28, y: 4, w: 44, h: 13 },
-  campo: { label: "Campo", group: "campo", x: 28, y: 23, w: 44, h: 38 },
-  oeste: { label: "Tribuna Oeste", group: "tribuna", x: 4, y: 18, w: 18, h: 66 },
-  este: { label: "Tribuna Este", group: "tribuna", x: 78, y: 18, w: 18, h: 66 },
-  vip: { label: "VIP", group: "vip", x: 28, y: 67, w: 44, h: 22 },
+  escenario: { label: "DJ", group: null, x: 34, y: 4, w: 32, h: 13 },
+  pista: { label: "Pista", group: "pista", x: 26, y: 23, w: 48, h: 44 },
+  oeste: { label: "Boxes", group: "box", x: 4, y: 18, w: 18, h: 70 },
+  este: { label: "Boxes", group: "box", x: 78, y: 18, w: 18, h: 70 },
+  vip: { label: "VIP", group: "vip", x: 26, y: 72, w: 48, h: 17 },
 };
 
 const groups: { id: Group; label: string; price: string }[] = [
-  { id: "campo", label: "Campo", price: "18000" },
-  { id: "tribuna", label: "Tribunas", price: "12000" },
-  { id: "vip", label: "VIP", price: "35000" },
+  { id: "pista", label: "Pista", price: "15000" },
+  { id: "box", label: "Box (6 pers.)", price: "180000" },
+  { id: "vip", label: "VIP", price: "30000" },
 ];
 
 const palette: { group: Group; label: string }[] = [
-  { group: "campo", label: "Campo" },
-  { group: "tribuna", label: "Tribuna" },
+  { group: "pista", label: "Pista" },
+  { group: "box", label: "Box" },
   { group: "vip", label: "VIP" },
 ];
 
-const TITLE = "Festival de Primavera";
-const DATE = "Sáb 21 de septiembre · 20:00";
+const TITLE = "Fiesta Aniversario";
+const DATE = "Sáb 21 de septiembre · 00:30";
 
 type Tab = "plantilla" | "colores" | "contenido" | "mapa" | "precios";
 const tabs: { id: Tab; label: string }[] = [
@@ -159,9 +159,9 @@ function buildScript(): Step[] {
   // 4. Mapa: arrastrar sectores
   steps.push(...openTab("mapa"));
   const drops: [SectorId, string][] = [
-    ["campo", "Campo"],
-    ["oeste", "Tribuna"],
-    ["este", "Tribuna"],
+    ["pista", "Pista"],
+    ["oeste", "Box"],
+    ["este", "Box"],
     ["vip", "VIP"],
   ];
   for (const [id, label] of drops) {
@@ -345,7 +345,7 @@ export function SiteBuilder() {
             <div className="overflow-hidden rounded-xl border border-tinta/10 shadow-sm">
               <div className="flex items-center gap-2 border-b border-black/5 bg-white px-3 py-2">
                 <span className="flex-1 truncate rounded-md bg-tinta/5 px-3 py-1 text-center text-[11px] text-tinta/50">
-                  tuproductora.com/tickets
+                  tuboliche.com/tickets
                 </span>
               </div>
               <Preview s={s} />
@@ -568,7 +568,7 @@ function PanelContent({ s }: { s: State }) {
     <div className="space-y-4">
       <div>
         <Label>Título del evento</Label>
-        <FakeInput id="in-title" value={s.title} placeholder="Ej. Noche de gala" focus={s.focus} />
+        <FakeInput id="in-title" value={s.title} placeholder="Ej. Fiesta de los jueves" focus={s.focus} />
       </div>
       <div>
         <Label>Fecha y hora</Label>
@@ -672,7 +672,7 @@ function Preview({ s }: { s: State }) {
   return (
     <div className="relative min-h-[390px] transition-colors duration-500" style={{ background: l.bg, color: l.fg }}>
       <div className="flex items-center justify-between px-5 py-3 text-xs">
-        <span className={`text-sm transition-all ${l.title}`}>Tu Productora</span>
+        <span className={`text-sm transition-all ${l.title}`}>Tu Boliche</span>
         <span style={{ color: l.muted }}>Eventos · Contacto</span>
       </div>
 
@@ -750,7 +750,7 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
       {s.placed.map((id) => {
         const sc = sectors[id];
         const price = sc.group ? s.prices[sc.group] : undefined;
-        const strength = sc.group === "vip" ? 90 : sc.group === "campo" ? 55 : 32;
+        const strength = sc.group === "vip" ? 90 : sc.group === "pista" ? 55 : 32;
         const vertical = id === "oeste" || id === "este";
         return (
           <span
@@ -826,8 +826,8 @@ function LayoutPortada({ s, l }: LP) {
 
 function LayoutCartelera({ s, l }: LP) {
   const others = [
-    { t: "Otra función", d: "Vie 27" },
-    { t: "Próximamente", d: "Octubre" },
+    { t: "Jueves universitario", d: "Jue 26" },
+    { t: "Próxima fiesta", d: "Octubre" },
   ];
   return (
     <div className="px-5 pb-6 pt-1">

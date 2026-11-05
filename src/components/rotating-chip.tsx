@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Armchair } from "lucide-react";
+import { Ticket } from "lucide-react";
 import { useInterval, useReducedMotion } from "./hooks";
 
-const options = ["Platea · D7", "Pullman · G12", "Palco · B3", "Campo general"];
+const options = ["Preventa 2", "General", "Entrada VIP", "Mesa para 6"];
 
-/** Chip dentro del título que rota entre tipos de ubicación. */
+/** Chip dentro del título que rota entre tipos de entrada. */
 export function RotatingChip() {
   const reduced = useReducedMotion();
   const [i, setI] = useState(0);
@@ -14,8 +14,8 @@ export function RotatingChip() {
   useInterval(() => setI((n) => (n + 1) % options.length), 2200, !reduced);
 
   return (
-    <span className="relative mx-1 inline-flex -translate-y-[0.06em] items-center gap-[0.3em] rounded-[0.3em] bg-dorado px-[0.35em] py-[0.14em] leading-none align-middle text-[0.8em] text-palco-950 shadow-[0_8px_30px_-6px_rgba(217,178,111,0.55)]">
-      <Armchair className="h-[0.8em] w-[0.8em] shrink-0" strokeWidth={2.4} />
+    <span className="relative mx-1 inline-flex -translate-y-[0.06em] items-center gap-[0.3em] rounded-[0.3em] bg-dorado px-[0.35em] py-[0.14em] leading-none align-middle text-[0.8em] text-palco-950 shadow-[0_8px_30px_-8px_rgba(255,255,255,0.35)]">
+      <Ticket className="h-[0.8em] w-[0.8em] shrink-0" strokeWidth={2.4} />
       {/* Todas las opciones ocupan la misma celda para que el ancho no salte */}
       <span className="inline-grid justify-items-center overflow-hidden leading-[1.1]">
         {options.map((o, n) => (
