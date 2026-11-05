@@ -160,11 +160,23 @@ export function FeeCalculator() {
               </div>
 
               <div className="text-left sm:text-right">
-                <p className={`text-xs ${r.ours ? "text-white/55" : "text-tinta/50"}`}>Vos recibís</p>
-                <p className="text-2xl font-semibold tabular-nums tracking-tight">{money(r.youGet)}</p>
-                <p className={`mt-1 text-sm ${r.ours ? "text-white/55" : "text-tinta/50"}`}>
-                  Tu público paga {money(r.buyerPays)} por entrada
-                </p>
+                {/* Si paga el público, lo que recibe el boliche es igual en todas: se muestra el precio final de la entrada */}
+                {payer === "publico" ? (
+                  <>
+                    <p className={`text-xs ${r.ours ? "text-white/55" : "text-tinta/50"}`}>Tu público paga por entrada</p>
+                    <p className="text-2xl font-semibold tabular-nums tracking-tight">{money(r.buyerPays)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className={`text-xs ${r.ours ? "text-white/55" : "text-tinta/50"}`}>Vos recibís</p>
+                    <p className="text-2xl font-semibold tabular-nums tracking-tight">{money(r.youGet)}</p>
+                    {payer === "ambos" && (
+                      <p className={`mt-1 text-sm ${r.ours ? "text-white/55" : "text-tinta/50"}`}>
+                        Tu público paga {money(r.buyerPays)} por entrada
+                      </p>
+                    )}
+                  </>
+                )}
                 {!r.ours && (lessForYou > 0 || moreForBuyer > 0) && (
                   <p className="mt-1 text-sm font-medium text-tinta/75">
                     {[
