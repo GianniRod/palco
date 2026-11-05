@@ -254,6 +254,8 @@ export default function TeatrosPage() {
             <p className="text-xs">
               © <CurrentYear /> {site.name}
             </p>
+            {/* Temporal: sacar el día del lanzamiento */}
+            <p className="mt-1 text-xs">Que en paz descanses Palco 💔 4 noviembre 2026 – 5 noviembre 2026</p>
           </div>
         </div>
       </footer>
