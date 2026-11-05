@@ -183,16 +183,16 @@ body:has(.minimal) {
   transform: rotate(7deg) translate(10px, 6px);
 }
 
-/* ---------- Búho que se asoma en "Pedir demo" ---------- */
+/* ---------- Búho que se asoma en "Pedir demo" (barra superior) ---------- */
 .buho-asoma {
   -webkit-mask: url(/buho.png) center / contain no-repeat;
   mask: url(/buho.png) center / contain no-repeat;
-  transform: translateY(20%);
+  transform: translateY(15%);
   transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @media (hover: hover) {
-  .group:hover .buho-asoma {
-    transform: translateY(-58%) rotate(-6deg);
+  .asoma:hover .buho-asoma {
+    transform: translateY(-62%) rotate(-8deg);
     transition-delay: 0.12s;
   }
 }
