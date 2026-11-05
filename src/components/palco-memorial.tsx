@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 /**
  * Despedida del primer nombre del proyecto, en el footer.
@@ -18,7 +19,8 @@ export function PalcoMemorial() {
         <div className="absolute bottom-full right-0 z-20 mb-2 w-64 rounded-xl border border-black/10 bg-white p-4 text-left text-xs leading-relaxed text-[#09090b] shadow-xl">
           <p>
             Palco fue el primer nombre del proyecto. Lo tuvimos que cambiar por fines comerciales, y
-            así nació Nightowl.
+            así nació{" "}
+            <Logo className="h-3.5 align-[-0.2em]" color="#09090b" />
           </p>
           <p className="mt-2">
             Aunque nuestra marca cambió, el proyecto, la visión y las ganas de construir algo grande
