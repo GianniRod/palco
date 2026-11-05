@@ -1,13 +1,14 @@
 import type { CSSProperties, ReactNode } from "react";
+import { AtSign, CalendarDays, Globe, Mail, MapPin, Phone } from "lucide-react";
 
-// Las tres plantillas de la página pública, con el estilo de la animación del Editor de la landing
-// (components/site-builder.tsx). El mismo componente pinta la página real y la vista previa del
-// editor, por eso los cortes son por ancho del contenedor (@md) y no de la pantalla.
+// Las tres plantillas de la página pública. El mismo componente pinta la página real y la
+// vista previa del editor, por eso los cortes son por ancho del contenedor y no de la pantalla.
 
 export type SiteContent = {
   template: "dividida" | "portada" | "cartelera";
   displayName: string;
   logo: string;
+  cover: string;
   primaryColor: string;
   background: "claro" | "oscuro";
   titleFont: "clasica" | "moderna";
@@ -23,8 +24,8 @@ export type SiteContent = {
 export type SiteEvent = { id: string; title: string; startsAt: Date | string; venue: string };
 
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
-const fullDate = new Intl.DateTimeFormat("es-AR", {
-  weekday: "short",
+const longDate = new Intl.DateTimeFormat("es-AR", {
+  weekday: "long",
   day: "numeric",
   month: "long",
   hour: "2-digit",
@@ -32,15 +33,20 @@ const fullDate = new Intl.DateTimeFormat("es-AR", {
   hour12: false,
   timeZone: TIME_ZONE,
 });
-const shortDate = new Intl.DateTimeFormat("es-AR", {
+const cardDate = new Intl.DateTimeFormat("es-AR", {
   weekday: "short",
   day: "numeric",
   month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
   timeZone: TIME_ZONE,
 });
+const dayNumber = new Intl.DateTimeFormat("es-AR", { day: "numeric", timeZone: TIME_ZONE });
+const monthName = new Intl.DateTimeFormat("es-AR", { month: "short", timeZone: TIME_ZONE });
 
-const formatDate = (event: SiteEvent) => fullDate.format(new Date(event.startsAt)).replaceAll(",", " ·");
-const formatShortDate = (event: SiteEvent) => shortDate.format(new Date(event.startsAt));
+const formatLong = (event: SiteEvent) => longDate.format(new Date(event.startsAt)).replace(/,/g, " ·");
+const formatCard = (event: SiteEvent) => cardDate.format(new Date(event.startsAt)).replace(/,/g, " ·");
 
 function luminance(hex: string) {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -52,145 +58,221 @@ function luminance(hex: string) {
 
 function themeStyle(site: SiteContent) {
   const dark = site.background === "oscuro";
+  const light = luminance(site.primaryColor);
+  const fg = dark ? "#f5f5f7" : "#16161a";
+  // Un color muy oscuro sobre fondo oscuro (o muy claro sobre fondo claro) no se leería como texto.
+  const legible = dark ? light > 0.08 : light < 0.45;
   return {
-    "--site-bg": dark ? "#0E0C14" : "#FAF8F4",
-    "--site-fg": dark ? "#F5F3FA" : "#16141C",
-    "--site-muted": dark ? "rgba(245,243,250,0.6)" : "rgba(22,20,28,0.6)",
-    "--site-line": dark ? "rgba(245,243,250,0.14)" : "rgba(22,20,28,0.12)",
+    "--site-bg": dark ? "#0d0d10" : "#f6f6f7",
+    "--site-surface": dark ? "#18181d" : "#ffffff",
+    "--site-fg": fg,
+    "--site-muted": dark ? "#a6a6b0" : "#5f5f68",
+    "--site-line": dark ? "#2b2b32" : "#e5e5e8",
     "--site-accent": site.primaryColor,
-    "--site-on-accent": luminance(site.primaryColor) > 0.45 ? "#111111" : "#FFFFFF",
+    // Blanco o negro, el que más contraste tenga contra el color que eligió el cliente.
+    "--site-on-accent": light > 0.179 ? "#111111" : "#ffffff",
+    "--site-accent-text": legible ? site.primaryColor : fg,
+    "--site-shadow": dark ? "0 10px 30px rgba(0,0,0,.45)" : "0 10px 30px rgba(22,22,26,.08)",
     backgroundColor: "var(--site-bg)",
     color: "var(--site-fg)",
   } as CSSProperties;
 }
 
-const titleClass = (site: SiteContent) =>
-  site.titleFont === "clasica" ? "font-serif" : "font-sans font-black uppercase tracking-tight";
+const titleFont = (site: SiteContent) =>
+  site.titleFont === "clasica" ? "font-serif font-semibold" : "font-sans font-extrabold tracking-tight";
+const heroCase = (site: SiteContent) => (site.titleFont === "moderna" ? "uppercase" : "");
 
-const softBlock = { background: "color-mix(in srgb, var(--site-fg) 6%, transparent)" };
-const EYEBROW = "text-[11px] uppercase tracking-[0.2em]";
+const WRAP = "mx-auto w-full max-w-6xl px-5 @3xl:px-8";
 
 type Props = { site: SiteContent; events: SiteEvent[] };
 
 // Todavía no se venden entradas desde la página: se avisa en lugar de mostrar un botón que no hace nada.
-function SoonPill({ inverted = false }: { inverted?: boolean }) {
+function SoonButton({ size = "md", inverted = false }: { size?: "sm" | "md"; inverted?: boolean }) {
   return (
     <span
-      className="inline-block rounded-full px-5 py-2 text-sm font-semibold"
+      className={`inline-block rounded-md font-bold ${size === "sm" ? "px-3.5 py-2 text-sm" : "px-6 py-3 text-base"}`}
       style={
         inverted
           ? { background: "var(--site-on-accent)", color: "var(--site-accent)" }
           : { background: "var(--site-accent)", color: "var(--site-on-accent)" }
       }
     >
-      Entradas muy pronto
+      {size === "sm" ? "Muy pronto" : "Entradas muy pronto"}
     </span>
   );
 }
 
-function EventRows({ events, empty }: { events: SiteEvent[]; empty: string }) {
-  if (events.length === 0) return <p className="text-sm text-[var(--site-muted)]">{empty}</p>;
+// Reemplaza al flyer hasta que los eventos tengan imagen propia (etapa 4).
+function Poster({ event, index = 0, large = false }: { event: SiteEvent; index?: number; large?: boolean }) {
+  const date = new Date(event.startsAt);
+  const shade = [0, 22, 38][index % 3];
   return (
-    <ul className="space-y-2 text-sm">
-      {events.map((event) => (
-        <li key={event.id} className="flex items-baseline justify-between gap-3 border-b border-[var(--site-line)] pb-2">
-          <span className="min-w-0">{event.title}</span>
-          <span className="shrink-0 text-xs capitalize text-[var(--site-muted)]">{formatShortDate(event)}</span>
-        </li>
-      ))}
-    </ul>
+    <div
+      className={`relative flex overflow-hidden text-[var(--site-on-accent)] ${large ? "aspect-[4/3] rounded-2xl" : "aspect-[16/9]"}`}
+      style={{ background: `color-mix(in srgb, var(--site-accent) ${100 - shade}%, #000000)` }}
+    >
+      <span
+        aria-hidden
+        className="absolute -right-[12%] -top-[35%] aspect-square w-3/4 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,255,255,.28), rgba(255,255,255,0) 68%)" }}
+      />
+      <span aria-hidden className="absolute bottom-0 right-0 h-1/2 w-2/5 -skew-x-12 translate-x-6 bg-black/10" />
+      <div className="relative mt-auto flex items-end gap-3 p-5">
+        <span className={`font-black leading-none ${large ? "text-8xl" : "text-6xl"}`}>{dayNumber.format(date)}</span>
+        <span className="pb-1 text-sm font-bold uppercase tracking-widest">{monthName.format(date).replace(".", "")}</span>
+      </div>
+    </div>
   );
 }
 
-function About({ site }: { site: SiteContent }) {
+function EventCard({ site, event, index }: { site: SiteContent; event: SiteEvent; index: number }) {
+  return (
+    <li className="flex min-w-0 flex-col overflow-hidden rounded-xl bg-[var(--site-surface)] [box-shadow:var(--site-shadow)]">
+      <Poster event={event} index={index} />
+      <div className="flex flex-1 flex-col items-start p-5">
+        <h3 className={`text-xl leading-snug ${titleFont(site)}`}>{event.title}</h3>
+        <p className="mt-1 text-[15px] capitalize text-[var(--site-muted)]">{formatCard(event)}</p>
+        <p className="text-[15px] text-[var(--site-muted)]">{event.venue}</p>
+        <div className="mt-4"><SoonButton size="sm" /></div>
+      </div>
+    </li>
+  );
+}
+
+function EventSection({ site, events, title }: Props & { title: string }) {
+  return (
+    <section id="eventos" className={`${WRAP} scroll-mt-24 py-10 @3xl:py-14`}>
+      <h2 className={`mb-6 text-xl uppercase tracking-tight @3xl:text-2xl ${titleFont(site)}`}>{title}</h2>
+      {events.length === 0 ? (
+        <div className="flex flex-col items-center rounded-xl bg-[var(--site-surface)] px-6 py-14 text-center [box-shadow:var(--site-shadow)]">
+          <CalendarDays className="size-9 text-[var(--site-accent-text)]" aria-hidden />
+          <p className="mt-3 text-lg font-semibold">Estamos preparando las próximas fechas</p>
+          <p className="mt-1 text-[var(--site-muted)]">Muy pronto vas a poder ver los eventos y sacar tus entradas acá.</p>
+        </div>
+      ) : (
+        <ul className="grid gap-6 @xl:grid-cols-2 @4xl:grid-cols-3">
+          {events.map((event, index) => <EventCard key={event.id} site={site} event={event} index={index} />)}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function AboutSection({ site }: { site: SiteContent }) {
   if (!site.about) return null;
-  return <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--site-muted)]">{site.about}</p>;
+  return (
+    <section className="border-t border-[var(--site-line)] bg-[var(--site-surface)]">
+      <div className={`${WRAP} py-10 @3xl:py-14`}>
+        <h2 className={`text-xl uppercase tracking-tight @3xl:text-2xl ${titleFont(site)}`}>Sobre {site.displayName}</h2>
+        <p className="mt-4 max-w-3xl whitespace-pre-line text-lg leading-relaxed text-[var(--site-muted)]">{site.about}</p>
+      </div>
+    </section>
+  );
+}
+
+function CoverImage({ site }: { site: SiteContent }) {
+  // eslint-disable-next-line @next/next/no-img-element -- la portada es una data URL guardada con el sitio.
+  return <img src={site.cover} alt="" className="absolute inset-0 size-full object-cover" />;
+}
+
+function Portada({ site, events }: Props) {
+  const [next, ...rest] = events;
+  const hasCover = Boolean(site.cover);
+  return (
+    <>
+      <section
+        className={`relative flex min-h-[440px] overflow-hidden @3xl:min-h-[520px] ${hasCover ? "text-white" : "text-[var(--site-on-accent)]"}`}
+        style={hasCover ? undefined : { background: "var(--site-accent)" }}
+      >
+        {hasCover ? (
+          <>
+            <CoverImage site={site} />
+            <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+          </>
+        ) : (
+          <span
+            aria-hidden
+            className="absolute -right-[10%] -top-[60%] aspect-square w-2/3 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 68%)" }}
+          />
+        )}
+        <div className={`${WRAP} relative mt-auto py-10 @3xl:py-14`}>
+          {next && <p className="text-sm font-bold uppercase tracking-[0.14em] opacity-90">{formatLong(next)}</p>}
+          <h1 className={`mt-3 max-w-4xl text-5xl leading-[1.02] text-balance @3xl:text-7xl ${titleFont(site)} ${heroCase(site)}`}>
+            {next?.title ?? (site.tagline || site.displayName)}
+          </h1>
+          {next && site.tagline && <p className="mt-4 max-w-2xl text-lg opacity-90 @3xl:text-xl">{site.tagline}</p>}
+          {next && <div className="mt-6"><SoonButton inverted={!hasCover} /></div>}
+        </div>
+      </section>
+      <EventSection site={site} events={next ? rest : []} title={next ? "Más fechas" : "Próximos eventos"} />
+      <AboutSection site={site} />
+    </>
+  );
 }
 
 function Dividida({ site, events }: Props) {
   const [next, ...rest] = events;
   return (
-    <div className="grid gap-6 px-5 pb-8 pt-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="flex min-w-0 flex-col">
-        <p className={`${EYEBROW} text-[var(--site-accent)]`}>{next ? formatDate(next) : "Próximamente"}</p>
-        <h1 className={`mt-2 text-3xl leading-[1.05] text-balance @lg:text-4xl ${titleClass(site)}`}>
-          {next?.title ?? (site.tagline || site.displayName)}
-        </h1>
-        {next && site.tagline && <p className="mt-3 text-sm text-[var(--site-muted)]">{site.tagline}</p>}
-        <div className="mt-5"><SoonPill /></div>
-        {site.about && <div className="mt-6"><About site={site} /></div>}
-      </div>
-      <section id="eventos" style={softBlock} className="min-w-0 self-start rounded-lg p-5">
-        <h2 className={`${EYEBROW} mb-3 text-[var(--site-muted)]`}>{next ? "Otras fechas" : "Próximas fechas"}</h2>
-        <EventRows events={rest} empty={next ? "Por ahora, esta es la próxima fecha." : "Pronto vas a ver las fechas acá."} />
+    <>
+      <section className="border-b border-[var(--site-line)] bg-[var(--site-surface)]">
+        <div className={`${WRAP} grid items-center gap-8 py-10 @3xl:grid-cols-2 @3xl:gap-12 @3xl:py-14`}>
+          <div className="min-w-0">
+            {site.cover ? (
+              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl"><CoverImage site={site} /></div>
+            ) : next ? (
+              <Poster event={next} large />
+            ) : (
+              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-[var(--site-accent)] p-8 text-center text-[var(--site-on-accent)]">
+                <span className={`text-4xl ${titleFont(site)}`}>{site.displayName}</span>
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            {next && <p className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--site-accent-text)]">{formatLong(next)}</p>}
+            <h1 className={`mt-3 text-4xl leading-[1.05] text-balance @3xl:text-6xl ${titleFont(site)} ${heroCase(site)}`}>
+              {next?.title ?? (site.tagline || site.displayName)}
+            </h1>
+            {next && <p className="mt-4 flex items-center gap-2 text-[var(--site-muted)]"><MapPin className="size-4 shrink-0" aria-hidden />{next.venue}</p>}
+            {next && site.tagline && <p className="mt-4 text-lg leading-relaxed text-[var(--site-muted)]">{site.tagline}</p>}
+            {next && <div className="mt-6"><SoonButton /></div>}
+          </div>
+        </div>
       </section>
-    </div>
-  );
-}
-
-function Portada({ site, events }: Props) {
-  const [next, ...rest] = events;
-  return (
-    <div className="pb-8">
-      <section className="mx-5 mt-2 flex flex-col items-center rounded-xl bg-[var(--site-accent)] px-6 py-10 text-center text-[var(--site-on-accent)]">
-        <p className={`${EYEBROW} opacity-75`}>{next ? formatDate(next) : "Próximamente"}</p>
-        <h1 className={`mt-2 text-4xl leading-[1.05] text-balance @lg:text-5xl ${titleClass(site)}`}>
-          {next?.title ?? (site.tagline || site.displayName)}
-        </h1>
-        {next && site.tagline && <p className="mt-3 text-sm opacity-85">{site.tagline}</p>}
-        <div className="mt-5"><SoonPill inverted /></div>
-      </section>
-      <div className="mt-6 grid items-start gap-6 px-5 @md:grid-cols-[1.2fr_1fr]">
-        <div className="min-w-0"><About site={site} /></div>
-        <section id="eventos" className="min-w-0">
-          <h2 className={`${EYEBROW} mb-3 text-[var(--site-muted)]`}>{next ? "Otras fechas" : "Próximas fechas"}</h2>
-          <EventRows events={rest} empty={next ? "Por ahora, esta es la próxima fecha." : "Pronto vas a ver las fechas acá."} />
-        </section>
-      </div>
-    </div>
+      <EventSection site={site} events={next ? rest : []} title={next ? "Más fechas" : "Próximos eventos"} />
+      <AboutSection site={site} />
+    </>
   );
 }
 
 function Cartelera({ site, events }: Props) {
   return (
-    <div className="px-5 pb-8 pt-2">
-      <h1 className={`${EYEBROW} text-[var(--site-muted)]`}>Cartelera</h1>
-      {site.tagline && <p className={`mt-2 text-2xl leading-tight text-balance ${titleClass(site)}`}>{site.tagline}</p>}
-      {events.length === 0 ? (
-        <p style={softBlock} className="mt-4 rounded-lg p-5 text-sm text-[var(--site-muted)]">Pronto vas a ver las fechas acá.</p>
-      ) : (
-        <ul id="eventos" className="mt-4 grid grid-cols-2 gap-3 @md:grid-cols-3">
-          {events.map((event, index) => (
-            <li
-              key={event.id}
-              style={index === 0 ? undefined : softBlock}
-              className={`flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-lg p-3 ${
-                index === 0 ? "bg-[var(--site-accent)] text-[var(--site-on-accent)]" : ""
-              }`}
-            >
-              <p className={`text-[10px] uppercase tracking-widest ${index === 0 ? "opacity-75" : "text-[var(--site-muted)]"}`}>
-                {formatShortDate(event)}
-              </p>
-              <p className={`mt-1 text-sm leading-tight ${titleClass(site)}`}>{event.title}</p>
-            </li>
-          ))}
-        </ul>
+    <>
+      {site.cover && (
+        <section className="relative h-56 overflow-hidden @3xl:h-80">
+          <CoverImage site={site} />
+          <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          {site.tagline && (
+            <div className={`${WRAP} absolute inset-x-0 bottom-0 pb-6`}>
+              <h1 className={`text-3xl text-white @3xl:text-5xl ${titleFont(site)} ${heroCase(site)}`}>{site.tagline}</h1>
+            </div>
+          )}
+        </section>
       )}
-      <div className="mt-5"><SoonPill /></div>
-      {site.about && <div className="mt-6 max-w-2xl"><About site={site} /></div>}
-    </div>
+      {!site.cover && site.tagline && (
+        <section className="border-b border-[var(--site-line)] bg-[var(--site-surface)]">
+          <div className={`${WRAP} py-8 @3xl:py-10`}>
+            <h1 className={`text-3xl text-balance @3xl:text-5xl ${titleFont(site)} ${heroCase(site)}`}>{site.tagline}</h1>
+          </div>
+        </section>
+      )}
+      <EventSection site={site} events={events} title="Próximos eventos" />
+      <AboutSection site={site} />
+    </>
   );
 }
 
 const TEMPLATES = { dividida: Dividida, portada: Portada, cartelera: Cartelera };
-
-function Brand({ site }: { site: SiteContent }) {
-  if (site.logo) {
-    // eslint-disable-next-line @next/next/no-img-element -- el logo es una data URL guardada con el sitio.
-    return <img src={site.logo} alt={site.displayName} className="h-8 w-auto max-w-40 object-contain" />;
-  }
-  return <span className={`text-sm ${titleClass(site)}`}>{site.displayName}</span>;
-}
 
 // En la vista previa llega lo que se está escribiendo, así que puede ser una dirección a medias.
 function parseWebsite(value: string) {
@@ -202,31 +284,43 @@ function parseWebsite(value: string) {
   }
 }
 
-function Contact({ site }: { site: SiteContent }) {
-  const items: ReactNode[] = [];
+function Brand({ site, footer = false }: { site: SiteContent; footer?: boolean }) {
+  if (site.logo) {
+    // eslint-disable-next-line @next/next/no-img-element -- el logo es una data URL guardada con el sitio.
+    return <img src={site.logo} alt={site.displayName} className="h-12 w-auto max-w-56 object-contain" />;
+  }
+  return <span className={`${footer ? "text-xl" : "text-2xl"} ${titleFont(site)}`}>{site.displayName}</span>;
+}
+
+function FooterLine({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return <li className="flex min-w-0 items-start gap-2 [overflow-wrap:anywhere]"><span className="mt-1 shrink-0">{icon}</span><span className="min-w-0">{children}</span></li>;
+}
+
+function Footer({ site }: { site: SiteContent }) {
   const website = site.website ? parseWebsite(site.website) : null;
   const instagram = site.instagram.replace(/^@/, "");
-  if (site.address) items.push(<span key="address">{site.address}</span>);
-  if (site.phone) items.push(<span key="phone">{site.phone}</span>);
-  if (site.email) items.push(<a key="email" href={`mailto:${site.email}`} className="underline">{site.email}</a>);
-  if (website) {
-    items.push(
-      <a key="website" href={website.href} target="_blank" rel="noopener noreferrer" className="underline">
-        {website.hostname.replace(/^www\./, "")}
-      </a>,
-    );
-  }
-  if (instagram) {
-    items.push(
-      <a key="instagram" href={`https://instagram.com/${encodeURIComponent(instagram)}`} target="_blank" rel="noopener noreferrer" className="underline">
-        @{instagram}
-      </a>,
-    );
-  }
-  if (items.length === 0) return null;
+  const hasContact = Boolean(site.address || site.phone || site.email || website || instagram);
+  const icon = "size-4";
   return (
-    <footer id="contacto" className="mt-auto flex flex-wrap gap-x-5 gap-y-1 border-t border-[var(--site-line)] px-5 py-4 text-xs text-[var(--site-muted)]">
-      {items}
+    <footer id="contacto" className="mt-auto scroll-mt-24 border-t border-[var(--site-line)] bg-[var(--site-surface)]">
+      <div className={`${WRAP} grid gap-8 py-10 @3xl:grid-cols-2`}>
+        <div className="min-w-0">
+          <Brand site={site} footer />
+          {site.tagline && <p className="mt-3 max-w-md text-[var(--site-muted)]">{site.tagline}</p>}
+        </div>
+        {hasContact && (
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold uppercase tracking-[0.14em]">Contacto</h2>
+            <ul className="mt-3 grid gap-2 text-[var(--site-muted)]">
+              {site.address && <FooterLine icon={<MapPin className={icon} aria-hidden />}>{site.address}</FooterLine>}
+              {site.phone && <FooterLine icon={<Phone className={icon} aria-hidden />}>{site.phone}</FooterLine>}
+              {site.email && <FooterLine icon={<Mail className={icon} aria-hidden />}><a href={`mailto:${site.email}`} className="hover:underline">{site.email}</a></FooterLine>}
+              {website && <FooterLine icon={<Globe className={icon} aria-hidden />}><a href={website.href} target="_blank" rel="noopener noreferrer" className="hover:underline">{website.hostname.replace(/^www\./, "")}</a></FooterLine>}
+              {instagram && <FooterLine icon={<AtSign className={icon} aria-hidden />}><a href={`https://instagram.com/${encodeURIComponent(instagram)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">{instagram}</a></FooterLine>}
+            </ul>
+          </div>
+        )}
+      </div>
     </footer>
   );
 }
@@ -236,14 +330,22 @@ export function PublicSite({ site, events, className = "" }: Props & { className
   const hasContact = Boolean(site.address || site.phone || site.email || site.website || site.instagram);
   return (
     <div style={themeStyle(site)} className={`@container flex flex-col font-sans ${className}`}>
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 px-5 py-3 text-xs">
+      <header className="sticky top-0 z-10 bg-[var(--site-surface)] shadow-sm">
+        <div className={`${WRAP} flex min-h-20 items-center justify-between gap-4 py-3`}>
           <Brand site={site} />
-          <span className="shrink-0 text-[var(--site-muted)]">Eventos{hasContact ? " · Contacto" : ""}</span>
-        </header>
-        <Template site={site} events={events} />
-        <Contact site={site} />
-      </div>
+          <nav aria-label="Secciones" className="flex shrink-0 items-center gap-5 text-[15px] font-medium @3xl:gap-8 @3xl:text-lg">
+            <a href="#eventos" className="hover:underline">Eventos</a>
+            {hasContact && <a href="#contacto" className="hover:underline">Contacto</a>}
+          </nav>
+        </div>
+        <div
+          aria-hidden
+          className="h-1.5"
+          style={{ background: "linear-gradient(90deg, var(--site-accent), color-mix(in srgb, var(--site-accent) 55%, #ffffff))" }}
+        />
+      </header>
+      <Template site={site} events={events} />
+      <Footer site={site} />
     </div>
   );
 }

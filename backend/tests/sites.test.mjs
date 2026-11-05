@@ -136,6 +136,9 @@ test("rechaza valores peligrosos o inválidos", async () => {
     { logo: "data:image/svg+xml;base64,PHN2Zz4=" },
     { logo: "https://otro.sitio/logo.png" },
     { logo: `data:image/png;base64,${"A".repeat(600 * 1024)}` },
+    { cover: "data:image/svg+xml;base64,PHN2Zz4=" },
+    { cover: "https://otro.sitio/portada.jpg" },
+    { cover: `data:image/jpeg;base64,${"A".repeat(1300 * 1024)}` },
     { instagram: "no vale/con espacios" },
     { email: "sin-arroba" },
     { displayName: "   " },
@@ -146,6 +149,18 @@ test("rechaza valores peligrosos o inválidos", async () => {
   }
   await saveSiteDraft(db, tenant, site({ logo: PNG }));
   assert.equal((await getSiteForEditing(db, tenant)).draft.logo, PNG);
+});
+
+test("un sitio guardado antes de existir la portada sigue funcionando", async () => {
+  const fresh = await createTenant();
+  await publishSite(db, fresh, site());
+  await db.query(
+    "update sites set draft = draft - 'cover', published = published - 'cover' where organization_id = $1",
+    [fresh.organization.id],
+  );
+  assert.equal((await getSiteForEditing(db, fresh)).draft.cover, "");
+  assert.equal((await getSiteForEditing(db, fresh)).published.cover, "");
+  assert.equal((await getPublicSite(db, fresh.organization.slug)).content.cover, "");
 });
 
 test("una plantilla, fondo o tipografía desconocidos caen en el valor por defecto", async () => {
