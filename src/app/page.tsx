@@ -85,13 +85,13 @@ export default function Home() {
             </nav>
             <div className="flex items-center gap-3">
               <SegmentSwitch current="boliche" tone="light" />
-              {/* Al pasar el cursor, se asoma la cabeza del búho desde el fondo del botón (solo en compu) */}
+              {/* Al pasar el cursor, el búho se asoma por detrás del texto, de derecha a izquierda (solo en compu) */}
               <a
                 href={demoHref}
-                className="asoma relative hidden overflow-hidden rounded-full border border-tinta/20 px-4 py-2 text-sm font-medium transition-all duration-300 hover:bg-tinta hover:pr-12 hover:text-white sm:inline-flex"
+                className="asoma relative hidden overflow-hidden rounded-full border border-tinta/20 px-4 py-2 text-sm font-medium transition-colors duration-300 hover:bg-tinta hover:text-white sm:inline-flex"
               >
-                Pedir demo
-                <span aria-hidden className="buho-asoma pointer-events-none absolute bottom-0 right-3 block h-9 w-[26px] bg-white" />
+                <span aria-hidden className="buho-asoma pointer-events-none absolute -top-1 right-1 block h-16 w-[46px] bg-white/25" />
+                <span className="relative z-10">Pedir demo</span>
               </a>
             </div>
           </header>
