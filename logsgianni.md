@@ -9,6 +9,13 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Web pública del cliente (plantillas de Lorenzo) más prolija**, en `src/components/public-site.tsx`:
+  - Header: la marca es clickeable (vuelve al inicio), botón "Entradas" con el color del cliente,
+    fondo semitransparente con desenfoque y se sacó la franja de color de abajo (con colores claros parecía una línea gris).
+  - Títulos de sección más grandes con una barrita del color del cliente; más aire entre secciones;
+    el aviso de "sin fechas" pasó a recuadro punteado.
+  - Footer: franja final con "© año + nombre" y **"Tecnología de [logo Nightowl]"** que lleva a www.palcotickets.com.
+  Afecta a las 3 plantillas y a la vista previa del editor de Mi página.
 - **Tamaño del logo editable**: en la animación del editor (pestaña Textos) el cliente sube su logo y lo agranda
   con un deslizador "Tamaño"; en la vista previa el logo crece en vivo. Especificado para "Mi página" en
   `docs/dashboard.md` (3.1, Identidad). Archivo: `src/components/site-builder.tsx`.

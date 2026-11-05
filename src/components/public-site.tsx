@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { AtSign, CalendarDays, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { Logo } from "@/components/logo";
+import { site as nightowl } from "@/lib/site";
 
 // Las tres plantillas de la página pública. El mismo componente pinta la página real y la
 // vista previa del editor, por eso los cortes son por ancho del contenedor y no de la pantalla.
@@ -84,6 +86,15 @@ const heroCase = (site: SiteContent) => (site.titleFont === "moderna" ? "upperca
 
 const WRAP = "mx-auto w-full max-w-6xl px-5 @3xl:px-8";
 
+function SectionTitle({ site, children }: { site: SiteContent; children: ReactNode }) {
+  return (
+    <h2 className={`flex items-center gap-3 text-2xl uppercase tracking-tight @3xl:text-3xl ${titleFont(site)}`}>
+      <span aria-hidden className="h-[0.9em] w-1.5 shrink-0 rounded-full bg-[var(--site-accent-text)]" />
+      {children}
+    </h2>
+  );
+}
+
 type Props = { site: SiteContent; events: SiteEvent[] };
 
 // Todavía no se venden entradas desde la página: se avisa en lugar de mostrar un botón que no hace nada.
@@ -141,11 +152,13 @@ function EventCard({ site, event, index }: { site: SiteContent; event: SiteEvent
 
 function EventSection({ site, events, title }: Props & { title: string }) {
   return (
-    <section id="eventos" className={`${WRAP} scroll-mt-24 py-10 @3xl:py-14`}>
-      <h2 className={`mb-6 text-xl uppercase tracking-tight @3xl:text-2xl ${titleFont(site)}`}>{title}</h2>
+    <section id="eventos" className={`${WRAP} scroll-mt-24 py-12 @3xl:py-20`}>
+      <div className="mb-7"><SectionTitle site={site}>{title}</SectionTitle></div>
       {events.length === 0 ? (
-        <div className="flex flex-col items-center rounded-xl bg-[var(--site-surface)] px-6 py-14 text-center [box-shadow:var(--site-shadow)]">
-          <CalendarDays className="size-9 text-[var(--site-accent-text)]" aria-hidden />
+        <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--site-line)] px-6 py-14 text-center">
+          <span className="flex size-14 items-center justify-center rounded-full bg-[var(--site-surface)] [box-shadow:var(--site-shadow)]">
+            <CalendarDays className="size-7 text-[var(--site-accent-text)]" aria-hidden />
+          </span>
           <p className="mt-3 text-lg font-semibold">Estamos preparando las próximas fechas</p>
           <p className="mt-1 text-[var(--site-muted)]">Muy pronto vas a poder ver los eventos y sacar tus entradas acá.</p>
         </div>
@@ -162,9 +175,9 @@ function AboutSection({ site }: { site: SiteContent }) {
   if (!site.about) return null;
   return (
     <section className="border-t border-[var(--site-line)] bg-[var(--site-surface)]">
-      <div className={`${WRAP} py-10 @3xl:py-14`}>
-        <h2 className={`text-xl uppercase tracking-tight @3xl:text-2xl ${titleFont(site)}`}>Sobre {site.displayName}</h2>
-        <p className="mt-4 max-w-3xl whitespace-pre-line text-lg leading-relaxed text-[var(--site-muted)]">{site.about}</p>
+      <div className={`${WRAP} py-12 @3xl:py-20`}>
+        <SectionTitle site={site}>Sobre {site.displayName}</SectionTitle>
+        <p className="mt-5 max-w-3xl whitespace-pre-line text-lg leading-relaxed text-[var(--site-muted)]">{site.about}</p>
       </div>
     </section>
   );
@@ -286,8 +299,14 @@ function parseWebsite(value: string) {
 
 function Brand({ site, footer = false }: { site: SiteContent; footer?: boolean }) {
   if (site.logo) {
-    // eslint-disable-next-line @next/next/no-img-element -- el logo es una data URL guardada con el sitio.
-    return <img src={site.logo} alt={site.displayName} className="h-12 w-auto max-w-56 object-contain" />;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- el logo es una data URL guardada con el sitio.
+      <img
+        src={site.logo}
+        alt={site.displayName}
+        className={`${footer ? "h-12" : "h-10 @3xl:h-12"} w-auto max-w-56 object-contain`}
+      />
+    );
   }
   return <span className={`${footer ? "text-xl" : "text-2xl"} ${titleFont(site)}`}>{site.displayName}</span>;
 }
@@ -303,7 +322,7 @@ function Footer({ site }: { site: SiteContent }) {
   const icon = "size-4";
   return (
     <footer id="contacto" className="mt-auto scroll-mt-24 border-t border-[var(--site-line)] bg-[var(--site-surface)]">
-      <div className={`${WRAP} grid gap-8 py-10 @3xl:grid-cols-2`}>
+      <div className={`${WRAP} grid gap-8 py-12 @3xl:grid-cols-2`}>
         <div className="min-w-0">
           <Brand site={site} footer />
           {site.tagline && <p className="mt-3 max-w-md text-[var(--site-muted)]">{site.tagline}</p>}
@@ -321,6 +340,23 @@ function Footer({ site }: { site: SiteContent }) {
           </div>
         )}
       </div>
+      <div className="border-t border-[var(--site-line)]">
+        <div className={`${WRAP} flex flex-wrap items-center justify-between gap-3 py-5 text-sm text-[var(--site-muted)]`}>
+          <p>
+            © {new Date().getFullYear()} {site.displayName}
+          </p>
+          {/* Crédito chico de la plataforma: lleva a la web de Nightowl */}
+          <a
+            href={nightowl.url}
+            target="_blank"
+            rel="noopener"
+            className="flex items-center gap-2 opacity-80 transition hover:opacity-100"
+          >
+            Tecnología de
+            <Logo className="h-4" color="var(--site-fg)" />
+          </a>
+        </div>
+      </div>
     </footer>
   );
 }
@@ -329,20 +365,31 @@ export function PublicSite({ site, events, className = "" }: Props & { className
   const Template = TEMPLATES[site.template];
   const hasContact = Boolean(site.address || site.phone || site.email || site.website || site.instagram);
   return (
-    <div style={themeStyle(site)} className={`@container flex flex-col font-sans ${className}`}>
-      <header className="sticky top-0 z-10 bg-[var(--site-surface)] shadow-sm">
-        <div className={`${WRAP} flex min-h-20 items-center justify-between gap-4 py-3`}>
-          <Brand site={site} />
-          <nav aria-label="Secciones" className="flex shrink-0 items-center gap-5 text-[15px] font-medium @3xl:gap-8 @3xl:text-lg">
-            <a href="#eventos" className="hover:underline">Eventos</a>
-            {hasContact && <a href="#contacto" className="hover:underline">Contacto</a>}
+    <div id="inicio" style={themeStyle(site)} className={`@container flex flex-col font-sans ${className}`}>
+      <header className="sticky top-0 z-10 border-b border-[var(--site-line)] bg-[color-mix(in_srgb,var(--site-surface)_88%,transparent)] backdrop-blur-md">
+        <div className={`${WRAP} flex min-h-16 items-center justify-between gap-4 py-3 @3xl:min-h-20`}>
+          {/* La marca lleva al principio de la página */}
+          <a href="#inicio" aria-label={`${site.displayName}, inicio`} className="min-w-0 transition hover:opacity-80">
+            <Brand site={site} />
+          </a>
+          <nav aria-label="Secciones" className="flex shrink-0 items-center gap-1 text-[15px] font-medium @3xl:gap-2">
+            <a href="#eventos" className="hidden rounded-full px-4 py-2 transition hover:bg-[var(--site-line)] @md:block">
+              Eventos
+            </a>
+            {hasContact && (
+              <a href="#contacto" className="hidden rounded-full px-4 py-2 transition hover:bg-[var(--site-line)] @md:block">
+                Contacto
+              </a>
+            )}
+            <a
+              href="#eventos"
+              className="ml-1 rounded-full px-5 py-2.5 text-sm font-bold transition hover:opacity-90"
+              style={{ background: "var(--site-accent)", color: "var(--site-on-accent)" }}
+            >
+              Entradas
+            </a>
           </nav>
         </div>
-        <div
-          aria-hidden
-          className="h-1.5"
-          style={{ background: "linear-gradient(90deg, var(--site-accent), color-mix(in srgb, var(--site-accent) 55%, #ffffff))" }}
-        />
       </header>
       <Template site={site} events={events} />
       <Footer site={site} />
