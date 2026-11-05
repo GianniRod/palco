@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireTenant } from "@/lib/dashboard/session";
 import { Card, Loading, PageTitle } from "../_components/shell";
 
@@ -23,8 +24,11 @@ async function Content() {
         </dl>
       </Card>
       <p className="mt-6 text-sm text-palco-600">
-        Estamos habilitando las demás secciones del panel: tu página, salas, eventos, pagos, ventas y control de
-        acceso.
+        Empezá por{" "}
+        <Link href="/panel/mi-pagina" className="underline">
+          armar tu página
+        </Link>
+        . Estamos habilitando las demás secciones: salas, eventos, pagos, ventas y control de acceso.
       </p>
     </>
   );
