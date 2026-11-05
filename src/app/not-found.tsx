@@ -6,17 +6,17 @@ import { Logo } from "@/components/logo";
 export default function NotFound() {
   return (
     <div className="minimal flex min-h-dvh flex-col bg-white text-tinta">
-      <header className="mx-auto flex w-full max-w-6xl items-center px-6 pt-8">
+      <header className="mx-auto flex w-full max-w-6xl items-center px-6 pt-6">
         <Link href="/" aria-label="Nightowl, inicio">
           <Logo className="h-7" color="var(--color-tinta)" />
         </Link>
       </header>
 
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-6 text-center">
         {/* 4 🦉 4: el búho hace de cero y ladea la cabeza buscando la página */}
         <p
           aria-label="404"
-          className="subir flex items-center gap-[0.12em] text-[clamp(6rem,22vw,12rem)] font-semibold leading-none tracking-tight"
+          className="subir flex items-center gap-[0.12em] text-[clamp(4.5rem,min(22vw,17vh),11rem)] font-semibold leading-none tracking-tight"
         >
           <span aria-hidden>4</span>
           <span
@@ -30,17 +30,17 @@ export default function NotFound() {
           <span aria-hidden>4</span>
         </p>
 
-        <h1 className="subir mt-8 text-3xl font-semibold tracking-tight sm:text-4xl" style={{ animationDelay: "0.1s" }}>
+        <h1 className="subir mt-5 text-3xl font-semibold tracking-tight sm:text-4xl" style={{ animationDelay: "0.1s" }}>
           Esta fiesta no existe.
         </h1>
-        <p className="subir mt-4 max-w-md text-lg leading-relaxed text-tinta/55" style={{ animationDelay: "0.2s" }}>
+        <p className="subir mt-3 max-w-md text-base leading-relaxed sm:text-lg text-tinta/55" style={{ animationDelay: "0.2s" }}>
           La página que buscás se fue del boliche antes de tiempo. Puede que el link esté mal o que el evento
           ya haya terminado.
         </p>
 
         {/* Entrada rechazada en la puerta */}
         <div
-          className="subir mt-10 flex w-full max-w-sm drop-shadow-[0_20px_30px_rgba(0,0,0,0.12)]"
+          className="subir mt-6 flex w-full max-w-sm drop-shadow-[0_20px_30px_rgba(0,0,0,0.12)]"
           style={{ animationDelay: "0.3s" }}
           aria-hidden
         >
@@ -62,7 +62,7 @@ export default function NotFound() {
           </div>
         </div>
 
-        <div className="subir mt-10 flex flex-wrap justify-center gap-3" style={{ animationDelay: "0.4s" }}>
+        <div className="subir mt-6 flex flex-wrap justify-center gap-3" style={{ animationDelay: "0.4s" }}>
           <Link
             href="/"
             className="group inline-flex items-center gap-2 rounded-full bg-tinta px-6 py-3 font-medium text-white transition hover:bg-tinta/85"
