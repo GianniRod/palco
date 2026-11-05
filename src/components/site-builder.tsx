@@ -1,7 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { CalendarDays, Check, ChevronLeft, ChevronRight, Loader2, MousePointer2, RotateCcw } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  Loader2,
+  MousePointer2,
+  PenTool,
+  RotateCcw,
+} from "lucide-react";
 import { useInView, useReducedMotion } from "./hooks";
 
 /* ------------------------------------------------------------------ */
@@ -56,8 +66,10 @@ type Scenario = {
   others: { t: string; d: string }[]; // otras fechas en la plantilla Cartelera
   /** Calendario desplegable para elegir la fecha (semana empieza el lunes: 0 = lunes). */
   cal: { month: string; firstWeekday: number; days: number; pick: number; time: string };
-  /** Teatro: primero se arma la forma de la sala arrastrando la esquina. */
-  room?: boolean;
+  /** Sector cuya forma se edita con la pluma (teatro: la platea se abre en abanico). */
+  penTarget?: string;
+  /** Imagen del evento (fondo CSS que simula el flyer que sube el cliente). */
+  flyer: string;
   /** Teatro: sectores a los que se les cargan butacas (cantidad y columnas del dibujo). */
   seatPlan?: { id: string; count: number; cols: number }[];
 };
@@ -106,6 +118,8 @@ const scenarios: Record<ScenarioId, Scenario> = {
       { t: "Próxima fiesta", d: "Octubre" },
     ],
     cal: { month: "Septiembre 2026", firstWeekday: 1, days: 30, pick: 19, time: "00:30" },
+    flyer:
+      "radial-gradient(circle at 22% 28%, rgba(255,255,255,0.75), transparent 30%), radial-gradient(circle at 78% 62%, rgba(190,190,200,0.55), transparent 38%), conic-gradient(from 200deg at 50% 110%, transparent 0deg, rgba(255,255,255,0.18) 20deg, transparent 40deg, rgba(255,255,255,0.12) 70deg, transparent 90deg), linear-gradient(135deg, #0b0b0d, #3f3f46)",
   },
   teatro: {
     venue: "Tu Teatro",
@@ -148,7 +162,9 @@ const scenarios: Record<ScenarioId, Scenario> = {
       { t: "Próximo estreno", d: "Abril" },
     ],
     cal: { month: "Marzo 2026", firstWeekday: 6, days: 31, pick: 14, time: "21:00" },
-    room: true,
+    penTarget: "platea",
+    flyer:
+      "radial-gradient(ellipse at 50% -10%, rgba(255,214,140,0.85), transparent 55%), radial-gradient(circle at 15% 85%, rgba(217,178,111,0.35), transparent 40%), linear-gradient(160deg, #2a0610, #7a1428)",
     seatPlan: [
       { id: "platea", count: 120, cols: 15 },
       { id: "pullman", count: 48, cols: 16 },
@@ -182,9 +198,11 @@ type State = {
   title: string;
   date: string;
   calendar: boolean; // calendario de la fecha desplegado
-  room: number; // 0 = sala chica, 1 = sala armada (solo teatro)
+  pen: boolean; // herramienta pluma activa
+  shape: number; // 0 = sector rectangular, 1 = forma editada con la pluma
+  image: boolean; // imagen del evento cargada
   seats: Record<string, number>; // butacas cargadas por sector
-  seatEdit: string | null; // sector al que se le están cargando butacas
+  seatEdit: string | null; // sector abierto para ver/cargar butacas
   seatValue: string;
   placed: string[];
   prices: Record<string, string>;
@@ -207,11 +225,13 @@ function initialState(sc: Scenario): State {
     title: "",
     date: "",
     calendar: false,
-    room: sc.room ? 0 : 1,
+    pen: false,
+    shape: 0,
+    image: false,
     seats: {},
     seatEdit: null,
     seatValue: "",
-    placed: sc.room ? [] : ["escenario"],
+    placed: ["escenario"],
     prices: {},
     cursor: null,
     focus: null,
@@ -275,18 +295,11 @@ function buildScript(sc: Scenario): Step[] {
   steps.push(...tap("in-date", (s) => ({ ...s, focus: "in-date", calendar: true }), 500));
   steps.push(...tap(`day-${sc.cal.pick}`, (s) => ({ ...s, date: sc.date }), 700));
   steps.push({ wait: 650, apply: (s) => ({ ...s, calendar: false, focus: null }) });
+  steps.push(...tap("in-image", (s) => ({ ...s, image: true }), 600));
+  steps.push({ wait: 700, apply: (s) => s });
 
-  // 4. Mapa: (teatro) armar la forma de la sala, después arrastrar sectores
+  // 4. Mapa: arrastrar sectores
   steps.push(...openTab("mapa"));
-  if (sc.room) {
-    steps.push(move("room-handle", 600));
-    steps.push({ wait: 650, apply: (s) => ({ ...s, pressed: true }) });
-    for (let k = 1; k <= 10; k++) {
-      steps.push({ wait: 70, apply: (s) => ({ ...s, room: k / 10 }) });
-    }
-    steps.push({ wait: 350, apply: (s) => ({ ...s, pressed: false }) });
-    steps.push({ wait: 450, apply: (s) => ({ ...s, placed: ["escenario"] }) });
-  }
   for (const [id, label] of sc.drops) {
     const group = sc.sectors[id].group!;
     steps.push(move(`pal-${group}`, 600));
@@ -298,14 +311,25 @@ function buildScript(sc: Scenario): Step[] {
     });
   }
 
-  // Teatro: elegir un sector, cargar la cantidad de butacas y se dibujan solas
+  // Teatro: con la pluma se le cambia la forma a un sector (la platea se abre en abanico)
+  if (sc.penTarget) {
+    steps.push(...tap("tool-pen", (s) => ({ ...s, pen: true }), 600));
+    steps.push(move("pen-handle", 650));
+    steps.push({ wait: 650, apply: (s) => ({ ...s, pressed: true }) });
+    for (let k = 1; k <= 8; k++) {
+      steps.push({ wait: 75, apply: (s) => ({ ...s, shape: k / 8 }) });
+    }
+    steps.push({ wait: 350, apply: (s) => ({ ...s, pressed: false }) });
+    steps.push(...tap("tool-select", (s) => ({ ...s, pen: false }), 500));
+  }
+
+  // Teatro: al tocar un sector se abre, se carga la cantidad de butacas y aparecen solas
   for (const plan of sc.seatPlan ?? []) {
     steps.push(...tap(`drop-${plan.id}`, (s) => ({ ...s, seatEdit: plan.id, seatValue: "" }), 650));
     steps.push(...type(String(plan.count), (s, v) => ({ ...s, seatValue: v }), 130));
-    steps.push(
-      ...tap("seat-ok", (s) => ({ ...s, seatEdit: null, seats: { ...s.seats, [plan.id]: plan.count } }), 450),
-    );
-    steps.push({ wait: 1300, apply: (s) => s });
+    steps.push(...tap("seat-ok", (s) => ({ ...s, seats: { ...s.seats, [plan.id]: plan.count } }), 450));
+    steps.push({ wait: 1900, apply: (s) => ({ ...s, seatEdit: null }) });
+    steps.push({ wait: 500, apply: (s) => s });
   }
 
   // 5. Precios
@@ -411,7 +435,7 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [s.cursor, s.tab, s.room, s.seatEdit]);
+  }, [s.cursor, s.tab, s.shape, s.pen, s.seatEdit]);
 
   return (
     <ScenarioContext.Provider value={sc}>
@@ -777,6 +801,33 @@ function PanelContent({ s }: { s: State }) {
         {s.calendar && <DatePicker s={s} />}
       </div>
       <div>
+        <Label>Imagen del evento</Label>
+        <div
+          data-t="in-image"
+          className={`flex h-14 items-center gap-3 rounded-lg border px-2 text-xs transition ${
+            s.image ? "border-tinta/15 bg-white text-tinta/70" : "border-dashed border-tinta/20 text-tinta/50"
+          }`}
+        >
+          {s.image ? (
+            <>
+              <span
+                className="h-10 w-16 shrink-0 rounded-md [animation:subir_0.4s_ease-out_both]"
+                style={{ background: scn.flyer }}
+              />
+              <span className="flex-1 truncate">flyer-evento.jpg</span>
+              <Check className="h-4 w-4 text-emerald-600" />
+            </>
+          ) : (
+            <>
+              <span className="flex h-10 w-16 shrink-0 items-center justify-center rounded-md bg-tinta/5">
+                <ImagePlus className="h-4 w-4 text-tinta/40" />
+              </span>
+              Subí el flyer o una foto
+            </>
+          )}
+        </div>
+      </div>
+      <div>
         <Label>Logo</Label>
         <div className="flex h-9 items-center gap-2 rounded-lg border border-dashed border-tinta/20 px-3 text-xs text-tinta/50">
           <span className="h-5 w-5 rounded bg-tinta/10" /> tu-logo.png
@@ -786,10 +837,13 @@ function PanelContent({ s }: { s: State }) {
   );
 }
 
-/** Rectángulo de la sala según cuánto se arrastró la esquina (0 = chica, 1 = armada). */
-function roomRect(t: number) {
-  const lerp = (a: number, b: number) => a + (b - a) * t;
-  return { left: lerp(24, 1.5), top: lerp(26, 1.5), width: lerp(40, 97), height: lerp(36, 97) };
+/** Forma de un sector editado con la pluma: los vértices de arriba se acercan (abanico). */
+function shapeInset(shape: number) {
+  return shape * 16; // % que se corre cada vértice superior
+}
+function shapePoints(shape: number) {
+  const i = shapeInset(shape);
+  return `${i},0 ${100 - i},0 100,100 0,100`;
 }
 
 /** Butacas dibujadas como una grilla de puntos que aparecen de a una. */
@@ -805,7 +859,7 @@ function SeatDots({
   className?: string;
 }) {
   return (
-    <span className={`grid gap-[2px] p-1 ${className}`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+    <span className={`grid gap-[3px] p-1 ${className}`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
       {Array.from({ length: count }, (_, i) => (
         <span
           key={i}
@@ -820,27 +874,33 @@ function SeatDots({
 function PanelMap({ s }: { s: State }) {
   const scn = useScenario();
   const { sectors, palette } = scn;
-  const room = roomRect(s.room);
   const editing = s.seatEdit ? sectors[s.seatEdit] : null;
   const colsOf = (id: string) => scn.seatPlan?.find((p) => p.id === id)?.cols ?? 12;
+  const inset = shapeInset(s.shape);
   return (
     <div>
-      <Label>{scn.room ? "Armá tu sala" : "Diseñá tu plano"}</Label>
-      <div className="relative aspect-[4/3] rounded-lg border border-tinta/15 bg-white bg-[radial-gradient(rgba(31,3,10,0.12)_1px,transparent_1px)] [background-size:12px_12px]">
-        {scn.room && (
-          <span
-            className="absolute rounded-md border-2 border-tinta/35 bg-papel/40"
-            style={{ left: `${room.left}%`, top: `${room.top}%`, width: `${room.width}%`, height: `${room.height}%` }}
-          >
-            {s.room < 1 && (
-              <span className="absolute left-1.5 top-1 text-[9px] font-medium text-tinta/45">Tu sala</span>
-            )}
+      <div className="mb-2 flex items-center justify-between">
+        <Label>Diseñá tu plano</Label>
+        {scn.penTarget && (
+          <div className="-mt-2 flex gap-0.5 rounded-md bg-tinta/5 p-0.5">
             <span
-              data-t="room-handle"
-              className="absolute -bottom-1.5 -right-1.5 h-3 w-3 rounded-sm border-2 border-palco-700 bg-white"
-            />
-          </span>
+              data-t="tool-select"
+              title="Seleccionar"
+              className={`rounded p-1 ${!s.pen ? "bg-white text-tinta shadow-sm" : "text-tinta/45"}`}
+            >
+              <MousePointer2 className="h-3.5 w-3.5" />
+            </span>
+            <span
+              data-t="tool-pen"
+              title="Pluma"
+              className={`rounded p-1 ${s.pen ? "bg-white text-tinta shadow-sm" : "text-tinta/45"}`}
+            >
+              <PenTool className="h-3.5 w-3.5" />
+            </span>
+          </div>
         )}
+      </div>
+      <div className="relative aspect-[4/3] rounded-lg border border-tinta/15 bg-white bg-[radial-gradient(rgba(31,3,10,0.12)_1px,transparent_1px)] [background-size:12px_12px]">
         {Object.keys(sectors).map((id) => {
           const sc = sectors[id];
           const on = s.placed.includes(id);
@@ -865,32 +925,77 @@ function PanelMap({ s }: { s: State }) {
               </span>
             );
           }
+          const shaped = id === scn.penTarget;
           return (
             <span
               key={id}
               data-t={`drop-${id}`}
-              className={`absolute flex items-center justify-center rounded-md border text-[9px] font-medium transition-all duration-300 ${
+              className={`absolute flex items-center justify-center rounded-md text-[9px] font-medium transition-all duration-300 ${
+                shaped ? "" : "border"
+              } ${
                 on
                   ? id === "escenario"
                     ? "border-tinta/30 bg-tinta/80 text-white"
-                    : "scale-100 border-palco-700 bg-palco-700/15 text-palco-800 opacity-100"
+                    : `scale-100 border-palco-700 text-palco-800 opacity-100 ${shaped ? "" : "bg-palco-700/15"}`
                   : "scale-90 border-dashed border-transparent opacity-0"
               }`}
               style={{ left: `${sc.x}%`, top: `${sc.y}%`, width: `${sc.w}%`, height: `${sc.h}%` }}
             >
-              {s.seats[id] ? (
-                <SeatDots count={s.seats[id]} cols={colsOf(id)} color="var(--color-palco-700)" />
-              ) : (
-                <span className={sc.vertical ? "[writing-mode:vertical-rl]" : ""}>{sc.label}</span>
+              {shaped && (
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+                  <polygon
+                    points={shapePoints(s.shape)}
+                    className="fill-palco-700/15 stroke-palco-700"
+                    strokeWidth={1}
+                    vectorEffect="non-scaling-stroke"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               )}
-              {s.seatEdit === id && (
-                <span className="pointer-events-none absolute -inset-1 rounded-lg ring-2 ring-palco-700" />
+              <span className={`relative flex flex-col items-center ${sc.vertical ? "[writing-mode:vertical-rl]" : ""}`}>
+                {sc.label}
+                {s.seats[id] && <span className="text-[8px] font-normal opacity-70">{s.seats[id]} butacas</span>}
+              </span>
+              {shaped && s.pen && on && (
+                <>
+                  {[
+                    { left: `${inset}%`, top: "0%" },
+                    { left: `${100 - inset}%`, top: "0%", t: "pen-handle" },
+                    { left: "100%", top: "100%" },
+                    { left: "0%", top: "100%" },
+                  ].map((v, k) => (
+                    <span
+                      key={k}
+                      data-t={v.t}
+                      className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-[2px] border border-palco-700 bg-white"
+                      style={{ left: v.left, top: v.top }}
+                    />
+                  ))}
+                </>
               )}
             </span>
           );
         })}
+        {editing && s.seatEdit && (
+          <div className="absolute inset-0 z-10 flex flex-col rounded-lg bg-white p-3 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.35)] [animation:subir_0.3s_ease-out_both]">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-semibold text-tinta">{editing.label}</span>
+              <span className="text-tinta/45">
+                {s.seats[s.seatEdit] ? `${s.seats[s.seatEdit]} butacas` : "Sin butacas todavía"}
+              </span>
+            </div>
+            <div className="mt-1 h-1 rounded-full bg-tinta/10" aria-hidden />
+            <div className="flex flex-1 items-center justify-center">
+              {s.seats[s.seatEdit] ? (
+                <SeatDots count={s.seats[s.seatEdit]} cols={colsOf(s.seatEdit)} color="var(--color-palco-700)" />
+              ) : (
+                <span className="text-[11px] text-tinta/35">Cargá la cantidad de butacas</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-      {editing ? (
+      {editing && s.seatEdit && !s.seats[s.seatEdit] ? (
         <div className="mt-3 rounded-lg border border-tinta/10 bg-white p-2.5 shadow-sm [animation:subir_0.25s_ease-out_both]">
           <p className="text-[11px] text-tinta/50">Butacas en {editing.label}</p>
           <div className="mt-1.5 flex items-center gap-2">
@@ -906,7 +1011,7 @@ function PanelMap({ s }: { s: State }) {
       ) : (
         <>
       <p className="mb-1.5 mt-3 text-[11px] text-tinta/45">
-        {scn.seatPlan ? "Arrastrá sectores y tocá uno para cargarle butacas" : "Arrastrá sectores al plano"}
+        {scn.seatPlan ? "Arrastrá sectores y tocá uno para abrirlo y cargarle butacas" : "Arrastrá sectores al plano"}
       </p>
       <div className="flex flex-wrap gap-1.5">
         {palette.map((p) => (
@@ -1041,7 +1146,7 @@ function PriceList({ s, l }: LP) {
 }
 
 function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
-  const { sectors, seatPlan } = useScenario();
+  const { sectors, penTarget } = useScenario();
   return (
     <div
       className={`relative aspect-[4/3] rounded-lg ${className}`}
@@ -1074,6 +1179,9 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
             </span>
           );
         }
+        // En el plano general no se ven las butacas: aparecen al tocar el sector en la web real
+        const fill = id === "escenario" ? l.fg : `color-mix(in srgb, ${l.accent} ${strength}%, transparent)`;
+        const shaped = id === penTarget;
         return (
           <span
             key={id}
@@ -1083,28 +1191,19 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
               top: `${sc.y}%`,
               width: `${sc.w}%`,
               height: `${sc.h}%`,
-              background: id === "escenario" ? l.fg : `color-mix(in srgb, ${l.accent} ${strength}%, transparent)`,
+              background: shaped ? "transparent" : fill,
               color: id === "escenario" ? l.bg : strength >= 80 ? l.onAccent : l.fg,
             }}
           >
-            {s.seats[id] ? (
-              <span className="flex w-full flex-col items-center">
-                {/* Más angosta que el sector para que entren las filas y el nombre abajo */}
-                <SeatDots
-                  count={s.seats[id]}
-                  cols={seatPlan?.find((p) => p.id === id)?.cols ?? 12}
-                  color={strength >= 80 ? l.onAccent : l.fg}
-                  className="w-[62%]"
-                />
-                {/* Solo el nombre: el precio ya está en la lista de al lado */}
-                <span className="text-[8px] leading-none">{sc.label}</span>
-              </span>
-            ) : (
-              <span className={`flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
-                <span>{sc.label}</span>
-                {price && <span className="mt-0.5 font-normal opacity-80">{pesos(price)}</span>}
-              </span>
+            {shaped && (
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+                <polygon points={shapePoints(s.shape)} style={{ fill }} strokeLinejoin="round" />
+              </svg>
             )}
+            <span className={`relative flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
+              <span>{sc.label}</span>
+              {price && <span className="mt-0.5 font-normal opacity-80">{pesos(price)}</span>}
+            </span>
           </span>
         );
       })}
@@ -1120,10 +1219,21 @@ function DateLine({ s, l }: LP) {
   );
 }
 
+/** Fondo del bloque principal: el flyer (con un velo para leer el texto) o el color de la marca. */
+function heroBg(s: State, l: Look, flyer: string) {
+  return s.image
+    ? { background: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), ${flyer}`, color: "#ffffff" }
+    : { background: l.accent, color: l.onAccent };
+}
+
 function LayoutDividida({ s, l }: LP) {
+  const { flyer } = useScenario();
   return (
-    <div className="grid gap-5 px-5 pb-6 pt-3 lg:grid-cols-[1fr_1.1fr]">
+    <div className="grid gap-5 px-5 pb-6 pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <div className="flex flex-col">
+        {s.image && (
+          <div className="mb-4 aspect-[16/6] rounded-lg [animation:subir_0.5s_ease-out_both]" style={{ background: flyer }} />
+        )}
         <DateLine s={s} l={l} />
         <Title s={s} l={l} className="mt-2 min-h-[2.2em] text-3xl" />
         <div className="mt-5">
@@ -1137,17 +1247,19 @@ function LayoutDividida({ s, l }: LP) {
 }
 
 function LayoutPortada({ s, l }: LP) {
+  const { flyer } = useScenario();
+  const hero = heroBg(s, l, flyer);
   return (
     <div className="pb-6">
       <div
         className="mx-5 flex flex-col items-center rounded-xl px-6 py-7 text-center transition-colors duration-500"
-        style={{ background: l.accent, color: l.onAccent }}
+        style={hero}
       >
         <p className="text-[11px] uppercase tracking-[0.2em] opacity-75">{s.date || "Fecha a confirmar"}</p>
         <Title s={s} l={l} className="mt-2 text-4xl" />
         <span
           className="mt-4 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-500"
-          style={{ background: l.onAccent, color: l.accent }}
+          style={s.image ? { background: l.accent, color: l.onAccent } : { background: l.onAccent, color: l.accent }}
         >
           Comprar entradas
         </span>
@@ -1161,7 +1273,7 @@ function LayoutPortada({ s, l }: LP) {
 }
 
 function LayoutCartelera({ s, l }: LP) {
-  const { others } = useScenario();
+  const { others, flyer } = useScenario();
   return (
     <div className="px-5 pb-6 pt-1">
       <p className="text-[11px] uppercase tracking-[0.2em]" style={{ color: l.muted }}>
@@ -1170,7 +1282,7 @@ function LayoutCartelera({ s, l }: LP) {
       <div className="mt-2 grid grid-cols-3 gap-3">
         <div
           className="flex aspect-[4/3] flex-col justify-end rounded-lg p-3 transition-colors duration-500"
-          style={{ background: l.accent, color: l.onAccent }}
+          style={heroBg(s, l, flyer)}
         >
           <p className="text-[9px] uppercase tracking-widest opacity-75">
             {s.date ? s.date.split("·")[0] : "Fecha"}
