@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireTenant } from "@/lib/dashboard/session";
 import { Card, Loading, PageTitle } from "../_components/shell";
 
@@ -17,14 +18,17 @@ async function Content() {
             <dd className="font-medium text-palco-900">{organization.slug}.palcotickets.com</dd>
           </div>
           <div>
-            <dt className="text-palco-500">Comisión de Palco por venta</dt>
+            <dt className="text-palco-500">Comisión de Nightowl por venta</dt>
             <dd className="font-medium text-palco-900">{Number(organization.commissionPercent)}%</dd>
           </div>
         </dl>
       </Card>
       <p className="mt-6 text-sm text-palco-600">
-        Estamos habilitando las demás secciones del panel: tu página, salas, eventos, pagos, ventas y control de
-        acceso.
+        Empezá por{" "}
+        <Link href="/panel/mi-pagina" className="underline">
+          armar tu página
+        </Link>
+        . Estamos habilitando las demás secciones: salas, eventos, pagos, ventas y control de acceso.
       </p>
     </>
   );

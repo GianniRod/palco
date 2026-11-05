@@ -22,6 +22,8 @@ const ACTION_LABELS: Record<string, string> = {
   "impersonation.stopped": "Salió de ver como el cliente",
   "password.changed": "Cambió su contraseña",
   "password.reset": "Recuperó su contraseña por email",
+  "site.published": "Publicó la página",
+  "site.unpublished": "Despublicó la página",
 };
 
 function describe(details: Record<string, unknown>) {
