@@ -23,7 +23,18 @@ export type SiteContent = {
   instagram: string;
 };
 
-export type SiteEvent = { id: string; title: string; startsAt: Date | string; venue: string };
+export type SiteEvent = {
+  id: string;
+  title: string;
+  startsAt: Date | string;
+  venue: string;
+  image?: string | null;
+  moreDates?: number;
+  fromPrice?: number | null;
+};
+
+const priceFormat = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+export const formatPrice = (price: number) => priceFormat.format(price);
 
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 const longDate = new Intl.DateTimeFormat("es-AR", {
@@ -95,26 +106,39 @@ function SectionTitle({ site, children }: { site: SiteContent; children: ReactNo
   );
 }
 
-type Props = { site: SiteContent; events: SiteEvent[] };
+type Props = { site: SiteContent; events: SiteEvent[]; linkEvents?: boolean };
 
-// Todavía no se venden entradas desde la página: se avisa en lugar de mostrar un botón que no hace nada.
-function SoonButton({ size = "md", inverted = false }: { size?: "sm" | "md"; inverted?: boolean }) {
-  return (
-    <span
-      className={`inline-block rounded-md font-bold ${size === "sm" ? "px-3.5 py-2 text-sm" : "px-6 py-3 text-base"}`}
-      style={
-        inverted
-          ? { background: "var(--site-on-accent)", color: "var(--site-accent)" }
-          : { background: "var(--site-accent)", color: "var(--site-on-accent)" }
-      }
-    >
-      {size === "sm" ? "Muy pronto" : "Entradas muy pronto"}
-    </span>
+// Lleva a la página del evento. En la vista previa del editor es solo un dibujo.
+function EventButton({
+  event,
+  link,
+  size = "md",
+  inverted = false,
+}: {
+  event: SiteEvent;
+  link?: boolean;
+  size?: "sm" | "md";
+  inverted?: boolean;
+}) {
+  const className = `inline-block rounded-md font-bold ${size === "sm" ? "px-3.5 py-2 text-sm" : "px-6 py-3 text-base"}`;
+  const style = inverted
+    ? { background: "var(--site-on-accent)", color: "var(--site-accent)" }
+    : { background: "var(--site-accent)", color: "var(--site-on-accent)" };
+  return link ? (
+    <a href={`/eventos/${event.id}`} aria-label={`Ver ${event.title}`} className={className} style={style}>Ver evento</a>
+  ) : (
+    <span className={className} style={style}>Ver evento</span>
   );
 }
 
-// Reemplaza al flyer hasta que los eventos tengan imagen propia (etapa 4).
+// El flyer del evento o, si todavía no subieron uno, un afiche con el color de la marca.
 function Poster({ event, index = 0, large = false }: { event: SiteEvent; index?: number; large?: boolean }) {
+  if (event.image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- el flyer se sirve desde nuestra API.
+      <img src={event.image} alt="" className={`w-full object-cover ${large ? "aspect-[4/3] rounded-2xl" : "aspect-[16/9]"}`} />
+    );
+  }
   const date = new Date(event.startsAt);
   const shade = [0, 22, 38][index % 3];
   return (
@@ -136,7 +160,7 @@ function Poster({ event, index = 0, large = false }: { event: SiteEvent; index?:
   );
 }
 
-function EventCard({ site, event, index }: { site: SiteContent; event: SiteEvent; index: number }) {
+function EventCard({ site, event, index, link }: { site: SiteContent; event: SiteEvent; index: number; link?: boolean }) {
   return (
     <li className="flex min-w-0 flex-col overflow-hidden rounded-xl bg-[var(--site-surface)] [box-shadow:var(--site-shadow)]">
       <Poster event={event} index={index} />
@@ -144,13 +168,15 @@ function EventCard({ site, event, index }: { site: SiteContent; event: SiteEvent
         <h3 className={`text-xl leading-snug ${titleFont(site)}`}>{event.title}</h3>
         <p className="mt-1 text-[15px] capitalize text-[var(--site-muted)]">{formatCard(event)}</p>
         <p className="text-[15px] text-[var(--site-muted)]">{event.venue}</p>
-        <div className="mt-4"><SoonButton size="sm" /></div>
+        {Boolean(event.moreDates) && <p className="text-[15px] text-[var(--site-muted)]">Y {event.moreDates} {event.moreDates === 1 ? "fecha más" : "fechas más"}</p>}
+        {typeof event.fromPrice === "number" && <p className="mt-2 font-semibold">Desde {formatPrice(event.fromPrice)}</p>}
+        <div className="mt-4"><EventButton event={event} link={link} size="sm" /></div>
       </div>
     </li>
   );
 }
 
-function EventSection({ site, events, title }: Props & { title: string }) {
+function EventSection({ site, events, title, linkEvents }: Props & { title: string }) {
   return (
     <section id="eventos" className={`${WRAP} scroll-mt-24 py-12 @3xl:py-20`}>
       <div className="mb-7"><SectionTitle site={site}>{title}</SectionTitle></div>
@@ -160,11 +186,11 @@ function EventSection({ site, events, title }: Props & { title: string }) {
             <CalendarDays className="size-7 text-[var(--site-accent-text)]" aria-hidden />
           </span>
           <p className="mt-3 text-lg font-semibold">Estamos preparando las próximas fechas</p>
-          <p className="mt-1 text-[var(--site-muted)]">Muy pronto vas a poder ver los eventos y sacar tus entradas acá.</p>
+          <p className="mt-1 text-[var(--site-muted)]">Muy pronto vas a poder ver los eventos acá.</p>
         </div>
       ) : (
         <ul className="grid gap-6 @xl:grid-cols-2 @4xl:grid-cols-3">
-          {events.map((event, index) => <EventCard key={event.id} site={site} event={event} index={index} />)}
+          {events.map((event, index) => <EventCard key={event.id} site={site} event={event} index={index} link={linkEvents} />)}
         </ul>
       )}
     </section>
@@ -188,7 +214,7 @@ function CoverImage({ site }: { site: SiteContent }) {
   return <img src={site.cover} alt="" className="absolute inset-0 size-full object-cover" />;
 }
 
-function Portada({ site, events }: Props) {
+function Portada({ site, events, linkEvents }: Props) {
   const [next, ...rest] = events;
   const hasCover = Boolean(site.cover);
   return (
@@ -215,16 +241,16 @@ function Portada({ site, events }: Props) {
             {next?.title ?? (site.tagline || site.displayName)}
           </h1>
           {next && site.tagline && <p className="mt-4 max-w-2xl text-lg opacity-90 @3xl:text-xl">{site.tagline}</p>}
-          {next && <div className="mt-6"><SoonButton inverted={!hasCover} /></div>}
+          {next && <div className="mt-6"><EventButton event={next} link={linkEvents} inverted={!hasCover} /></div>}
         </div>
       </section>
-      <EventSection site={site} events={next ? rest : []} title={next ? "Más fechas" : "Próximos eventos"} />
+      {(!next || rest.length > 0) && <EventSection site={site} events={next ? rest : []} title={next ? "Más fechas" : "Próximos eventos"} linkEvents={linkEvents} />}
       <AboutSection site={site} />
     </>
   );
 }
 
-function Dividida({ site, events }: Props) {
+function Dividida({ site, events, linkEvents }: Props) {
   const [next, ...rest] = events;
   return (
     <>
@@ -248,17 +274,17 @@ function Dividida({ site, events }: Props) {
             </h1>
             {next && <p className="mt-4 flex items-center gap-2 text-[var(--site-muted)]"><MapPin className="size-4 shrink-0" aria-hidden />{next.venue}</p>}
             {next && site.tagline && <p className="mt-4 text-lg leading-relaxed text-[var(--site-muted)]">{site.tagline}</p>}
-            {next && <div className="mt-6"><SoonButton /></div>}
+            {next && <div className="mt-6"><EventButton event={next} link={linkEvents} /></div>}
           </div>
         </div>
       </section>
-      <EventSection site={site} events={next ? rest : []} title={next ? "Más fechas" : "Próximos eventos"} />
+      {(!next || rest.length > 0) && <EventSection site={site} events={next ? rest : []} title={next ? "Más fechas" : "Próximos eventos"} linkEvents={linkEvents} />}
       <AboutSection site={site} />
     </>
   );
 }
 
-function Cartelera({ site, events }: Props) {
+function Cartelera({ site, events, linkEvents }: Props) {
   return (
     <>
       {site.cover && (
@@ -279,7 +305,7 @@ function Cartelera({ site, events }: Props) {
           </div>
         </section>
       )}
-      <EventSection site={site} events={events} title="Próximos eventos" />
+      <EventSection site={site} events={events} title="Próximos eventos" linkEvents={linkEvents} />
       <AboutSection site={site} />
     </>
   );
@@ -361,19 +387,30 @@ function Footer({ site }: { site: SiteContent }) {
   );
 }
 
-export function PublicSite({ site, events, className = "" }: Props & { className?: string }) {
-  const Template = TEMPLATES[site.template];
+// Barra superior, tema y pie: lo que comparten la portada del sitio y la página de cada evento.
+export function SiteFrame({
+  site,
+  className = "",
+  homeHref,
+  children,
+}: {
+  site: SiteContent;
+  className?: string;
+  homeHref?: string;
+  children: ReactNode;
+}) {
   const hasContact = Boolean(site.address || site.phone || site.email || site.website || site.instagram);
+  const eventsHref = homeHref ? `${homeHref}#eventos` : "#eventos";
   return (
     <div id="inicio" style={themeStyle(site)} className={`@container flex flex-col font-sans ${className}`}>
       <header className="sticky top-0 z-10 border-b border-[var(--site-line)] bg-[color-mix(in_srgb,var(--site-surface)_88%,transparent)] backdrop-blur-md">
         <div className={`${WRAP} flex min-h-16 items-center justify-between gap-4 py-3 @3xl:min-h-20`}>
           {/* La marca lleva al principio de la página */}
-          <a href="#inicio" aria-label={`${site.displayName}, inicio`} className="min-w-0 transition hover:opacity-80">
+          <a href={homeHref ?? "#inicio"} aria-label={`${site.displayName}, inicio`} className="min-w-0 transition hover:opacity-80">
             <Brand site={site} />
           </a>
           <nav aria-label="Secciones" className="flex shrink-0 items-center gap-1 text-[15px] font-medium @3xl:gap-2">
-            <a href="#eventos" className="hidden rounded-full px-4 py-2 transition hover:bg-[var(--site-line)] @md:block">
+            <a href={eventsHref} className="hidden rounded-full px-4 py-2 transition hover:bg-[var(--site-line)] @md:block">
               Eventos
             </a>
             {hasContact && (
@@ -382,7 +419,7 @@ export function PublicSite({ site, events, className = "" }: Props & { className
               </a>
             )}
             <a
-              href="#eventos"
+              href={eventsHref}
               className="ml-1 rounded-full px-5 py-2.5 text-sm font-bold transition hover:opacity-90"
               style={{ background: "var(--site-accent)", color: "var(--site-on-accent)" }}
             >
@@ -391,8 +428,17 @@ export function PublicSite({ site, events, className = "" }: Props & { className
           </nav>
         </div>
       </header>
-      <Template site={site} events={events} />
+      {children}
       <Footer site={site} />
     </div>
+  );
+}
+
+export function PublicSite({ site, events, linkEvents, className = "" }: Props & { className?: string }) {
+  const Template = TEMPLATES[site.template];
+  return (
+    <SiteFrame site={site} className={className}>
+      <Template site={site} events={events} linkEvents={linkEvents} />
+    </SiteFrame>
   );
 }

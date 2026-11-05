@@ -8,8 +8,6 @@ import { SubmitButton } from "../_components/ui";
 
 // Las secciones de las próximas etapas (docs/dashboard.md, sección 3).
 const upcoming = [
-  { label: "Salas y mapas", icon: Map },
-  { label: "Eventos", icon: CalendarDays },
   { label: "Medios de pago", icon: CreditCard },
   { label: "Ventas", icon: Receipt },
   { label: "Puerta", icon: QrCode },
@@ -27,6 +25,14 @@ function Nav() {
       <NavLink href="/panel/mi-pagina" segment="mi-pagina">
         <Globe className="size-4" aria-hidden />
         Mi página
+      </NavLink>
+      <NavLink href="/panel/salas" segment="salas">
+        <Map className="size-4" aria-hidden />
+        Salas y mapas
+      </NavLink>
+      <NavLink href="/panel/eventos" segment="eventos">
+        <CalendarDays className="size-4" aria-hidden />
+        Eventos
       </NavLink>
       {upcoming.map(({ label, icon: Icon }) => (
         <span

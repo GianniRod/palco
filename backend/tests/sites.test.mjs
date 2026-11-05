@@ -190,14 +190,14 @@ test("la página pública trae solo fechas futuras de ese cliente, y ningún dat
 
   const addEvent = async (owner, title, when) => {
     const { rows: [venue] } = await db.query(
-      "insert into venues (organization_id, slug, name) values ($1, $2, 'Sala') returning id",
-      [owner.organization.id, `sala-${crypto.randomUUID()}`],
+      "insert into venues (organization_id, name) values ($1, 'Sala') returning id",
+      [owner.organization.id],
     );
-    await db.query("insert into events (venue_id, title, starts_at) values ($1, $2, now() + $3::interval)", [
-      venue.id,
-      title,
-      when,
-    ]);
+    const { rows: [event] } = await db.query(
+      "insert into events (organization_id, venue_id, title, status) values ($1, $2, $3, 'published') returning id",
+      [owner.organization.id, venue.id, title],
+    );
+    await db.query("insert into performances (event_id, starts_at) values ($1, now() + $2::interval)", [event.id, when]);
   };
   await addEvent(first, "Después", "2 days");
   await addEvent(first, "Antes", "1 day");

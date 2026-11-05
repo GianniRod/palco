@@ -30,7 +30,7 @@ async function Content({ params }: { params: Props["params"] }) {
   const { slug } = await params;
   const site = await loadSite(slug);
   if (!site) notFound();
-  return <PublicSite site={site.content} events={site.events} className="min-h-screen" />;
+  return <PublicSite site={site.content} events={site.events} linkEvents className="min-h-screen" />;
 }
 
 export default function SitePage({ params }: Props) {

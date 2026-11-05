@@ -28,7 +28,15 @@ async function Content() {
         <Link href="/panel/mi-pagina" className="underline">
           armar tu página
         </Link>
-        . Estamos habilitando las demás secciones: salas, eventos, pagos, ventas y control de acceso.
+        , cargá tus{" "}
+        <Link href="/panel/salas" className="underline">
+          salas
+        </Link>{" "}
+        y publicá tus{" "}
+        <Link href="/panel/eventos" className="underline">
+          eventos
+        </Link>
+        . Estamos habilitando las demás secciones: pagos, ventas y control de acceso.
       </p>
     </>
   );
