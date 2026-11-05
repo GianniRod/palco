@@ -263,7 +263,7 @@ body:has(.minimal) {
 
 /* Entrada que se corta: el talón cae al final */
 .talon-cae {
-  animation: talon-cae 1.6s cubic-bezier(0.5, 0, 0.7, 0.4) 7.2s both;
+  animation: talon-cae 1.6s cubic-bezier(0.5, 0, 0.7, 0.4) 9.9s both;
   transform-origin: 0% 100%;
 }
 @keyframes talon-cae {

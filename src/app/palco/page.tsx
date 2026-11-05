@@ -88,19 +88,29 @@ export default function PalcoMemorial() {
           <span className="h-20 w-8 rounded-t-sm bg-gradient-to-r from-[#e9dcc4] via-[#fbf4e6] to-[#d8c7a8] shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
         </div>
 
-        <div className="mt-12 space-y-5 text-lg leading-relaxed text-papel/80 sm:text-xl">
-          <p className="aparecer" style={delay(5)}>
-            Palco fue el primer nombre del proyecto. Con él soñamos, diseñamos y escribimos las
-            primeras líneas de código.
+        <div className="mt-12 space-y-6 text-lg leading-relaxed text-papel/80 sm:text-xl">
+          <p className="aparecer text-2xl font-semibold text-papel sm:text-3xl" style={delay(5)}>
+            Viviste un solo día. Pero qué día.
           </p>
           <p className="aparecer" style={delay(5.8)}>
-            Lo tuvimos que cambiar por fines comerciales. Aunque nuestra marca cambió, el proyecto, la
-            visión y las ganas de construir algo grande siguen intactos.
+            Fuiste el nombre que escribimos primero, el logo que nos hizo decir «esto va en serio» y
+            la primera web que le mostramos a alguien con el pecho inflado.
+          </p>
+          <p className="aparecer" style={delay(6.6)}>
+            Te elegimos porque un palco es el mejor lugar para ver la función. Y desde ahí nos viste
+            arrancar.
+          </p>
+          <p className="aparecer" style={delay(7.4)}>
+            Te tuvimos que dejar ir por fines comerciales. No fue tu culpa: son cosas de grandes.
+          </p>
+          <p className="aparecer" style={delay(8.2)}>
+            Aunque nuestra marca cambió, el proyecto, la visión y las ganas de construir algo grande
+            siguen intactos. Y cada entrada que vendamos va a llevar un poquito de vos.
           </p>
         </div>
 
         {/* Última entrada: función única */}
-        <div className="aparecer mt-14 flex w-full max-w-md drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]" style={delay(6.4)}>
+        <div className="aparecer mt-14 flex w-full max-w-md drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]" style={delay(9)}>
           <div className="ticket-izq flex-1 rounded-l-2xl bg-papel p-5 text-left text-tinta">
             <p className="text-[10px] uppercase tracking-[0.3em] text-tinta/50">Función única</p>
             <p className="mt-2 text-xl font-semibold tracking-tight">Palco</p>
@@ -113,19 +123,23 @@ export default function PalcoMemorial() {
           </div>
         </div>
 
-        <p className="aparecer mt-16 flex items-center gap-2 text-papel/60" style={delay(8.6)}>
+        <p className="aparecer mt-16 text-xl text-papel sm:text-2xl" style={delay(11)}>
+          Gracias por todo, Palco. Descansá en paz.
+        </p>
+
+        <p className="aparecer mt-8 flex items-center gap-2 text-papel/60" style={delay(11.8)}>
           y así nació
           <Logo className="h-6 align-middle" color="var(--color-papel)" />
         </p>
 
-        <p className="aparecer mt-3 text-2xl" style={delay(9.2)}>
+        <p className="aparecer mt-3 text-2xl" style={delay(12.4)}>
           💔
         </p>
 
         <Link
           href="/"
           className="aparecer mt-12 rounded-full border border-papel/20 px-5 py-2 text-sm text-papel/70 transition hover:bg-papel hover:text-palco-950"
-          style={delay(9.8)}
+          style={delay(13)}
         >
           Volver a Nightowl
         </Link>
