@@ -9,15 +9,15 @@ const STEP_MS = 3200;
 
 type Variant = "boliche" | "teatro";
 
-// Textos y montos de cada versión. Cargo de servicio: 10% del valor de las entradas.
+// Textos y montos de cada versión. Cargo de servicio: 8% del valor de las entradas (comisión de Nightowl).
 const content = {
   boliche: {
     choose: "Su lote y cuántas entradas, desde tu web.",
     venue: "Tu Boliche",
     item: "2 × Preventa 2",
     subtotal: "$ 22.000",
-    fee: "$ 2.200",
-    total: "$ 24.200",
+    fee: "$ 1.760",
+    total: "$ 23.760",
     event: "Fiesta Aniversario",
     ticket: "Preventa 2 · Entrada 1 de 2",
   },
@@ -26,8 +26,8 @@ const content = {
     venue: "Tu Teatro",
     item: "2 × Platea",
     subtotal: "$ 44.000",
-    fee: "$ 4.400",
-    total: "$ 48.400",
+    fee: "$ 3.520",
+    total: "$ 47.520",
     event: "Función de gala",
     ticket: "Platea · Fila D · 6",
   },
