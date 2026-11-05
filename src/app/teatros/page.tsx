@@ -107,7 +107,7 @@ export default function TeatrosPage() {
           <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-16 sm:pt-24">
             <h1 className="subir text-[clamp(2.1rem,5vw,4rem)] font-semibold leading-[1.12] tracking-tight">
               Tu público elige{" "}
-              <RotatingChip icon="seat" options={["Platea · D7", "Pullman · G12", "Palco · B3", "Campo general"]} />, paga en tu web y entra con un
+              <span className="whitespace-nowrap"><RotatingChip icon="seat" options={["Platea · D7", "Pullman · G12", "Palco · B3", "Campo general"]} />,</span> paga en tu web y entra con un
               QR.
             </h1>
 
@@ -233,9 +233,9 @@ export default function TeatrosPage() {
           <Reveal>
             <a
               href={demoHref}
-              className="asoma group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(31,3,10,0.3)]"
+              className="asoma cierre group mx-auto flex max-w-4xl flex-col sm:flex-row drop-shadow-[0_30px_40px_rgba(31,3,10,0.3)]"
             >
-              <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-800 p-8 text-white sm:p-12">
+              <div className="ticket-izq flex-1 rounded-t-3xl sm:rounded-none sm:rounded-l-3xl bg-palco-800 p-8 text-white sm:p-12">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">
                   Demo personalizada
                 </p>
@@ -247,8 +247,8 @@ export default function TeatrosPage() {
                   tu marca.
                 </p>
               </div>
-              <div className="ticket-der talon relative flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-dorado p-4 text-palco-950 sm:w-48">
-                <span className="troquel absolute inset-y-6 left-0 w-0.5 text-palco-950/40" />
+              <div className="ticket-der talon relative flex flex-row items-center justify-center gap-3 rounded-b-3xl py-6 sm:w-48 sm:flex-col sm:rounded-none sm:rounded-r-3xl sm:py-4 bg-dorado p-4 text-palco-950 sm:w-48">
+                <span className="troquel absolute left-6 right-6 top-0 h-0.5 sm:bottom-6 sm:left-0 sm:right-auto sm:top-6 sm:h-auto sm:w-0.5 text-palco-950/40" />
                 <OwlPeek
                   className="bottom-0 right-0 h-40 w-[116px] bg-palco-900/20"
                   from="translate(100%, 100%) rotate(25deg)"

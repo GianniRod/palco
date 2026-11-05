@@ -108,7 +108,7 @@ export default function Home() {
               style={{ animationDelay: "0.05s" }}
             >
               Tu público compra{" "}
-              <RotatingChip tone="dark" options={["Preventa 2", "General", "Entrada VIP", "Mesa para 6"]} />, paga en tu web y entra con un QR.
+              <span className="whitespace-nowrap"><RotatingChip tone="dark" options={["Preventa 2", "General", "Entrada VIP", "Mesa para 6"]} />,</span> paga en tu web y entra con un QR.
             </h1>
 
             <div
@@ -233,8 +233,8 @@ export default function Home() {
         {/* ---------------- Cierre ---------------- */}
         <section className="bg-white px-6 pb-28">
           <Reveal>
-            <a href={demoHref} className="asoma group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
-              <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-900 p-8 text-white sm:p-12">
+            <a href={demoHref} className="asoma cierre group mx-auto flex max-w-4xl flex-col sm:flex-row drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
+              <div className="ticket-izq flex-1 rounded-t-3xl sm:rounded-none sm:rounded-l-3xl bg-palco-900 p-8 text-white sm:p-12">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Demo personalizada</p>
                 <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
                   Veamos Nightowl con tu próxima fiesta.
@@ -243,8 +243,8 @@ export default function Home() {
                   Contanos cómo vendés hoy y te armamos una demo con tu marca, tus lotes y tu web.
                 </p>
               </div>
-              <div className="ticket-der talon relative flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-palco-200 p-4 text-black sm:w-48">
-                <span className="troquel absolute inset-y-6 left-0 w-0.5 text-black/30" />
+              <div className="ticket-der talon relative flex flex-row items-center justify-center gap-3 rounded-b-3xl py-6 sm:w-48 sm:flex-col sm:rounded-none sm:rounded-r-3xl sm:py-4 bg-palco-200 p-4 text-black sm:w-48">
+                <span className="troquel absolute left-6 right-6 top-0 h-0.5 sm:bottom-6 sm:left-0 sm:right-auto sm:top-6 sm:h-auto sm:w-0.5 text-black/30" />
                 <OwlPeek
                   className="bottom-0 right-0 h-40 w-[116px] bg-tinta/15"
                   from="translate(100%, 100%) rotate(25deg)"

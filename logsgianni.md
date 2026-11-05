@@ -9,6 +9,12 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Landing responsive (celular)**, boliches y teatros:
+  - Ticket final "Veamos Nightowl…": en el celular el talón "Pedir demo" va abajo con el troquel horizontal
+    (antes el texto quedaba apretado en una columna angosta). Clase `.cierre` + reglas en `globals.css`.
+  - Título principal: el chip que rota y la coma van juntos, así la coma no queda sola al principio del renglón.
+  - Revisado a 390 px: editor, venta, comisiones, puerta, preguntas, footer y 404 ya se veían bien.
+  Archivos: `src/app/page.tsx`, `src/app/teatros/page.tsx`, `src/app/globals.css`.
 - **Dashboard responsive (celular)**:
   - El menú lateral pasa a una barra arriba con logo y botón ☰ que despliega todas las secciones en columna
     (grandes para el dedo) más la cuenta (email, cambiar contraseña, salir). Se cierra al tocar una sección.
