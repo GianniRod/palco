@@ -193,4 +193,9 @@ test("la página pública trae solo fechas futuras de ese cliente, y ningún dat
   assert.deepEqual(publicSite.events.map((e) => e.title), ["Antes", "Después"]);
   assert.deepEqual(Object.keys(publicSite).sort(), ["content", "events"]);
   assert.equal(JSON.stringify(publicSite).includes("commission"), false);
+
+  // El editor muestra las mismas fechas, aunque el sitio todavía no esté publicado.
+  await unpublishSite(db, first);
+  const editing = await getSiteForEditing(db, first);
+  assert.deepEqual(editing.events.map((e) => e.title), ["Antes", "Después"]);
 });

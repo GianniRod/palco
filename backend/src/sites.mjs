@@ -125,6 +125,7 @@ export async function getSiteForEditing(db, tenant) {
     publishedAt: site?.publishedAt ?? null,
     updatedAt: site?.updatedAt ?? null,
     slug: tenant.organization.slug,
+    events: await upcomingEvents(db, tenant.organization.id),
   };
 }
 
@@ -191,15 +192,18 @@ export async function getPublicSite(db, slug) {
     [slug],
   );
   if (!site) return null;
+  return { content: site.content, events: await upcomingEvents(db, site.organizationId) };
+}
 
-  const { rows: events } = await db.query(
+async function upcomingEvents(db, organizationId) {
+  const { rows } = await db.query(
     `select events.id, events.title, events.starts_at as "startsAt", venues.name as venue
      from events
      join venues on venues.id = events.venue_id
      where venues.organization_id = $1 and events.starts_at >= now()
      order by events.starts_at
      limit 24`,
-    [site.organizationId],
+    [organizationId],
   );
-  return { content: site.content, events };
+  return rows;
 }
