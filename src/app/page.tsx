@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { LotsPanel } from "@/components/lots-panel";
 import { CheckoutFlow } from "@/components/checkout-flow";
+import { FeeCalculator } from "@/components/fee-calculator";
 import { DoorScanner } from "@/components/door-scanner";
 import { RotatingChip } from "@/components/rotating-chip";
 import { SiteBuilder } from "@/components/site-builder";
@@ -17,6 +18,7 @@ import { contactHref, demoHref, site } from "@/lib/site";
 const nav = [
   { label: "Editor", href: "#editor" },
   { label: "Venta", href: "#venta" },
+  { label: "Comisiones", href: "#comisiones" },
   { label: "Puerta", href: "#acceso" },
   { label: "Preguntas", href: "#preguntas" },
 ];
@@ -175,6 +177,19 @@ export default function Home() {
             </SectionTitle>
             <Reveal className="mt-16">
               <CheckoutFlow />
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ---------------- Comisiones ---------------- */}
+        <section id="comisiones" className="scroll-mt-4 border-t border-tinta/10 bg-white">
+          <div className="mx-auto max-w-6xl px-6 py-24">
+            <SectionTitle eyebrow="Comisiones" title="Hacé la cuenta.">
+              Poné el precio de tu entrada y cuántas vendés, y compará cuánto te queda con cada
+              ticketera.
+            </SectionTitle>
+            <Reveal className="mt-16">
+              <FeeCalculator />
             </Reveal>
           </div>
         </section>
