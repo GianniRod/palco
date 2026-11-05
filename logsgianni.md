@@ -9,6 +9,14 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Dashboard responsive (celular)**:
+  - El menú lateral pasa a una barra arriba con logo y botón ☰ que despliega todas las secciones en columna
+    (grandes para el dedo) más la cuenta (email, cambiar contraseña, salir). Se cierra al tocar una sección.
+    Antes las secciones quedaban en una fila cortada de costado y no se veían todas.
+  - Lugar libre abajo en el admin para que el botón fijo "Escanear QR" no tape el final de las páginas (`fabSpace` en `Shell`).
+  - Auditoría: en el celular, una tarjeta por movimiento (la tabla no entraba).
+  - `backend/src/qr.mjs`: lee las claves de la base antes de generar unas nuevas.
+  Archivos: `_components/shell.tsx`, `_components/mobile-nav.tsx` (nuevo), `admin/layout.tsx`, `admin/auditoria/page.tsx`.
 - **Puerta (prueba): la pantalla de la compu se actualiza sola** cada 2 s mientras está a la vista, así al escanear
   desde el celular el QR pasa a "Usada" sin recargar. Archivo: `src/app/dashboard/admin/puerta/_auto-refresh.tsx`.
 - **Sistema de prueba de QR (escaneo con control de duplicados)**: panel admin → "Puerta (prueba)".

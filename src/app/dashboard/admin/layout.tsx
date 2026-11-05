@@ -20,6 +20,7 @@ async function Guard({ children }: { children: ReactNode }) {
 export default function AdminLayout({ children }: LayoutProps<"/dashboard/admin">) {
   return (
     <Shell
+      fabSpace
       nav={
         <>
           <NavLink href="/admin/clientes" segment="clientes">

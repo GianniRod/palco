@@ -54,6 +54,9 @@ export async function getSigningKeys(db) {
   const env = { privateKey: process.env.TICKET_SIGNING_PRIVATE_KEY, publicKey: process.env.TICKET_SIGNING_PUBLIC_KEY };
   if (env.privateKey && env.publicKey) return (cached = keysFromBase64(env));
 
+  const { rows: [saved] } = await db.query("select private_key, public_key from qr_signing_keys where id = 1");
+  if (saved) return (cached = keysFromBase64({ privateKey: saved.private_key, publicKey: saved.public_key }));
+
   const fresh = generateSigningKeys();
   await db.query(
     "insert into qr_signing_keys (id, private_key, public_key) values (1, $1, $2) on conflict (id) do nothing",

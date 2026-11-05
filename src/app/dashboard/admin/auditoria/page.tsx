@@ -44,7 +44,8 @@ function describe(details: Record<string, unknown>) {
   if (typeof details.sector === "string") {
     return `${details.title}: ${details.sector}, $${details.from ?? "—"} → $${details.to ?? "—"}`;
   }
-  if (typeof details.count === "number") return `${details.title}: ${details.count} butacas`;
+  if (typeof details.count === "number")
+    return `${details.title}: ${details.count} butacas`;
   if (typeof details.title === "string") return details.title;
   if (typeof details.name === "string") return details.name;
   return typeof details.email === "string" ? details.email : "";
@@ -55,35 +56,75 @@ async function Content() {
   const entries = await listAudit(getDb(), actor);
 
   if (entries.length === 0) {
-    return <p className="text-sm text-palco-600">Todavía no hay movimientos.</p>;
+    return (
+      <p className="text-sm text-palco-600">Todavía no hay movimientos.</p>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-palco-100 bg-white">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-palco-100 text-palco-500">
-          <tr>
-            <th className="px-4 py-3 font-medium">Cuándo</th>
-            <th className="px-4 py-3 font-medium">Quién</th>
-            <th className="px-4 py-3 font-medium">Qué</th>
-            <th className="px-4 py-3 font-medium">Cliente</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry: (typeof entries)[number]) => (
-            <tr key={entry.id} className="border-b border-palco-50 last:border-0">
-              <td className="whitespace-nowrap px-4 py-3 tabular-nums text-palco-600">{formatDate(entry.createdAt)}</td>
-              <td className="px-4 py-3">{entry.actorEmail}</td>
-              <td className="px-4 py-3">
-                {ACTION_LABELS[entry.action] ?? entry.action}
-                {describe(entry.details) && <span className="text-palco-500"> · {describe(entry.details)}</span>}
-              </td>
-              <td className="px-4 py-3">{entry.organizationName ?? "—"}</td>
+    <>
+      {/* Celular: una tarjeta por movimiento */}
+      <ul className="space-y-2 md:hidden">
+        {entries.map((entry: (typeof entries)[number]) => (
+          <li
+            key={entry.id}
+            className="rounded-xl border border-palco-100 bg-white p-4 text-sm"
+          >
+            <p className="font-medium text-palco-900">
+              {ACTION_LABELS[entry.action] ?? entry.action}
+              {describe(entry.details) && (
+                <span className="font-normal text-palco-500">
+                  {" "}
+                  · {describe(entry.details)}
+                </span>
+              )}
+            </p>
+            <p className="mt-1 break-all text-palco-600">{entry.actorEmail}</p>
+            <p className="mt-1 text-xs text-palco-500">
+              <span className="tabular-nums">
+                {formatDate(entry.createdAt)}
+              </span>
+              {entry.organizationName && <> · {entry.organizationName}</>}
+            </p>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto rounded-xl border border-palco-100 bg-white md:block">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-palco-100 text-palco-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">Cuándo</th>
+              <th className="px-4 py-3 font-medium">Quién</th>
+              <th className="px-4 py-3 font-medium">Qué</th>
+              <th className="px-4 py-3 font-medium">Cliente</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {entries.map((entry: (typeof entries)[number]) => (
+              <tr
+                key={entry.id}
+                className="border-b border-palco-50 last:border-0"
+              >
+                <td className="whitespace-nowrap px-4 py-3 tabular-nums text-palco-600">
+                  {formatDate(entry.createdAt)}
+                </td>
+                <td className="px-4 py-3">{entry.actorEmail}</td>
+                <td className="px-4 py-3">
+                  {ACTION_LABELS[entry.action] ?? entry.action}
+                  {describe(entry.details) && (
+                    <span className="text-palco-500">
+                      {" "}
+                      · {describe(entry.details)}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">{entry.organizationName ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
