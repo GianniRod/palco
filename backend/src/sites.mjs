@@ -9,6 +9,7 @@ const FONTS = ["clasica", "moderna"];
 const EDITOR_ROLES = ["owner", "editor", "soporte"];
 
 const MAX_LOGO_BYTES = 400 * 1024;
+const MAX_COVER_BYTES = 900 * 1024;
 const LIMITS = { displayName: 80, tagline: 140, about: 1000, address: 160, phone: 40, email: 120 };
 
 export const canEditSite = (tenant) => EDITOR_ROLES.includes(tenant?.role);
@@ -63,6 +64,16 @@ function parseLogo(value) {
   return logo;
 }
 
+function parseCover(value) {
+  const cover = String(value ?? "");
+  if (!cover) return "";
+  if (!/^data:image\/(jpeg|webp);base64,[a-zA-Z0-9+/]+={0,2}$/.test(cover)) {
+    throw new ValidationError("La portada tiene que ser una imagen JPG o WebP");
+  }
+  if (cover.length > (MAX_COVER_BYTES * 4) / 3) throw new ValidationError("La portada es demasiado pesada");
+  return cover;
+}
+
 function parseColor(value) {
   const color = String(value ?? "").trim().toLowerCase();
   if (!/^#[0-9a-f]{6}$/.test(color)) throw new ValidationError("El color tiene que tener el formato #RRGGBB");
@@ -82,6 +93,7 @@ function parseSite(data) {
     template: oneOf(data.template, TEMPLATES, TEMPLATES[0]),
     displayName,
     logo: parseLogo(data.logo),
+    cover: parseCover(data.cover),
     primaryColor: parseColor(data.primaryColor),
     background: oneOf(data.background, BACKGROUNDS, BACKGROUNDS[0]),
     titleFont: oneOf(data.titleFont, FONTS, FONTS[0]),
@@ -99,6 +111,7 @@ const defaultDraft = (organization) => ({
   template: TEMPLATES[0],
   displayName: organization.name,
   logo: "",
+  cover: "",
   primaryColor: "#111111",
   background: BACKGROUNDS[0],
   titleFont: FONTS[0],
@@ -120,8 +133,9 @@ export async function getSiteForEditing(db, tenant) {
     [tenant.organization.id],
   );
   return {
-    draft: site?.draft ?? defaultDraft(tenant.organization),
-    published: site?.published ?? null,
+    // Los sitios guardados antes de sumar un campo nuevo no lo tienen.
+    draft: { ...defaultDraft(tenant.organization), ...site?.draft },
+    published: site?.published ? { ...defaultDraft(tenant.organization), ...site.published } : null,
     publishedAt: site?.publishedAt ?? null,
     updatedAt: site?.updatedAt ?? null,
     slug: tenant.organization.slug,
@@ -192,7 +206,7 @@ export async function getPublicSite(db, slug) {
     [slug],
   );
   if (!site) return null;
-  return { content: site.content, events: await upcomingEvents(db, site.organizationId) };
+  return { content: { cover: "", ...site.content }, events: await upcomingEvents(db, site.organizationId) };
 }
 
 async function upcomingEvents(db, organizationId) {

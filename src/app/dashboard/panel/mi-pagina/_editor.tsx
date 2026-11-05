@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState, type ChangeEvent, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import { Check, ExternalLink, ImagePlus, Loader2 } from "lucide-react";
+import { Check, ExternalLink, ImagePlus, Loader2, Monitor, Smartphone } from "lucide-react";
 import { PublicSite, type SiteContent, type SiteEvent } from "@/components/public-site";
 import { publicSiteUrl } from "@/lib/dashboard/config";
 import { inputClass } from "../../_components/styles";
@@ -144,6 +144,49 @@ async function logoToDataUrl(file: File) {
   return canvas.toDataURL("image/png");
 }
 
+// La portada ocupa todo el ancho: se achica hasta que pese lo que acepta el servidor.
+async function coverToDataUrl(file: File) {
+  const bitmap = await createImageBitmap(file);
+  try {
+    for (const [maxWidth, quality] of [[1800, 0.82], [1400, 0.75], [1000, 0.7]]) {
+      const scale = Math.min(1, maxWidth / bitmap.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
+      if (dataUrl.length <= 1_100_000) return dataUrl;
+    }
+    throw new Error("Imagen demasiado pesada");
+  } finally {
+    bitmap.close();
+  }
+}
+
+type Device = "escritorio" | "celular";
+const DEVICE_WIDTH: Record<Device, number> = { escritorio: 1200, celular: 390 };
+
+// Pinta la página a su ancho real y la achica para que entre: así se ve igual que en internet.
+function DevicePreview({ device, children }: { device: Device; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [available, setAvailable] = useState(0);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new ResizeObserver(([entry]) => setAvailable(entry.contentRect.width));
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const width = DEVICE_WIDTH[device];
+  const zoom = available ? Math.min(1, available / width) : 1;
+  return (
+    <div ref={ref} className="max-h-[70vh] overflow-y-auto overflow-x-hidden bg-tinta/5">
+      <div className="mx-auto" style={{ width, zoom }}>{children}</div>
+    </div>
+  );
+}
+
 function PublishButton({ published }: { published: boolean }) {
   const { pending, data } = useFormStatus();
   const publishing = pending && data?.get("intent") === "publish";
@@ -203,7 +246,9 @@ export function SiteEditor({
   const [state, action] = useActionState(saveSiteAction, {} as SiteFormState);
   const [site, setSite] = useState(initial);
   const [tab, setTab] = useState<TabId>("plantilla");
+  const [device, setDevice] = useState<Device>("escritorio");
   const [logoError, setLogoError] = useState("");
+  const [coverError, setCoverError] = useState("");
   const [handled, setHandled] = useState(state);
 
   // El servidor normaliza algunos campos (la web, el usuario de Instagram): se muestra lo guardado.
@@ -226,6 +271,18 @@ export function SiteEditor({
       set("logo", await logoToDataUrl(file));
     } catch {
       setLogoError("No pudimos leer esa imagen. Probá con un PNG o JPG.");
+    }
+  }
+
+  async function onCover(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setCoverError("");
+    try {
+      set("cover", await coverToDataUrl(file));
+    } catch {
+      setCoverError("No pudimos usar esa imagen. Probá con un JPG más liviano.");
     }
   }
 
@@ -257,6 +314,7 @@ export function SiteEditor({
           </div>
 
           <input type="hidden" name="logo" value={site.logo} />
+          <input type="hidden" name="cover" value={site.cover} />
 
           {/* Las pestañas se ocultan sin desmontarse: todo tiene que viajar en el formulario. */}
           <div className="mt-4 min-h-[330px] flex-1">
@@ -370,6 +428,23 @@ export function SiteEditor({
                 </div>
                 <FormError message={logoError} />
               </div>
+              <div>
+                <Label>Imagen de portada</Label>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-tinta/25 bg-white px-3 py-2 text-xs font-medium text-tinta/70 transition hover:border-tinta/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-palco-300">
+                    <ImagePlus className="size-4" aria-hidden />
+                    {site.cover ? "Cambiar portada" : "Subir portada"}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onCover} className="sr-only" />
+                  </label>
+                  {site.cover && (
+                    <button type="button" onClick={() => set("cover", "")} className="text-xs text-tinta/70 underline">
+                      Quitar
+                    </button>
+                  )}
+                </div>
+                <p className="mt-1 text-[11px] text-tinta/60">Una foto horizontal de tu sala o de tu evento.</p>
+                <FormError message={coverError} />
+              </div>
               <TextField label="Frase principal" id="tagline" name="tagline" maxLength={140} value={site.tagline} onChange={onText("tagline")} />
               <div>
                 <Label htmlFor="about">Presentación</Label>
@@ -403,12 +478,30 @@ export function SiteEditor({
               <span className="flex-1 truncate rounded-md bg-tinta/5 px-3 py-1 text-center text-[11px] text-tinta/60">
                 {url.replace(/^https?:\/\//, "")}
               </span>
-            </div>
-            <div className="max-h-[70vh] overflow-y-auto">
-              <div key={site.template} className="[animation:subir_0.5s_ease-out_both]">
-                <PublicSite site={preview} events={events.length > 0 ? events : SAMPLE_EVENTS} className="min-h-[390px]" />
+              <div className="flex shrink-0 gap-0.5 rounded-md bg-tinta/5 p-0.5">
+                {([
+                  ["escritorio", Monitor, "Ver como en la computadora"],
+                  ["celular", Smartphone, "Ver como en el celular"],
+                ] as const).map(([id, Icon, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-label={label}
+                    title={label}
+                    aria-pressed={device === id}
+                    onClick={() => setDevice(id)}
+                    className={`rounded p-1 transition ${device === id ? "bg-white text-tinta shadow-sm" : "text-tinta/60 hover:text-tinta"}`}
+                  >
+                    <Icon className="size-3.5" aria-hidden />
+                  </button>
+                ))}
               </div>
             </div>
+            <DevicePreview device={device}>
+              <div key={site.template} className="[animation:subir_0.5s_ease-out_both]">
+                <PublicSite site={preview} events={events.length > 0 ? events : SAMPLE_EVENTS} className="min-h-[640px]" />
+              </div>
+            </DevicePreview>
             {state.done === "published" && upToDate && (
               <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
                 <span role="status" className="flex items-center gap-2 rounded-full bg-emerald-700 px-4 py-2 text-xs font-medium text-white shadow-lg [animation:subir_0.5s_ease-out_both]">
