@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Logo } from "@/components/logo";
 
 /**
  * Calculadora de comisiones: compara cuánto recibe el organizador (o cuánto paga el
@@ -147,7 +148,11 @@ export function FeeCalculator() {
             >
               <div>
                 <div className="flex items-center gap-3">
-                  <p className="text-xl font-semibold tracking-tight">{r.name}</p>
+                  {r.ours ? (
+                    <Logo className="h-6" color="#ffffff" />
+                  ) : (
+                    <p className="text-xl font-semibold tracking-tight">{r.name}</p>
+                  )}
                   {isCheapest && (
                     <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-palco-950">
                       La más barata
@@ -155,7 +160,7 @@ export function FeeCalculator() {
                   )}
                 </div>
                 <p className={`mt-1 text-sm ${r.ours ? "text-white/55" : "text-tinta/50"}`}>
-                  Comisión del {Math.round(r.fee * 100)}% · {money(r.feeTotal)} en total
+                  Comisión del {Math.round(r.fee * 100)}%
                 </p>
               </div>
 
