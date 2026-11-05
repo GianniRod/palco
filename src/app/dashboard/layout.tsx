@@ -7,5 +7,6 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
-  return children;
+  // Blanco y negro, igual que la landing: .minimal pasa la paleta a grises
+  return <div className="minimal min-h-dvh">{children}</div>;
 }

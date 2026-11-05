@@ -69,7 +69,7 @@ export function FormSaved({ show, children = "Guardado" }: { show?: boolean; chi
 export function TemporaryCredentials({ email, password }: { email: string; password: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="rounded-lg border border-dorado bg-white p-4 text-sm">
+    <div className="rounded-lg border border-palco-900 bg-white p-4 text-sm">
       <p className="font-medium text-palco-900">Pasale estos datos a {email}</p>
       <p className="mt-1 text-palco-600">
         Se muestran una sola vez. Al primer ingreso va a tener que elegir una contraseña propia.
