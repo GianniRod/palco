@@ -15,7 +15,7 @@ const platforms = [
   { name: "Passify", fee: 0.15, ours: false },
 ];
 
-type Payer = "organizador" | "publico";
+type Payer = "publico" | "organizador" | "ambos";
 
 const money = (n: number) =>
   n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -23,10 +23,14 @@ const money = (n: number) =>
 export function FeeCalculator() {
   const [price, setPrice] = useState(15000);
   const [qty, setQty] = useState(500);
-  const [payer, setPayer] = useState<Payer>("organizador");
+  const [payer, setPayer] = useState<Payer>("publico");
+  const [publicShare, setPublicShare] = useState(50); // % de la comisión que paga el público en "Ambos"
   const priceId = useId();
   const qtyId = useId();
+  const splitId = useId();
 
+  // Parte de la comisión que paga el público (0 a 1); el resto lo absorbe el organizador.
+  const share = payer === "publico" ? 1 : payer === "organizador" ? 0 : publicShare / 100;
   const gross = price * qty;
   const rows = platforms
     .map((p) => {
@@ -34,9 +38,8 @@ export function FeeCalculator() {
       return {
         ...p,
         feeTotal,
-        // Si la comisión la absorbe el organizador, se le descuenta; si no, la paga el público.
-        youGet: payer === "organizador" ? gross - feeTotal : gross,
-        buyerPays: payer === "publico" ? Math.round(price * (1 + p.fee)) : price,
+        youGet: Math.round(gross - feeTotal * (1 - share)),
+        buyerPays: Math.round(price * (1 + p.fee * share)),
       };
     })
     .sort((a, b) => a.fee - b.fee);
@@ -82,11 +85,12 @@ export function FeeCalculator() {
         </div>
 
         <p className="mt-6 text-xs uppercase tracking-[0.2em] text-tinta/45">La comisión la paga</p>
-        <div className="mt-2 grid grid-cols-2 rounded-full border border-tinta/15 p-0.5 text-sm font-medium">
+        <div className="mt-2 grid grid-cols-3 rounded-full border border-tinta/15 p-0.5 text-sm font-medium">
           {(
             [
-              ["organizador", "Vos"],
               ["publico", "Tu público"],
+              ["organizador", "Vos"],
+              ["ambos", "Ambos"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -103,6 +107,26 @@ export function FeeCalculator() {
           ))}
         </div>
 
+        {payer === "ambos" && (
+          <div className="mt-4">
+            <input
+              id={splitId}
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={publicShare}
+              onChange={(e) => setPublicShare(Number(e.target.value))}
+              aria-label="Parte de la comisión que paga tu público"
+              className="w-full accent-[var(--color-tinta)]"
+            />
+            <div className="mt-1 flex justify-between text-xs tabular-nums text-tinta/55">
+              <span>Tu público {publicShare}%</span>
+              <span>Vos {100 - publicShare}%</span>
+            </div>
+          </div>
+        )}
+
         <p className="mt-6 border-t border-tinta/10 pt-4 text-sm text-tinta/55">
           Venta total: <span className="font-semibold tabular-nums text-tinta">{money(gross)}</span>
         </p>
@@ -112,7 +136,8 @@ export function FeeCalculator() {
       <div className="space-y-3">
         {rows.map((r) => {
           const isCheapest = r.name === cheapest.name;
-          const diff = payer === "organizador" ? ours.youGet - r.youGet : r.buyerPays - ours.buyerPays;
+          const lessForYou = ours.youGet - r.youGet;
+          const moreForBuyer = r.buyerPays - ours.buyerPays;
           return (
             <div
               key={r.name}
@@ -135,22 +160,20 @@ export function FeeCalculator() {
               </div>
 
               <div className="text-left sm:text-right">
-                {payer === "organizador" ? (
-                  <>
-                    <p className={`text-xs ${r.ours ? "text-white/55" : "text-tinta/50"}`}>Vos recibís</p>
-                    <p className="text-2xl font-semibold tabular-nums tracking-tight">{money(r.youGet)}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className={`text-xs ${r.ours ? "text-white/55" : "text-tinta/50"}`}>Tu público paga por entrada</p>
-                    <p className="text-2xl font-semibold tabular-nums tracking-tight">{money(r.buyerPays)}</p>
-                  </>
-                )}
-                {!r.ours && diff > 0 && (
-                  <p className="mt-1 text-sm font-medium text-tinta/70">
-                    {payer === "organizador"
-                      ? `${money(diff)} menos que con Nightowl`
-                      : `${money(diff)} más caro por entrada que con Nightowl`}
+                <p className={`text-xs ${r.ours ? "text-white/55" : "text-tinta/50"}`}>Vos recibís</p>
+                <p className="text-2xl font-semibold tabular-nums tracking-tight">{money(r.youGet)}</p>
+                <p className={`mt-1 text-sm ${r.ours ? "text-white/55" : "text-tinta/50"}`}>
+                  Tu público paga {money(r.buyerPays)} por entrada
+                </p>
+                {!r.ours && (lessForYou > 0 || moreForBuyer > 0) && (
+                  <p className="mt-1 text-sm font-medium text-tinta/75">
+                    {[
+                      lessForYou > 0 && `${money(lessForYou)} menos para vos`,
+                      moreForBuyer > 0 && `${money(moreForBuyer)} más caro por entrada`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}{" "}
+                    que con Nightowl
                   </p>
                 )}
               </div>
