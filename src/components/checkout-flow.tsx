@@ -145,9 +145,9 @@ function StepPay() {
       <p className="mt-1 font-display text-2xl font-semibold tracking-tight">Pago</p>
       <div className="mt-6 space-y-2 text-sm">
         <Row l="2 × Preventa 2" r="$ 22.000" />
-        <Row l="Cargo de servicio" r="$ 1.100" />
+        <Row l="Cargo de servicio (10%)" r="$ 2.200" />
         <div className="border-t border-black/10 pt-2">
-          <Row l="Total" r="$ 23.100" bold />
+          <Row l="Total" r="$ 24.200" bold />
         </div>
       </div>
       <p className="mt-6 text-xs text-black/50">Medio de pago</p>
@@ -156,7 +156,7 @@ function StepPay() {
         <PayOption title="Mercado Pago" sub="Dinero en cuenta o tarjetas guardadas" />
       </div>
       <div className="mt-auto rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
-        Pagar $ 23.100
+        Pagar $ 24.200
       </div>
     </div>
   );
