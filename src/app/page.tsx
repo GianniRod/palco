@@ -31,7 +31,7 @@ const nightFeatures = [
     text: "Cada RRPP vende con su propio link y ves en el panel cuánto vendió cada uno.",
   },
   {
-    title: "Pista, VIP y boxes",
+    title: "Pista, VIP y mesas",
     text: "Vendé entradas generales, sectores VIP y mesas con cupo de personas en el mismo lugar.",
   },
   {
@@ -137,8 +137,8 @@ export default function Home() {
         <section id="editor" className="papel scroll-mt-4 border-t border-tinta/10">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Editor" title="Tu web de entradas, armada por vos.">
-              Elegí uno de los tres diseños, poné tu logo y tus colores, armá la pista, el VIP y los
-              boxes, cargá los precios y publicá. Queda en tuboliche.com/tickets.
+              Elegí uno de los tres diseños, poné tu logo y tus colores, armá la pista, el VIP y las
+              mesas, cargá los precios y publicá. Queda en tuboliche.com/tickets.
             </SectionTitle>
             <Reveal className="mt-16">
               <SiteBuilder />

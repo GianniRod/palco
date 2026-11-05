@@ -31,9 +31,11 @@ type Sector = {
   h: number;
   vertical?: boolean;
   strength?: number; // intensidad del color en la web (0-100)
+  tables?: number; // si está, el sector se dibuja como mesas redondas (en columna)
+  firstTable?: number; // número de la primera mesa del sector
 };
 
-/** Ejemplo que recorre la animación: boliche (pista, boxes, VIP) o teatro (platea, palcos, pullman). */
+/** Ejemplo que recorre la animación: boliche (pista, mesas, VIP) o teatro (platea, palcos, pullman). */
 type Scenario = {
   venue: string;
   url: string;
@@ -73,24 +75,24 @@ const scenarios: Record<ScenarioId, Scenario> = {
     sectors: {
       escenario: { label: "DJ", group: null, x: 34, y: 4, w: 32, h: 13 },
       pista: { label: "Pista", group: "pista", x: 26, y: 23, w: 48, h: 44, strength: 55 },
-      oeste: { label: "Boxes", group: "box", x: 4, y: 18, w: 18, h: 70, vertical: true, strength: 32 },
-      este: { label: "Boxes", group: "box", x: 78, y: 18, w: 18, h: 70, vertical: true, strength: 32 },
+      oeste: { label: "Mesas", group: "mesa", x: 4, y: 18, w: 18, h: 70, tables: 4, strength: 45 },
+      este: { label: "Mesas", group: "mesa", x: 78, y: 18, w: 18, h: 70, tables: 4, firstTable: 5, strength: 45 },
       vip: { label: "VIP", group: "vip", x: 26, y: 72, w: 48, h: 17, strength: 90 },
     },
     groups: [
       { id: "pista", label: "Pista", price: "15000" },
-      { id: "box", label: "Box (6 pers.)", price: "180000" },
+      { id: "mesa", label: "Mesa (6 pers.)", price: "180000" },
       { id: "vip", label: "VIP", price: "30000" },
     ],
     palette: [
       { group: "pista", label: "Pista" },
-      { group: "box", label: "Box" },
+      { group: "mesa", label: "Mesa" },
       { group: "vip", label: "VIP" },
     ],
     drops: [
       ["pista", "Pista"],
-      ["oeste", "Box"],
-      ["este", "Box"],
+      ["oeste", "Mesa"],
+      ["este", "Mesa"],
       ["vip", "VIP"],
     ],
     others: [
@@ -693,6 +695,27 @@ function PanelMap({ s }: { s: State }) {
         {Object.keys(sectors).map((id) => {
           const sc = sectors[id];
           const on = s.placed.includes(id);
+          if (sc.tables) {
+            return (
+              <span
+                key={id}
+                data-t={`drop-${id}`}
+                className={`absolute flex flex-col items-center justify-around transition-all duration-300 ${
+                  on ? "scale-100 opacity-100" : "scale-90 opacity-0"
+                }`}
+                style={{ left: `${sc.x}%`, top: `${sc.y}%`, width: `${sc.w}%`, height: `${sc.h}%` }}
+              >
+                {Array.from({ length: sc.tables }, (_, i) => (
+                  <span
+                    key={i}
+                    className="flex aspect-square w-[62%] items-center justify-center rounded-full border border-palco-700 bg-palco-700/15 text-[8px] font-medium text-palco-800"
+                  >
+                    {(sc.firstTable ?? 1) + i}
+                  </span>
+                ))}
+              </span>
+            );
+          }
           return (
             <span
               key={id}
@@ -856,6 +879,28 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
         const price = sc.group ? s.prices[sc.group] : undefined;
         const strength = sc.strength ?? 40;
         const vertical = sc.vertical;
+        if (sc.tables) {
+          return (
+            <span
+              key={id}
+              className="absolute flex flex-col items-center justify-around [animation:subir_0.5s_ease-out_both]"
+              style={{ left: `${sc.x}%`, top: `${sc.y}%`, width: `${sc.w}%`, height: `${sc.h}%` }}
+            >
+              {Array.from({ length: sc.tables }, (_, i) => (
+                <span
+                  key={i}
+                  className="flex aspect-square w-[62%] items-center justify-center rounded-full text-[9px] font-semibold transition-colors duration-500"
+                  style={{
+                    background: `color-mix(in srgb, ${l.accent} ${strength}%, transparent)`,
+                    color: l.fg,
+                  }}
+                >
+                  {(sc.firstTable ?? 1) + i}
+                </span>
+              ))}
+            </span>
+          );
+        }
         return (
           <span
             key={id}
