@@ -107,6 +107,14 @@ body:has(.minimal) {
   100% { transform: scale(1); }
 }
 
+/* ---------- Cinta de texto (versión teatros) ---------- */
+.cinta {
+  animation: cinta 40s linear infinite;
+}
+@keyframes cinta {
+  to { transform: translateX(-50%); }
+}
+
 /* ---------- Escáner ---------- */
 .linea-escaner {
   animation: escanear 1.6s ease-in-out infinite alternate;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Loader2, MousePointer2, RotateCcw } from "lucide-react";
 import { useInView, useReducedMotion } from "./hooks";
 
@@ -16,44 +16,133 @@ const templateList: { id: TemplateId; name: string; hint: string }[] = [
   { id: "cartelera", name: "Cartelera", hint: "Todas tus fechas juntas" },
 ];
 
-const swatches = ["#111111", "#52525B", "#A1A1AA", "#7A1428", "#1E3A8A"];
-const CUSTOM_HEX = "#F4F4F5";
-
 type Font = "clasica" | "moderna";
 const fontClass: Record<Font, string> = {
   clasica: "font-serif",
   moderna: "font-sans font-black uppercase tracking-tight",
 };
 
-type Group = "pista" | "box" | "vip";
-type SectorId = "escenario" | "pista" | "oeste" | "este" | "vip";
-
-// Posiciones en % dentro del plano
-const sectors: Record<
-  SectorId,
-  { label: string; group: Group | null; x: number; y: number; w: number; h: number }
-> = {
-  escenario: { label: "DJ", group: null, x: 34, y: 4, w: 32, h: 13 },
-  pista: { label: "Pista", group: "pista", x: 26, y: 23, w: 48, h: 44 },
-  oeste: { label: "Boxes", group: "box", x: 4, y: 18, w: 18, h: 70 },
-  este: { label: "Boxes", group: "box", x: 78, y: 18, w: 18, h: 70 },
-  vip: { label: "VIP", group: "vip", x: 26, y: 72, w: 48, h: 17 },
+type Sector = {
+  label: string;
+  group: string | null;
+  x: number; // posiciones en % dentro del plano
+  y: number;
+  w: number;
+  h: number;
+  vertical?: boolean;
+  strength?: number; // intensidad del color en la web (0-100)
 };
 
-const groups: { id: Group; label: string; price: string }[] = [
-  { id: "pista", label: "Pista", price: "15000" },
-  { id: "box", label: "Box (6 pers.)", price: "180000" },
-  { id: "vip", label: "VIP", price: "30000" },
-];
+/** Ejemplo que recorre la animación: boliche (pista, boxes, VIP) o teatro (platea, palcos, pullman). */
+type Scenario = {
+  venue: string;
+  url: string;
+  title: string;
+  date: string;
+  titlePlaceholder: string;
+  templates: TemplateId[]; // plantillas que prueba; se queda con la última
+  swatches: string[];
+  swatchPick: number;
+  customHex: string;
+  dark: boolean;
+  initialFont: Font;
+  finalFont: Font;
+  sectors: Record<string, Sector>;
+  groups: { id: string; label: string; price: string }[];
+  palette: { group: string; label: string }[];
+  drops: [string, string][]; // [sector, etiqueta que se arrastra]
+  others: { t: string; d: string }[]; // otras fechas en la plantilla Cartelera
+};
 
-const palette: { group: Group; label: string }[] = [
-  { group: "pista", label: "Pista" },
-  { group: "box", label: "Box" },
-  { group: "vip", label: "VIP" },
-];
+export type ScenarioId = "boliche" | "teatro";
 
-const TITLE = "Fiesta Aniversario";
-const DATE = "Sáb 21 de septiembre · 00:30";
+const scenarios: Record<ScenarioId, Scenario> = {
+  boliche: {
+    venue: "Tu Boliche",
+    url: "tuboliche.com/tickets",
+    title: "Fiesta Aniversario",
+    date: "Sáb 21 de septiembre · 00:30",
+    titlePlaceholder: "Ej. Fiesta de los jueves",
+    templates: ["portada", "cartelera", "portada"],
+    swatches: ["#111111", "#52525B", "#A1A1AA", "#7A1428", "#1E3A8A"],
+    swatchPick: 2,
+    customHex: "#F4F4F5",
+    dark: true,
+    initialFont: "clasica",
+    finalFont: "moderna",
+    sectors: {
+      escenario: { label: "DJ", group: null, x: 34, y: 4, w: 32, h: 13 },
+      pista: { label: "Pista", group: "pista", x: 26, y: 23, w: 48, h: 44, strength: 55 },
+      oeste: { label: "Boxes", group: "box", x: 4, y: 18, w: 18, h: 70, vertical: true, strength: 32 },
+      este: { label: "Boxes", group: "box", x: 78, y: 18, w: 18, h: 70, vertical: true, strength: 32 },
+      vip: { label: "VIP", group: "vip", x: 26, y: 72, w: 48, h: 17, strength: 90 },
+    },
+    groups: [
+      { id: "pista", label: "Pista", price: "15000" },
+      { id: "box", label: "Box (6 pers.)", price: "180000" },
+      { id: "vip", label: "VIP", price: "30000" },
+    ],
+    palette: [
+      { group: "pista", label: "Pista" },
+      { group: "box", label: "Box" },
+      { group: "vip", label: "VIP" },
+    ],
+    drops: [
+      ["pista", "Pista"],
+      ["oeste", "Box"],
+      ["este", "Box"],
+      ["vip", "VIP"],
+    ],
+    others: [
+      { t: "Jueves universitario", d: "Jue 26" },
+      { t: "Próxima fiesta", d: "Octubre" },
+    ],
+  },
+  teatro: {
+    venue: "Tu Teatro",
+    url: "tuteatro.com/tickets",
+    title: "Función de gala",
+    date: "Sáb 14 de marzo · 21:00",
+    titlePlaceholder: "Ej. Temporada de otoño",
+    templates: ["portada", "dividida", "cartelera"],
+    swatches: ["#7A1428", "#2F5BFF", "#0F766E", "#F59E0B", "#111111"],
+    swatchPick: 2,
+    customHex: "#7A1428",
+    dark: false,
+    initialFont: "moderna",
+    finalFont: "clasica",
+    sectors: {
+      escenario: { label: "Escenario", group: null, x: 28, y: 4, w: 44, h: 13 },
+      platea: { label: "Platea", group: "platea", x: 26, y: 23, w: 48, h: 44, strength: 55 },
+      palcoIzq: { label: "Palcos", group: "palco", x: 4, y: 18, w: 18, h: 52, vertical: true, strength: 85 },
+      palcoDer: { label: "Palcos", group: "palco", x: 78, y: 18, w: 18, h: 52, vertical: true, strength: 85 },
+      pullman: { label: "Pullman", group: "pullman", x: 26, y: 72, w: 48, h: 17, strength: 32 },
+    },
+    groups: [
+      { id: "platea", label: "Platea", price: "22000" },
+      { id: "palco", label: "Palcos", price: "35000" },
+      { id: "pullman", label: "Pullman", price: "16000" },
+    ],
+    palette: [
+      { group: "platea", label: "Platea" },
+      { group: "palco", label: "Palco" },
+      { group: "pullman", label: "Pullman" },
+    ],
+    drops: [
+      ["platea", "Platea"],
+      ["palcoIzq", "Palco"],
+      ["palcoDer", "Palco"],
+      ["pullman", "Pullman"],
+    ],
+    others: [
+      { t: "Temporada de otoño", d: "Vie 20" },
+      { t: "Próximo estreno", d: "Abril" },
+    ],
+  },
+};
+
+const ScenarioContext = createContext<Scenario>(scenarios.boliche);
+const useScenario = () => useContext(ScenarioContext);
 
 type Tab = "plantilla" | "colores" | "contenido" | "mapa" | "precios";
 const tabs: { id: Tab; label: string }[] = [
@@ -77,8 +166,8 @@ type State = {
   font: Font;
   title: string;
   date: string;
-  placed: SectorId[];
-  prices: Partial<Record<Group, string>>;
+  placed: string[];
+  prices: Record<string, string>;
   cursor: string | null;
   focus: string | null;
   dragging: string | null;
@@ -87,24 +176,26 @@ type State = {
   published: boolean;
 };
 
-const initial: State = {
-  tab: "plantilla",
-  template: "dividida",
-  dark: false,
-  accent: swatches[0],
-  hex: swatches[0],
-  font: "clasica",
-  title: "",
-  date: "",
-  placed: ["escenario"],
-  prices: {},
-  cursor: null,
-  focus: null,
-  dragging: null,
-  pressed: false,
-  publishing: false,
-  published: false,
-};
+function initialState(sc: Scenario): State {
+  return {
+    tab: "plantilla",
+    template: "dividida",
+    dark: false,
+    accent: sc.swatches[0],
+    hex: sc.swatches[0],
+    font: sc.initialFont,
+    title: "",
+    date: "",
+    placed: ["escenario"],
+    prices: {},
+    cursor: null,
+    focus: null,
+    dragging: null,
+    pressed: false,
+    publishing: false,
+    published: false,
+  };
+}
 
 type Step = { wait: number; apply: (s: State) => State };
 
@@ -121,7 +212,8 @@ const click = (fn: (s: State) => State, wait = 750): Step[] => [
 const type = (text: string, set: (s: State, v: string) => State, speed = 55): Step[] =>
   Array.from(text, (_, i) => ({ wait: speed, apply: (s) => set(s, text.slice(0, i + 1)) }));
 
-function buildScript(): Step[] {
+function buildScript(sc: Scenario): Step[] {
+  const initial = initialState(sc);
   const steps: Step[] = [];
   const tap = (target: string, fn: (s: State) => State, wait?: number) => [
     move(target, wait),
@@ -129,43 +221,38 @@ function buildScript(): Step[] {
   ];
   const openTab = (id: Tab) => tap(`tab-${id}`, (s) => ({ ...s, tab: id, focus: null }));
 
-  // 1. Diseño: prueba las tres plantillas y se queda con Portada
+  // 1. Diseño: prueba plantillas y se queda con la última
   steps.push({ wait: 700, apply: (s) => s });
-  for (const id of ["portada", "cartelera", "portada"] as TemplateId[]) {
+  for (const id of sc.templates) {
     steps.push(...tap(`tpl-${id}`, (s) => ({ ...s, template: id })));
   }
 
   // 2. Colores: fondo oscuro, un color de la muestra y después uno propio
   steps.push(...openTab("colores"));
-  steps.push(...tap("bg-dark", (s) => ({ ...s, dark: true })));
-  steps.push(...tap("sw-2", (s) => ({ ...s, accent: swatches[2], hex: swatches[2] })));
+  if (sc.dark) steps.push(...tap("bg-dark", (s) => ({ ...s, dark: true })));
+  const pick = sc.swatches[sc.swatchPick];
+  steps.push(...tap(`sw-${sc.swatchPick}`, (s) => ({ ...s, accent: pick, hex: pick })));
   steps.push(...tap("in-hex", (s) => ({ ...s, focus: "in-hex", hex: "#" }), 600));
   steps.push(
     ...type(
-      CUSTOM_HEX.slice(1),
+      sc.customHex.slice(1),
       (s, v) => ({ ...s, hex: `#${v}`, accent: v.length === 6 ? `#${v}` : s.accent }),
       120,
     ),
   );
-  steps.push(...tap("font-moderna", (s) => ({ ...s, focus: null, font: "moderna" })));
+  steps.push(...tap(`font-${sc.finalFont}`, (s) => ({ ...s, focus: null, font: sc.finalFont })));
 
   // 3. Textos
   steps.push(...openTab("contenido"));
   steps.push(...tap("in-title", (s) => ({ ...s, focus: "in-title" })));
-  steps.push(...type(TITLE, (s, v) => ({ ...s, title: v })));
+  steps.push(...type(sc.title, (s, v) => ({ ...s, title: v })));
   steps.push(...tap("in-date", (s) => ({ ...s, focus: "in-date" }), 500));
-  steps.push(...type(DATE, (s, v) => ({ ...s, date: v }), 40));
+  steps.push(...type(sc.date, (s, v) => ({ ...s, date: v }), 40));
 
   // 4. Mapa: arrastrar sectores
   steps.push(...openTab("mapa"));
-  const drops: [SectorId, string][] = [
-    ["pista", "Pista"],
-    ["oeste", "Box"],
-    ["este", "Box"],
-    ["vip", "VIP"],
-  ];
-  for (const [id, label] of drops) {
-    const group = sectors[id].group!;
+  for (const [id, label] of sc.drops) {
+    const group = sc.sectors[id].group!;
     steps.push(move(`pal-${group}`, 600));
     steps.push({ wait: 750, apply: (s) => ({ ...s, pressed: true, dragging: label }) });
     steps.push(move(`drop-${id}`, 120));
@@ -177,7 +264,7 @@ function buildScript(): Step[] {
 
   // 5. Precios
   steps.push(...openTab("precios"));
-  for (const g of groups) {
+  for (const g of sc.groups) {
     steps.push(...tap(`in-price-${g.id}`, (s) => ({ ...s, focus: `in-price-${g.id}` }), 550));
     steps.push(...type(g.price, (s, v) => ({ ...s, prices: { ...s.prices, [g.id]: v } }), 90));
   }
@@ -189,8 +276,15 @@ function buildScript(): Step[] {
   return steps;
 }
 
-const script = buildScript();
-const finalState: State = script.slice(0, -1).reduce((s, step) => step.apply(s), initial);
+const built = Object.fromEntries(
+  (Object.keys(scenarios) as ScenarioId[]).map((id) => {
+    const sc = scenarios[id];
+    const script = buildScript(sc);
+    const initial = initialState(sc);
+    const final = script.slice(0, -1).reduce((s, step) => step.apply(s), initial);
+    return [id, { script, initial, final }];
+  }),
+) as Record<ScenarioId, { script: Step[]; initial: State; final: State }>;
 
 const pesos = (digits?: string) =>
   digits ? `$ ${Number(digits).toLocaleString("es-AR")}` : "";
@@ -234,7 +328,9 @@ function lookOf(s: State): Look {
 /* Componente                                                          */
 /* ------------------------------------------------------------------ */
 
-export function SiteBuilder() {
+export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId }) {
+  const { script, initial, final } = built[scenario];
+  const sc = scenarios[scenario];
   const [viewRef, inView] = useInView<HTMLDivElement>("-15% 0px");
   const reduced = useReducedMotion();
   const [state, setState] = useState<State>(initial);
@@ -242,7 +338,7 @@ export function SiteBuilder() {
   const boxRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
-  const s = reduced ? finalState : state;
+  const s = reduced ? final : state;
 
   // Avanza el guion mientras la sección está en pantalla
   useEffect(() => {
@@ -253,7 +349,7 @@ export function SiteBuilder() {
       setStepIdx((i) => (i + 1) % script.length);
     }, step.wait);
     return () => clearTimeout(id);
-  }, [stepIdx, inView, reduced]);
+  }, [stepIdx, inView, reduced, script]);
 
   // Ubica el cursor sobre el elemento objetivo
   useLayoutEffect(() => {
@@ -272,6 +368,7 @@ export function SiteBuilder() {
   }, [s.cursor, s.tab]);
 
   return (
+    <ScenarioContext.Provider value={sc}>
     <div ref={viewRef}>
       <div
         ref={boxRef}
@@ -345,7 +442,7 @@ export function SiteBuilder() {
             <div className="overflow-hidden rounded-xl border border-tinta/10 shadow-sm">
               <div className="flex items-center gap-2 border-b border-black/5 bg-white px-3 py-2">
                 <span className="flex-1 truncate rounded-md bg-tinta/5 px-3 py-1 text-center text-[11px] text-tinta/50">
-                  tuboliche.com/tickets
+                  {sc.url}
                 </span>
               </div>
               <Preview s={s} />
@@ -375,6 +472,7 @@ export function SiteBuilder() {
         )}
       </div>
     </div>
+    </ScenarioContext.Provider>
   );
 }
 
@@ -481,6 +579,7 @@ function Segmented({ options }: { options: { target: string; label: ReactNode; a
 }
 
 function PanelColors({ s }: { s: State }) {
+  const { swatches } = useScenario();
   const hexFocused = s.focus === "in-hex";
   return (
     <div className="space-y-5">
@@ -564,11 +663,12 @@ function FakeInput({
 }
 
 function PanelContent({ s }: { s: State }) {
+  const scn = useScenario();
   return (
     <div className="space-y-4">
       <div>
         <Label>Título del evento</Label>
-        <FakeInput id="in-title" value={s.title} placeholder="Ej. Fiesta de los jueves" focus={s.focus} />
+        <FakeInput id="in-title" value={s.title} placeholder={scn.titlePlaceholder} focus={s.focus} />
       </div>
       <div>
         <Label>Fecha y hora</Label>
@@ -585,11 +685,12 @@ function PanelContent({ s }: { s: State }) {
 }
 
 function PanelMap({ s }: { s: State }) {
+  const { sectors, palette } = useScenario();
   return (
     <div>
       <Label>Diseñá tu plano</Label>
       <div className="relative aspect-[4/3] rounded-lg border border-tinta/15 bg-white bg-[radial-gradient(rgba(31,3,10,0.12)_1px,transparent_1px)] [background-size:12px_12px]">
-        {(Object.keys(sectors) as SectorId[]).map((id) => {
+        {Object.keys(sectors).map((id) => {
           const sc = sectors[id];
           const on = s.placed.includes(id);
           return (
@@ -605,7 +706,7 @@ function PanelMap({ s }: { s: State }) {
               }`}
               style={{ left: `${sc.x}%`, top: `${sc.y}%`, width: `${sc.w}%`, height: `${sc.h}%` }}
             >
-              <span className={id === "oeste" || id === "este" ? "[writing-mode:vertical-rl]" : ""}>
+              <span className={sc.vertical ? "[writing-mode:vertical-rl]" : ""}>
                 {sc.label}
               </span>
             </span>
@@ -632,6 +733,7 @@ function PanelMap({ s }: { s: State }) {
 }
 
 function PanelPrices({ s }: { s: State }) {
+  const { groups } = useScenario();
   return (
     <div>
       <Label>Precios por sector</Label>
@@ -672,7 +774,7 @@ function Preview({ s }: { s: State }) {
   return (
     <div className="relative min-h-[390px] transition-colors duration-500" style={{ background: l.bg, color: l.fg }}>
       <div className="flex items-center justify-between px-5 py-3 text-xs">
-        <span className={`text-sm transition-all ${l.title}`}>Tu Boliche</span>
+        <span className={`text-sm transition-all ${l.title}`}>{useScenario().venue}</span>
         <span style={{ color: l.muted }}>Eventos · Contacto</span>
       </div>
 
@@ -718,6 +820,7 @@ function BuyButton({ l, className = "" }: { l: Look; className?: string }) {
 }
 
 function PriceList({ s, l }: LP) {
+  const { groups, sectors } = useScenario();
   return (
     <ul className="space-y-1.5 text-sm">
       {groups.map((g) => {
@@ -742,6 +845,7 @@ function PriceList({ s, l }: LP) {
 }
 
 function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
+  const { sectors } = useScenario();
   return (
     <div
       className={`relative aspect-[4/3] rounded-lg ${className}`}
@@ -750,8 +854,8 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
       {s.placed.map((id) => {
         const sc = sectors[id];
         const price = sc.group ? s.prices[sc.group] : undefined;
-        const strength = sc.group === "vip" ? 90 : sc.group === "pista" ? 55 : 32;
-        const vertical = id === "oeste" || id === "este";
+        const strength = sc.strength ?? 40;
+        const vertical = sc.vertical;
         return (
           <span
             key={id}
@@ -762,7 +866,7 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
               width: `${sc.w}%`,
               height: `${sc.h}%`,
               background: id === "escenario" ? l.fg : `color-mix(in srgb, ${l.accent} ${strength}%, transparent)`,
-              color: id === "escenario" ? l.bg : sc.group === "vip" ? l.onAccent : l.fg,
+              color: id === "escenario" ? l.bg : strength >= 80 ? l.onAccent : l.fg,
             }}
           >
             <span className={`flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
@@ -825,10 +929,7 @@ function LayoutPortada({ s, l }: LP) {
 }
 
 function LayoutCartelera({ s, l }: LP) {
-  const others = [
-    { t: "Jueves universitario", d: "Jue 26" },
-    { t: "Próxima fiesta", d: "Octubre" },
-  ];
+  const { others } = useScenario();
   return (
     <div className="px-5 pb-6 pt-1">
       <p className="text-[11px] uppercase tracking-[0.2em]" style={{ color: l.muted }}>

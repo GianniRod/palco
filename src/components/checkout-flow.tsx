@@ -7,13 +7,41 @@ import { useInView, useInterval, useReducedMotion } from "./hooks";
 
 const STEP_MS = 3200;
 
-const steps = [
-  { title: "Elige", text: "Su lote y cuántas entradas, desde tu web." },
-  { title: "Paga", text: "Con tarjeta o Mercado Pago. El dinero se acredita en tu cuenta." },
-  { title: "Recibe", text: "Su entrada con QR por email, al instante." },
-];
+type Variant = "boliche" | "teatro";
 
-export function CheckoutFlow() {
+// Textos y montos de cada versión. Cargo de servicio: 10% del valor de las entradas.
+const content = {
+  boliche: {
+    choose: "Su lote y cuántas entradas, desde tu web.",
+    venue: "Tu Boliche",
+    item: "2 × Preventa 2",
+    subtotal: "$ 22.000",
+    fee: "$ 2.200",
+    total: "$ 24.200",
+    event: "Fiesta Aniversario",
+    ticket: "Preventa 2 · Entrada 1 de 2",
+  },
+  teatro: {
+    choose: "Su butaca en el plano de tu sala, desde tu web.",
+    venue: "Tu Teatro",
+    item: "2 × Platea",
+    subtotal: "$ 44.000",
+    fee: "$ 4.400",
+    total: "$ 48.400",
+    event: "Función de gala",
+    ticket: "Platea · Fila D · 6",
+  },
+} satisfies Record<Variant, Record<string, string>>;
+
+type Content = (typeof content)[Variant];
+
+export function CheckoutFlow({ variant = "boliche" }: { variant?: Variant }) {
+  const c = content[variant];
+  const steps = [
+    { title: "Elige", text: c.choose },
+    { title: "Paga", text: "Con tarjeta o Mercado Pago. El dinero se acredita en tu cuenta." },
+    { title: "Recibe", text: "Su entrada con QR por email, al instante." },
+  ];
   const [ref, inView] = useInView<HTMLDivElement>();
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
@@ -60,13 +88,13 @@ export function CheckoutFlow() {
         <div className="relative h-[500px] overflow-hidden rounded-[1.9rem] bg-white">
           <div className="absolute left-1/2 top-2 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-tinta" />
           <Screen active={step === 0}>
-            <StepChoose />
+            {variant === "teatro" ? <StepChooseTeatro /> : <StepChoose />}
           </Screen>
           <Screen active={step === 1}>
-            <StepPay />
+            <StepPay c={c} />
           </Screen>
           <Screen active={step === 2}>
-            <StepReceive />
+            <StepReceive c={c} />
           </Screen>
         </div>
       </div>
@@ -138,16 +166,54 @@ function StepChoose() {
   );
 }
 
-function StepPay() {
+function StepChooseTeatro() {
   return (
     <div className="flex h-full flex-col">
-      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Boliche</p>
+      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">Tu Teatro</p>
+      <p className="mt-1 font-display text-2xl font-semibold tracking-tight leading-tight">Función de gala</p>
+      <p className="text-xs text-black/50">Sábado 14 · 21:00</p>
+      <div className="mx-auto mt-6 h-2 w-2/3 rounded-b-full bg-palco-800/20" />
+      <div className="mt-4 flex flex-col items-center gap-1.5">
+        {[8, 10, 10, 12, 12, 12].map((n, r) => (
+          <div key={r} className="flex gap-1">
+            {Array.from({ length: n }, (_, s) => {
+              const chosen = r === 3 && (s === 5 || s === 6);
+              const sold = (r * 5 + s * 3) % 7 < 3;
+              return (
+                <span
+                  key={s}
+                  className={`h-3 w-3 rounded-t-[4px] rounded-b-[1px] ${
+                    chosen ? "bg-dorado" : sold ? "bg-black/10" : "bg-palco-800/70"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto rounded-xl bg-papel p-3 text-sm">
+        <div className="flex justify-between">
+          <span>Platea · D6, D7</span>
+          <span className="font-medium">$ 44.000</span>
+        </div>
+      </div>
+      <div className="mt-3 rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
+        Continuar
+      </div>
+    </div>
+  );
+}
+
+function StepPay({ c }: { c: Content }) {
+  return (
+    <div className="flex h-full flex-col">
+      <p className="text-[10px] uppercase tracking-[0.25em] text-palco-500">{c.venue}</p>
       <p className="mt-1 font-display text-2xl font-semibold tracking-tight">Pago</p>
       <div className="mt-6 space-y-2 text-sm">
-        <Row l="2 × Preventa 2" r="$ 22.000" />
-        <Row l="Cargo de servicio (10%)" r="$ 2.200" />
+        <Row l={c.item} r={c.subtotal} />
+        <Row l="Cargo de servicio (10%)" r={c.fee} />
         <div className="border-t border-black/10 pt-2">
-          <Row l="Total" r="$ 24.200" bold />
+          <Row l="Total" r={c.total} bold />
         </div>
       </div>
       <p className="mt-6 text-xs text-black/50">Medio de pago</p>
@@ -156,13 +222,13 @@ function StepPay() {
         <PayOption title="Mercado Pago" sub="Dinero en cuenta o tarjetas guardadas" />
       </div>
       <div className="mt-auto rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
-        Pagar $ 24.200
+        Pagar {c.total}
       </div>
     </div>
   );
 }
 
-function StepReceive() {
+function StepReceive({ c }: { c: Content }) {
   return (
     <div className="flex h-full flex-col items-center text-center">
       <span className="mt-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white">
@@ -173,8 +239,8 @@ function StepReceive() {
         <Mail className="h-3.5 w-3.5" /> Te enviamos tus entradas
       </p>
       <div className="mt-6 w-full rounded-2xl bg-palco-800 p-4 text-left text-white">
-        <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Fiesta Aniversario</p>
-        <p className="font-display text-lg font-medium">Preventa 2 · Entrada 1 de 2</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">{c.event}</p>
+        <p className="font-display text-lg font-medium">{c.ticket}</p>
         <div className="mt-3 flex justify-center rounded-lg bg-white p-3 text-black">
           <FakeQr seed={5} className="h-32 w-32" />
         </div>

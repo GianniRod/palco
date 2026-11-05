@@ -8,6 +8,8 @@ import { SiteBuilder } from "@/components/site-builder";
 import { Reveal } from "@/components/reveal";
 import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
+import { AudienceGate } from "@/components/audience-gate";
+import { SegmentSwitch } from "@/components/segment-switch";
 import { contactHref, demoHref, site } from "@/lib/site";
 
 const nav = [
@@ -76,12 +78,15 @@ export default function Home() {
                 </a>
               ))}
             </nav>
-            <a
-              href={demoHref}
-              className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium transition hover:bg-white hover:text-black"
-            >
-              Pedir demo
-            </a>
+            <div className="flex items-center gap-3">
+              <SegmentSwitch current="boliche" />
+              <a
+                href={demoHref}
+                className="hidden rounded-full border border-white/25 px-4 py-2 text-sm font-medium transition hover:bg-white hover:text-black sm:inline-flex"
+              >
+                Pedir demo
+              </a>
+            </div>
           </header>
 
           <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-16 sm:pt-24">
@@ -90,7 +95,8 @@ export default function Home() {
               className="subir mt-5 text-[clamp(2.1rem,5vw,4rem)] font-semibold leading-[1.12] tracking-tight"
               style={{ animationDelay: "0.05s" }}
             >
-              Tu público compra <RotatingChip />, paga en tu web y entra con un QR.
+              Tu público compra{" "}
+              <RotatingChip options={["Preventa 2", "General", "Entrada VIP", "Mesa para 6"]} />, paga en tu web y entra con un QR.
             </h1>
 
             <div
@@ -228,6 +234,7 @@ export default function Home() {
       </footer>
 
       <DemoDialog />
+      <AudienceGate />
     </div>
   );
 }
