@@ -9,6 +9,16 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Sistema de prueba de QR (escaneo con control de duplicados)**: panel admin → "Puerta (prueba)".
+  - Compu: crear entradas de prueba (con nombre opcional), ver sus QR reales, marcarlas sin usar o borrarlas.
+  - Celular (solo celu): botón grande "Escanear QR" (también flotante en todo el admin). Abre la cámara (`qr-scanner`),
+    valida en el servidor y muestra pantalla completa: verde "Entrada válida", amarillo "Ya fue usada" (hora y quién),
+    rojo "Entrada inválida". Vibra distinto según el resultado.
+  - QR firmado con Ed25519: `NO1.<id>.<firma>` (`backend/src/qr.mjs`, tests en `backend/tests/qr.test.mjs`, sin base).
+  - **Migración nueva `backend/db/migrations/006_qr_prueba.sql`**: tablas `qr_signing_keys`, `qr_test_tickets`, `qr_scans`.
+    No toca `tickets`. **Hay que correr `npm run db:migrate` en `backend/`** (no la pude aplicar yo).
+  - Dependencias nuevas: `qrcode`, `qr-scanner`, `@types/qrcode`.
+  Archivos: `src/app/dashboard/admin/puerta/*`, `src/app/dashboard/admin/_scan-fab.tsx`, `admin/layout.tsx`, `docs/dashboard.md`.
 - **Portada: recorte automático de bordes negros** al subirla (capturas de Instagram o de video con franjas).
   Una fila o columna es borde si casi no tiene píxeles con luz; nunca recorta más del 35% por lado.
   El aviso ahora explica que se recortó y pide la foto original (no una captura) de al menos 1920 px.

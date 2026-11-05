@@ -1,8 +1,9 @@
 import { Suspense, type ReactNode } from "react";
-import { BarChart3, Building2, Database, ScrollText } from "lucide-react";
+import { BarChart3, Building2, Database, ScanLine, ScrollText } from "lucide-react";
 import { requireAdmin } from "@/lib/dashboard/session";
 import { NavLink } from "../_components/nav-link";
 import { Loading, Shell } from "../_components/shell";
+import { ScanFab } from "./_scan-fab";
 
 // Secciones de las próximas etapas (docs/dashboard.md, sección 2).
 const upcoming = [
@@ -29,6 +30,10 @@ export default function AdminLayout({ children }: LayoutProps<"/dashboard/admin"
             <ScrollText className="size-4" aria-hidden />
             Auditoría
           </NavLink>
+          <NavLink href="/admin/puerta" segment="puerta">
+            <ScanLine className="size-4" aria-hidden />
+            Puerta (prueba)
+          </NavLink>
           {upcoming.map(({ label, icon: Icon }) => (
             <span
               key={label}
@@ -46,6 +51,7 @@ export default function AdminLayout({ children }: LayoutProps<"/dashboard/admin"
       <Suspense fallback={<Loading />}>
         <Guard>{children}</Guard>
       </Suspense>
+      <ScanFab />
     </Shell>
   );
 }

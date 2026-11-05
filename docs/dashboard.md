@@ -115,6 +115,16 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
 - Exportar a Excel/CSV.
 
 ### 3.6 Puerta (control de acceso)
+**Ya hay un sistema de prueba** en el panel admin → **Puerta (prueba)** (`src/app/dashboard/admin/puerta`):
+- En la compu el admin crea entradas de prueba y ve sus QR; en el celular toca **Escanear QR**.
+- El QR lleva `NO1.<id>.<firma Ed25519>` (`backend/src/qr.mjs`). Sin datos personales; solo Nightowl puede
+  fabricarlos y con la clave pública se pueden verificar sin internet (para la app offline).
+- Duplicados: la entrada se marca con un solo `update ... where checked_in_at is null`, así dos escaneos
+  a la vez no entran los dos. Cada escaneo queda en `qr_scans` (válido, repetido o inválido).
+- Claves: `TICKET_SIGNING_PRIVATE_KEY` / `TICKET_SIGNING_PUBLIC_KEY` (base64 DER) si están en el entorno;
+  si no, se generan una vez y se guardan en `qr_signing_keys`.
+- Tablas propias (`006_qr_prueba.sql`), separadas de `tickets`: cuando haya venta real se usa la misma firma.
+
 - Crear usuarios "portero" que solo pueden escanear QR de ese cliente.
 - La app de escaneo funciona sin internet y sincroniza después (ver la conversación sobre QR: token firmado + `checked_in_at` atómico).
 
