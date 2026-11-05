@@ -125,7 +125,7 @@ const scenarios: Record<ScenarioId, Scenario> = {
       platea: { label: "Platea", group: "platea", x: 26, y: 23, w: 48, h: 44, strength: 55 },
       palcoIzq: { label: "Palcos", group: "palco", x: 4, y: 18, w: 18, h: 52, vertical: true, strength: 85 },
       palcoDer: { label: "Palcos", group: "palco", x: 78, y: 18, w: 18, h: 52, vertical: true, strength: 85 },
-      pullman: { label: "Pullman", group: "pullman", x: 26, y: 72, w: 48, h: 17, strength: 32 },
+      pullman: { label: "Pullman", group: "pullman", x: 26, y: 71, w: 48, h: 22, strength: 32 },
     },
     groups: [
       { id: "platea", label: "Platea", price: "22000" },
@@ -793,9 +793,19 @@ function roomRect(t: number) {
 }
 
 /** Butacas dibujadas como una grilla de puntos que aparecen de a una. */
-function SeatDots({ count, cols, color }: { count: number; cols: number; color: string }) {
+function SeatDots({
+  count,
+  cols,
+  color,
+  className = "w-full",
+}: {
+  count: number;
+  cols: number;
+  color: string;
+  className?: string;
+}) {
   return (
-    <span className="grid w-full gap-[2px] p-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+    <span className={`grid gap-[2px] p-1 ${className}`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
       {Array.from({ length: count }, (_, i) => (
         <span
           key={i}
@@ -1079,15 +1089,15 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
           >
             {s.seats[id] ? (
               <span className="flex w-full flex-col items-center">
+                {/* Más angosta que el sector para que entren las filas y el nombre abajo */}
                 <SeatDots
                   count={s.seats[id]}
                   cols={seatPlan?.find((p) => p.id === id)?.cols ?? 12}
                   color={strength >= 80 ? l.onAccent : l.fg}
+                  className="w-[62%]"
                 />
-                <span className="text-[9px]">
-                  {sc.label}
-                  {price && <span className="font-normal opacity-80"> · {pesos(price)}</span>}
-                </span>
+                {/* Solo el nombre: el precio ya está en la lista de al lado */}
+                <span className="text-[8px] leading-none">{sc.label}</span>
               </span>
             ) : (
               <span className={`flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
