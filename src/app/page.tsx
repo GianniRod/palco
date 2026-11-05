@@ -66,23 +66,23 @@ export default function Home() {
     <div className="minimal flex min-h-full flex-1 flex-col">
       <main className="flex-1">
         {/* ---------------- Hero ---------------- */}
-        <section className="relative overflow-hidden bg-palco-900 text-white">
+        <section className="relative overflow-hidden bg-white text-tinta">
           <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 pt-8">
             <a href="#" aria-label="Palco, inicio">
-              <Logo className="h-7 sm:h-8" />
+              <Logo className="h-7 sm:h-8" color="var(--color-tinta)" />
             </a>
-            <nav className="hidden items-center gap-8 text-sm text-white/55 md:flex">
+            <nav className="hidden items-center gap-8 text-sm text-tinta/55 md:flex">
               {nav.map((n) => (
-                <a key={n.href} href={n.href} className="transition hover:text-white">
+                <a key={n.href} href={n.href} className="transition hover:text-tinta">
                   {n.label}
                 </a>
               ))}
             </nav>
             <div className="flex items-center gap-3">
-              <SegmentSwitch current="boliche" />
+              <SegmentSwitch current="boliche" tone="light" />
               <a
                 href={demoHref}
-                className="hidden rounded-full border border-white/25 px-4 py-2 text-sm font-medium transition hover:bg-white hover:text-black sm:inline-flex"
+                className="hidden rounded-full border border-tinta/20 px-4 py-2 text-sm font-medium transition hover:bg-tinta hover:text-white sm:inline-flex"
               >
                 Pedir demo
               </a>
@@ -90,40 +90,40 @@ export default function Home() {
           </header>
 
           <div className="relative mx-auto max-w-6xl px-6 pb-20 pt-16 sm:pt-24">
-            <p className="subir text-sm uppercase tracking-[0.25em] text-white/45">Entradas para boliches y fiestas</p>
+            <p className="subir text-sm uppercase tracking-[0.25em] text-tinta/45">Entradas para boliches y fiestas</p>
             <h1
               className="subir mt-5 text-[clamp(2.1rem,5vw,4rem)] font-semibold leading-[1.12] tracking-tight"
               style={{ animationDelay: "0.05s" }}
             >
               Tu público compra{" "}
-              <RotatingChip options={["Preventa 2", "General", "Entrada VIP", "Mesa para 6"]} />, paga en tu web y entra con un QR.
+              <RotatingChip tone="dark" options={["Preventa 2", "General", "Entrada VIP", "Mesa para 6"]} />, paga en tu web y entra con un QR.
             </h1>
 
             <div
               className="subir mt-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between"
               style={{ animationDelay: "0.15s" }}
             >
-              <p className="max-w-xl text-lg leading-relaxed text-white/55">
+              <p className="max-w-xl text-lg leading-relaxed text-tinta/60">
                 Vendé desde tu propia web, con tus lotes, tus RRPP y tu marca. Cobrás con tarjeta o
                 Mercado Pago, directo a tu cuenta.
               </p>
               <a
                 href={demoHref}
-                className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-white px-6 py-3 font-medium text-black transition hover:bg-white/85 md:self-auto"
+                className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-tinta px-6 py-3 font-medium text-white transition hover:bg-tinta/85 md:self-auto"
               >
                 Pedir una demo
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </a>
             </div>
 
-            <div className="subir mt-14" style={{ animationDelay: "0.3s" }}>
+            <div className="subir mt-14 rounded-2xl bg-palco-900" style={{ animationDelay: "0.3s" }}>
               <LotsPanel />
             </div>
           </div>
         </section>
 
         {/* ---------------- Editor ---------------- */}
-        <section id="editor" className="scroll-mt-4 bg-white">
+        <section id="editor" className="papel scroll-mt-4 border-t border-tinta/10">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Editor" title="Tu web de entradas, armada por vos.">
               Elegí uno de los tres diseños, poné tu logo y tus colores, armá la pista, el VIP y los
@@ -136,7 +136,7 @@ export default function Home() {
         </section>
 
         {/* ---------------- Hecho para la noche ---------------- */}
-        <section className="papel border-y border-tinta/10">
+        <section className="border-y border-tinta/10 bg-white">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Hecho para la noche" title="Lo que un boliche necesita, nada más." />
             <div className="mt-14 grid border-t border-tinta/10 sm:grid-cols-2">
@@ -156,7 +156,7 @@ export default function Home() {
         </section>
 
         {/* ---------------- Venta ---------------- */}
-        <section id="venta" className="scroll-mt-4 bg-white">
+        <section id="venta" className="papel scroll-mt-4">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Venta" title="Comprar lleva un minuto.">
               Elige el lote, paga con tarjeta de crédito, débito o Mercado Pago y recibe su QR. Sin salir
@@ -182,7 +182,7 @@ export default function Home() {
         </section>
 
         {/* ---------------- Preguntas ---------------- */}
-        <section id="preguntas" className="papel scroll-mt-4">
+        <section id="preguntas" className="scroll-mt-4 bg-white">
           <div className="mx-auto max-w-6xl px-6 py-24">
             <SectionTitle eyebrow="Preguntas" title="Lo que nos suelen preguntar." />
             <dl className="mt-14 grid gap-x-16 md:grid-cols-2">
@@ -197,7 +197,7 @@ export default function Home() {
         </section>
 
         {/* ---------------- Cierre ---------------- */}
-        <section className="papel px-6 pb-28">
+        <section className="bg-white px-6 pb-28">
           <Reveal>
             <a href={demoHref} className="group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
               <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-900 p-8 text-white sm:p-12">

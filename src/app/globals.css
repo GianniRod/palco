@@ -61,7 +61,7 @@ body {
 }
 
 body:has(.minimal) {
-  background: #09090b;
+  background: #ffffff;
 }
 
 ::selection {
