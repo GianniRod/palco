@@ -56,6 +56,10 @@ type Scenario = {
   others: { t: string; d: string }[]; // otras fechas en la plantilla Cartelera
   /** Calendario desplegable para elegir la fecha (semana empieza el lunes: 0 = lunes). */
   cal: { month: string; firstWeekday: number; days: number; pick: number; time: string };
+  /** Teatro: primero se arma la forma de la sala arrastrando la esquina. */
+  room?: boolean;
+  /** Teatro: sectores a los que se les cargan butacas (cantidad y columnas del dibujo). */
+  seatPlan?: { id: string; count: number; cols: number }[];
 };
 
 export type ScenarioId = "boliche" | "teatro";
@@ -144,6 +148,11 @@ const scenarios: Record<ScenarioId, Scenario> = {
       { t: "Próximo estreno", d: "Abril" },
     ],
     cal: { month: "Marzo 2026", firstWeekday: 6, days: 31, pick: 14, time: "21:00" },
+    room: true,
+    seatPlan: [
+      { id: "platea", count: 120, cols: 15 },
+      { id: "pullman", count: 48, cols: 16 },
+    ],
   },
 };
 
@@ -173,6 +182,10 @@ type State = {
   title: string;
   date: string;
   calendar: boolean; // calendario de la fecha desplegado
+  room: number; // 0 = sala chica, 1 = sala armada (solo teatro)
+  seats: Record<string, number>; // butacas cargadas por sector
+  seatEdit: string | null; // sector al que se le están cargando butacas
+  seatValue: string;
   placed: string[];
   prices: Record<string, string>;
   cursor: string | null;
@@ -194,7 +207,11 @@ function initialState(sc: Scenario): State {
     title: "",
     date: "",
     calendar: false,
-    placed: ["escenario"],
+    room: sc.room ? 0 : 1,
+    seats: {},
+    seatEdit: null,
+    seatValue: "",
+    placed: sc.room ? [] : ["escenario"],
     prices: {},
     cursor: null,
     focus: null,
@@ -259,8 +276,17 @@ function buildScript(sc: Scenario): Step[] {
   steps.push(...tap(`day-${sc.cal.pick}`, (s) => ({ ...s, date: sc.date }), 700));
   steps.push({ wait: 650, apply: (s) => ({ ...s, calendar: false, focus: null }) });
 
-  // 4. Mapa: arrastrar sectores
+  // 4. Mapa: (teatro) armar la forma de la sala, después arrastrar sectores
   steps.push(...openTab("mapa"));
+  if (sc.room) {
+    steps.push(move("room-handle", 600));
+    steps.push({ wait: 650, apply: (s) => ({ ...s, pressed: true }) });
+    for (let k = 1; k <= 10; k++) {
+      steps.push({ wait: 70, apply: (s) => ({ ...s, room: k / 10 }) });
+    }
+    steps.push({ wait: 350, apply: (s) => ({ ...s, pressed: false }) });
+    steps.push({ wait: 450, apply: (s) => ({ ...s, placed: ["escenario"] }) });
+  }
   for (const [id, label] of sc.drops) {
     const group = sc.sectors[id].group!;
     steps.push(move(`pal-${group}`, 600));
@@ -270,6 +296,16 @@ function buildScript(sc: Scenario): Step[] {
       wait: 850,
       apply: (s) => ({ ...s, pressed: false, dragging: null, placed: [...s.placed, id] }),
     });
+  }
+
+  // Teatro: elegir un sector, cargar la cantidad de butacas y se dibujan solas
+  for (const plan of sc.seatPlan ?? []) {
+    steps.push(...tap(`drop-${plan.id}`, (s) => ({ ...s, seatEdit: plan.id, seatValue: "" }), 650));
+    steps.push(...type(String(plan.count), (s, v) => ({ ...s, seatValue: v }), 130));
+    steps.push(
+      ...tap("seat-ok", (s) => ({ ...s, seatEdit: null, seats: { ...s.seats, [plan.id]: plan.count } }), 450),
+    );
+    steps.push({ wait: 1300, apply: (s) => s });
   }
 
   // 5. Precios
@@ -375,7 +411,7 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [s.cursor, s.tab]);
+  }, [s.cursor, s.tab, s.room, s.seatEdit]);
 
   return (
     <ScenarioContext.Provider value={sc}>
@@ -750,12 +786,51 @@ function PanelContent({ s }: { s: State }) {
   );
 }
 
+/** Rectángulo de la sala según cuánto se arrastró la esquina (0 = chica, 1 = armada). */
+function roomRect(t: number) {
+  const lerp = (a: number, b: number) => a + (b - a) * t;
+  return { left: lerp(24, 1.5), top: lerp(26, 1.5), width: lerp(40, 97), height: lerp(36, 97) };
+}
+
+/** Butacas dibujadas como una grilla de puntos que aparecen de a una. */
+function SeatDots({ count, cols, color }: { count: number; cols: number; color: string }) {
+  return (
+    <span className="grid w-full gap-[2px] p-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      {Array.from({ length: count }, (_, i) => (
+        <span
+          key={i}
+          className="butaca-aparece aspect-square rounded-full"
+          style={{ background: color, animationDelay: `${i * 9}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
 function PanelMap({ s }: { s: State }) {
-  const { sectors, palette } = useScenario();
+  const scn = useScenario();
+  const { sectors, palette } = scn;
+  const room = roomRect(s.room);
+  const editing = s.seatEdit ? sectors[s.seatEdit] : null;
+  const colsOf = (id: string) => scn.seatPlan?.find((p) => p.id === id)?.cols ?? 12;
   return (
     <div>
-      <Label>Diseñá tu plano</Label>
+      <Label>{scn.room ? "Armá tu sala" : "Diseñá tu plano"}</Label>
       <div className="relative aspect-[4/3] rounded-lg border border-tinta/15 bg-white bg-[radial-gradient(rgba(31,3,10,0.12)_1px,transparent_1px)] [background-size:12px_12px]">
+        {scn.room && (
+          <span
+            className="absolute rounded-md border-2 border-tinta/35 bg-papel/40"
+            style={{ left: `${room.left}%`, top: `${room.top}%`, width: `${room.width}%`, height: `${room.height}%` }}
+          >
+            {s.room < 1 && (
+              <span className="absolute left-1.5 top-1 text-[9px] font-medium text-tinta/45">Tu sala</span>
+            )}
+            <span
+              data-t="room-handle"
+              className="absolute -bottom-1.5 -right-1.5 h-3 w-3 rounded-sm border-2 border-palco-700 bg-white"
+            />
+          </span>
+        )}
         {Object.keys(sectors).map((id) => {
           const sc = sectors[id];
           const on = s.placed.includes(id);
@@ -793,14 +868,36 @@ function PanelMap({ s }: { s: State }) {
               }`}
               style={{ left: `${sc.x}%`, top: `${sc.y}%`, width: `${sc.w}%`, height: `${sc.h}%` }}
             >
-              <span className={sc.vertical ? "[writing-mode:vertical-rl]" : ""}>
-                {sc.label}
-              </span>
+              {s.seats[id] ? (
+                <SeatDots count={s.seats[id]} cols={colsOf(id)} color="var(--color-palco-700)" />
+              ) : (
+                <span className={sc.vertical ? "[writing-mode:vertical-rl]" : ""}>{sc.label}</span>
+              )}
+              {s.seatEdit === id && (
+                <span className="pointer-events-none absolute -inset-1 rounded-lg ring-2 ring-palco-700" />
+              )}
             </span>
           );
         })}
       </div>
-      <p className="mb-1.5 mt-3 text-[11px] text-tinta/45">Arrastrá sectores al plano</p>
+      {editing ? (
+        <div className="mt-3 rounded-lg border border-tinta/10 bg-white p-2.5 shadow-sm [animation:subir_0.25s_ease-out_both]">
+          <p className="text-[11px] text-tinta/50">Butacas en {editing.label}</p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="flex h-8 flex-1 items-center rounded-md border border-palco-700 px-2.5 text-sm tabular-nums ring-2 ring-palco-700/15">
+              {s.seatValue}
+              <span className="ml-px h-4 w-px animate-pulse bg-tinta" />
+            </div>
+            <span data-t="seat-ok" className="rounded-md bg-palco-700 px-3 py-1.5 text-xs font-medium text-white">
+              Listo
+            </span>
+          </div>
+        </div>
+      ) : (
+        <>
+      <p className="mb-1.5 mt-3 text-[11px] text-tinta/45">
+        {scn.seatPlan ? "Arrastrá sectores y tocá uno para cargarle butacas" : "Arrastrá sectores al plano"}
+      </p>
       <div className="flex flex-wrap gap-1.5">
         {palette.map((p) => (
           <span
@@ -815,6 +912,8 @@ function PanelMap({ s }: { s: State }) {
           + Butacas numeradas
         </span>
       </div>
+        </>
+      )}
     </div>
   );
 }
@@ -932,7 +1031,7 @@ function PriceList({ s, l }: LP) {
 }
 
 function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
-  const { sectors } = useScenario();
+  const { sectors, seatPlan } = useScenario();
   return (
     <div
       className={`relative aspect-[4/3] rounded-lg ${className}`}
@@ -978,10 +1077,24 @@ function VenueMap({ s, l, className = "" }: LP & { className?: string }) {
               color: id === "escenario" ? l.bg : strength >= 80 ? l.onAccent : l.fg,
             }}
           >
-            <span className={`flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
-              <span>{sc.label}</span>
-              {price && <span className="mt-0.5 font-normal opacity-80">{pesos(price)}</span>}
-            </span>
+            {s.seats[id] ? (
+              <span className="flex w-full flex-col items-center">
+                <SeatDots
+                  count={s.seats[id]}
+                  cols={seatPlan?.find((p) => p.id === id)?.cols ?? 12}
+                  color={strength >= 80 ? l.onAccent : l.fg}
+                />
+                <span className="text-[9px]">
+                  {sc.label}
+                  {price && <span className="font-normal opacity-80"> · {pesos(price)}</span>}
+                </span>
+              </span>
+            ) : (
+              <span className={`flex flex-col items-center ${vertical ? "[writing-mode:vertical-rl]" : ""}`}>
+                <span>{sc.label}</span>
+                {price && <span className="mt-0.5 font-normal opacity-80">{pesos(price)}</span>}
+              </span>
+            )}
           </span>
         );
       })}
