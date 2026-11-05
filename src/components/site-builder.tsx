@@ -68,8 +68,8 @@ const scenarios: Record<ScenarioId, Scenario> = {
     templates: ["portada", "cartelera", "portada"],
     swatches: ["#111111", "#52525B", "#A1A1AA", "#7A1428", "#1E3A8A"],
     swatchPick: 2,
-    customHex: "#F4F4F5",
-    dark: true,
+    customHex: "#18181B", // con fondo claro, el color propio es casi negro
+    dark: false,
     initialFont: "clasica",
     finalFont: "moderna",
     sectors: {
@@ -229,7 +229,7 @@ function buildScript(sc: Scenario): Step[] {
     steps.push(...tap(`tpl-${id}`, (s) => ({ ...s, template: id })));
   }
 
-  // 2. Colores: fondo oscuro, un color de la muestra y después uno propio
+  // 2. Colores: fondo (oscuro si el escenario lo pide), un color de la muestra y después uno propio
   steps.push(...openTab("colores"));
   if (sc.dark) steps.push(...tap("bg-dark", (s) => ({ ...s, dark: true })));
   const pick = sc.swatches[sc.swatchPick];
