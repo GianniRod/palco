@@ -318,3 +318,16 @@ body:has(.minimal) {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+
+/* 404: el búho ladea la cabeza buscando la página */
+.buho-404 {
+  transform-origin: 50% 85%;
+  animation: buho-busca 3.2s ease-in-out 0.6s infinite;
+}
+@keyframes buho-busca {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-10deg); }
+  45% { transform: rotate(-10deg); }
+  60% { transform: rotate(9deg); }
+  80% { transform: rotate(9deg); }
+}
