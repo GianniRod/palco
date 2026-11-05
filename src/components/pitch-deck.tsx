@@ -20,6 +20,8 @@ import {
   Palette,
   Percent,
   QrCode,
+  Scale,
+  ShieldCheck,
   Ticket,
   Users,
   Wallet,
@@ -516,16 +518,20 @@ const slides: Slide[] = [
           <Eyebrow dark>Dónde estamos</Eyebrow>
         </In>
         <In d={0.1}>
-          <H className="mt-4">Producto en construcción, listo para pilotos.</H>
+          <H className="mt-4">Estamos en la etapa 2 de 4.</H>
         </In>
         <div className="relative mt-14">
           <span className="absolute left-0 right-0 top-[11px] hidden h-px bg-white/15 md:block" aria-hidden />
           <div className="grid gap-8 md:grid-cols-4">
             {[
-              { t: "Hecho", x: "Web con demo del producto, formulario de demos y marca nueva.", s: "done" },
-              { t: "Hecho", x: "Base del sistema: salas, eventos, butacas, órdenes y reservas sin sobreventa.", s: "done" },
-              { t: "En curso", x: "Panel de clientes y de administración, con login y roles.", s: "now" },
-              { t: "Próximo", x: "Cobro con Mercado Pago, entradas con QR, app de puerta y primeros pilotos.", s: "next" },
+              { t: "Hecho", x: "Web con demo del producto, formulario de demos y marca.", s: "done" },
+              {
+                t: "En curso",
+                x: "Base del sistema y panel: salas, eventos, butacas, reservas sin sobreventa, login y roles.",
+                s: "now",
+              },
+              { t: "Próximo", x: "Cobro con Mercado Pago, entradas con QR y app de puerta.", s: "next" },
+              { t: "Próximo", x: "Auditoría profesional de los sistemas y primeros pilotos en boliches.", s: "next" },
             ].map((m, i) => (
               <In key={m.x} d={0.3 + i * 0.18}>
                 <div className="relative">
@@ -540,7 +546,10 @@ const slides: Slide[] = [
                   >
                     {m.s === "now" && <span className="absolute inset-1 animate-ping rounded-full bg-white/60" />}
                   </span>
-                  <p className={`mt-5 text-sm font-semibold ${m.s === "next" ? "text-white/45" : "text-white"}`}>{m.t}</p>
+                  <p className="mt-5 text-xs tabular-nums text-white/40">Etapa {i + 1}</p>
+                  <p className={`mt-0.5 text-sm font-semibold ${m.s === "next" ? "text-white/45" : "text-white"}`}>
+                    {m.t}
+                  </p>
                   <p className="mt-2 leading-relaxed text-white/55">{m.x}</p>
                 </div>
               </In>
@@ -599,7 +608,7 @@ const slides: Slide[] = [
             <Eyebrow dark>Qué buscamos</Eyebrow>
           </In>
           <In d={0.1}>
-            <H className="mt-4">Capital para llegar a los primeros boliches.</H>
+            <H className="mt-4">Capital para salir al mercado.</H>
           </In>
           <In d={0.25}>
             <p className="mt-6 text-[clamp(2.4rem,5vw,4rem)] font-semibold tracking-tight">
@@ -607,25 +616,31 @@ const slides: Slide[] = [
             </p>
           </In>
         </div>
-        <div className="space-y-5">
+        <div className="space-y-3">
           {[
-            { t: "Terminar el producto", x: "Pagos, entradas con QR y app de puerta.", p: 50 },
-            { t: "Pilotos y ventas", x: "Salir a vender y acompañar a los primeros boliches.", p: 30 },
-            { t: "Marca y legal", x: "Registro de marca, sociedad y facturación.", p: 20 },
-          ].map((u, i) => (
-            <In key={u.t} d={0.35 + i * 0.15}>
-              <div className="flex items-baseline justify-between">
-                <span className="font-semibold">{u.t}</span>
-                <span className="text-sm tabular-nums text-white/50">[{u.p}%]</span>
+            { Icon: Ticket, t: "Terminar el producto", x: "Cobro con Mercado Pago, entradas con QR y app de puerta." },
+            {
+              Icon: ShieldCheck,
+              t: "Auditoría profesional",
+              x: "Un ingeniero especializado revisa seguridad, pagos y control de acceso para asegurar que los sistemas funcionen antes de salir al mercado.",
+            },
+            { Icon: Users, t: "Pilotos y ventas", x: "Salir a vender y acompañar a los primeros boliches." },
+            { Icon: Scale, t: "Marca y legal", x: "Registro de marca, sociedad y facturación." },
+          ].map(({ Icon, t, x }, i) => (
+            <In key={t} d={0.35 + i * 0.12}>
+              <div className="flex gap-4 rounded-2xl border border-white/15 p-4 sm:p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-black">
+                  <Icon className="h-5 w-5" strokeWidth={1.7} />
+                </span>
+                <div>
+                  <p className="font-semibold">{t}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-white/55">{x}</p>
+                </div>
               </div>
-              <div className="mt-2 h-2.5">
-                <Bar pct={u.p * 2} delay={0.45 + i * 0.15} className="bg-white" />
-              </div>
-              <p className="mt-1.5 text-sm text-white/45">{u.x}</p>
             </In>
           ))}
           <In d={0.9}>
-            <p className="text-xs text-white/30">Montos y porcentajes entre corchetes: a completar.</p>
+            <p className="pt-1 text-xs text-white/30">El monto se define con el presupuesto de cada punto.</p>
           </In>
         </div>
       </div>
