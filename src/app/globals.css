@@ -187,12 +187,12 @@ body:has(.minimal) {
 .buho-asoma {
   -webkit-mask: url(/buho.png) center / contain no-repeat;
   mask: url(/buho.png) center / contain no-repeat;
-  transform: translateY(15%);
+  transform: translateY(105%);
   transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @media (hover: hover) {
   .asoma:hover .buho-asoma {
-    transform: translateY(-62%) rotate(-8deg);
+    transform: translateY(46%) rotate(-4deg);
     transition-delay: 0.12s;
   }
 }

@@ -85,18 +85,14 @@ export default function Home() {
             </nav>
             <div className="flex items-center gap-3">
               <SegmentSwitch current="boliche" tone="light" />
-              {/* Búho que se asoma por detrás del botón al pasar el cursor (solo en compu) */}
-              <span className="asoma relative hidden sm:inline-flex">
-                <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 flex justify-center">
-                  <span className="buho-asoma block h-8 w-[23px] bg-tinta" />
-                </span>
-                <a
-                  href={demoHref}
-                  className="relative z-10 inline-flex rounded-full border border-tinta/20 bg-white px-4 py-2 text-sm font-medium transition hover:bg-tinta hover:text-white"
-                >
-                  Pedir demo
-                </a>
-              </span>
+              {/* Al pasar el cursor, se asoma la cabeza del búho desde el fondo del botón (solo en compu) */}
+              <a
+                href={demoHref}
+                className="asoma relative hidden overflow-hidden rounded-full border border-tinta/20 px-4 py-2 text-sm font-medium transition-all duration-300 hover:bg-tinta hover:pr-12 hover:text-white sm:inline-flex"
+              >
+                Pedir demo
+                <span aria-hidden className="buho-asoma pointer-events-none absolute bottom-0 right-3 block h-9 w-[26px] bg-white" />
+              </a>
             </div>
           </header>
 
