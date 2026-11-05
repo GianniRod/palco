@@ -18,8 +18,8 @@ const ACTION_LABELS: Record<string, string> = {
   "user.password_reset": "Reseteó una contraseña",
   "user.disabled": "Desactivó un usuario",
   "user.enabled": "Reactivó un usuario",
-  "impersonation.started": "Entró como el cliente",
-  "impersonation.stopped": "Salió de ver como el cliente",
+  "impersonation.started": "Entró a editar como el cliente",
+  "impersonation.stopped": "Salió de editar como el cliente",
   "password.changed": "Cambió su contraseña",
   "password.reset": "Recuperó su contraseña por email",
 };

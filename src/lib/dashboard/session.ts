@@ -40,6 +40,17 @@ export async function requireTenant() {
   return { session, ...tenant };
 }
 
+// Quién puede editar la web del cliente (salas, mapas, eventos, precios, su página).
+// Los admins de Nightowl entran con "Editar como el cliente" y pueden hacer lo mismo que el dueño,
+// por si el cliente nos delega el trabajo. Cada cambio se audita con la sesión real (session.email).
+export const EDITOR_ROLES = ["owner", "editor", "soporte"] as const;
+
+export async function requireEditor() {
+  const tenant = await requireTenant();
+  if (!(EDITOR_ROLES as readonly string[]).includes(tenant.role)) redirect("/");
+  return tenant;
+}
+
 export async function setSessionCookie(token: string) {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,

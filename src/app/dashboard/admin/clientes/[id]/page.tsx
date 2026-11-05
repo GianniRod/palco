@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Eye } from "lucide-react";
+import { PencilLine } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
 import { getOrganization } from "@backend/admin.mjs";
 import { requireAdmin } from "@/lib/dashboard/session";
@@ -87,8 +87,8 @@ async function Content({ params }: { params: Props["params"] }) {
             <form action={startImpersonationAction}>
               <input type="hidden" name="id" value={organization.id} />
               <SubmitButton variant="secondary">
-                <Eye className="size-4" aria-hidden />
-                Ver como el cliente
+                <PencilLine className="size-4" aria-hidden />
+                Editar como el cliente
               </SubmitButton>
             </form>
             <form action={setSuspendedAction}>

@@ -9,6 +9,12 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Los admins pueden editar la web del cliente** (salas, precios, eventos, su página) por si el cliente
+  delega el trabajo. "Ver como el cliente" pasó a llamarse **"Editar como el cliente"** y la franja del panel lo aclara.
+  Nuevo helper `requireEditor()` en `src/lib/dashboard/session.ts` (acepta owner, editor y soporte):
+  **Lorenzo, usalo en cada sección del panel que edite datos** (salas, eventos, precios) para que los admins también puedan.
+  Regla documentada en `docs/dashboard.md` (punto 3 del panel admin). También corregí "Comisión de Palco" → Nightowl en el inicio del panel.
+  Archivos: `session.ts`, `admin/clientes/[id]/page.tsx`, `panel/layout.tsx`, `panel/page.tsx`, `admin/auditoria/page.tsx`, `docs/dashboard.md`.
 - **Comisión por defecto al crear cliente: 8%** (antes 5%). Se puede cambiar en el formulario.
   Archivo: `src/app/dashboard/admin/clientes/_forms.tsx`.
 - **Dashboard en blanco y negro**, igual que la landing (clase `.minimal` en el layout del panel).

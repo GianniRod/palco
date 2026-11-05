@@ -44,7 +44,8 @@ async function ImpersonationBanner() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 bg-palco-100 px-4 py-2 text-sm text-palco-950 md:px-10">
       <p>
-        Estás viendo el panel de <strong>{organization.name}</strong> como soporte. Queda registrado en la auditoría.
+        Estás editando el panel de <strong>{organization.name}</strong> como admin de Nightowl: podés cambiar su web,
+        salas y precios. Todo queda registrado en la auditoría.
       </p>
       <form action={stopImpersonationAction}>
         <SubmitButton variant="secondary">Volver a admin</SubmitButton>

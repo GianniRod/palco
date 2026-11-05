@@ -32,8 +32,15 @@ Lo mínimo para operar:
    - Crear el usuario del cliente: email + contraseña inicial.
    - Al primer ingreso, el cliente **está obligado a cambiar la contraseña**.
    - Resetear contraseña, desactivar usuario.
-3. **Ver como el cliente** (soporte): entrar al panel de un cliente para ayudarlo.
-   Queda registrado en la auditoría quién entró y cuándo.
+3. **Editar como el cliente** (soporte o trabajo delegado): el admin entra al panel de un cliente
+   y puede hacer **todo lo que hace el dueño**: su página, salas y mapas, eventos, precios y lotes.
+   Sirve para ayudarlo o cuando el cliente nos delega la carga. Queda registrado en la auditoría
+   quién entró, cuándo y cada cambio que hizo.
+   - Técnicamente: la sesión del admin guarda `acting_organization_id` y `resolveTenant` devuelve el
+     rol `soporte`. Toda sección que edite datos del cliente usa `requireEditor()`
+     (`src/lib/dashboard/session.ts`), que acepta `owner`, `editor` y `soporte`.
+   - El `organization_id` sale siempre de la sesión (`requireTenant`/`requireEditor`), nunca del formulario.
+   - En la auditoría se guarda el email real del admin (`session.email`), no el del cliente.
 4. **Comisión de Nightowl por cliente** (el % que cobramos en cada venta, ver sección 6).
 5. **Auditoría**: registro de acciones importantes (creación de clientes, cambios de precios, reembolsos, ingresos como otro usuario).
 
