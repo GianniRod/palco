@@ -9,6 +9,9 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Panel admin: "Base de datos" y "Estadísticas" en el menú como "Pronto"** (todavía no abren nada).
+  Qué va a tener cada una, en `docs/dashboard.md` (sección 2, puntos 6 y 7, y orden de trabajo punto 8)
+  y en los próximos pasos de `docs/negocio.md`. Archivo: `src/app/dashboard/admin/layout.tsx`.
 - **Los admins pueden editar la web del cliente** (salas, precios, eventos, su página) por si el cliente
   delega el trabajo. "Ver como el cliente" pasó a llamarse **"Editar como el cliente"** y la franja del panel lo aclara.
   Nuevo helper `requireEditor()` en `src/lib/dashboard/session.ts` (acepta owner, editor y soporte):

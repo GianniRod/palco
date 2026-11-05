@@ -43,6 +43,14 @@ Lo mínimo para operar:
    - En la auditoría se guarda el email real del admin (`session.email`), no el del cliente.
 4. **Comisión de Nightowl por cliente** (el % que cobramos en cada venta, ver sección 6).
 5. **Auditoría**: registro de acciones importantes (creación de clientes, cambios de precios, reembolsos, ingresos como otro usuario).
+6. **Base de datos** *(Pronto, ya aparece en el menú)*: ver los datos del sistema sin entrar a Neon.
+   - Tablas principales en solo lectura: clientes, usuarios, eventos, funciones, órdenes y entradas.
+   - Buscar y filtrar (por cliente, email, fecha, estado) y exportar a CSV.
+   - Cualquier corrección se hace desde las pantallas del panel (que auditan), no editando la tabla a mano.
+7. **Estadísticas** *(Pronto, ya aparece en el menú)*: cómo va el negocio de Nightowl.
+   - Totales: entradas vendidas, recaudación de los clientes, comisión cobrada por Nightowl, clientes activos.
+   - Por cliente y por período (día, semana, mes), con gráficos de evolución.
+   - Ranking de clientes y eventos que más venden.
 
 Los admins deberían tener **doble factor (2FA)** porque pueden ver todo. **[A definir]**
 
@@ -183,7 +191,9 @@ Un cliente **jamás** puede ver ni tocar datos de otro.
 4. **Eventos**: funciones, precios, lotes, publicar.
 5. **Pagos**: conectar Mercado Pago (Marketplace / split), checkout, webhooks, idempotencia.
 6. **Entradas y puerta**: QR firmado, envío por email, app de escaneo offline.
-7. **Ventas y reportes**.
+7. **Ventas y reportes** (del cliente).
+8. **Base de datos y Estadísticas** (panel admin): ya están en el menú como "Pronto";
+   se completan cuando haya ventas reales (después de las etapas 5 y 6).
 
 Cada etapa se puede mostrar a un cliente real antes de pasar a la siguiente.
 

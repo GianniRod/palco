@@ -177,14 +177,17 @@ eso lo hace Mercado Pago.
 - Landing en **www.palcotickets.com** con demo animada del producto y formulario "Pedir demo".
 - Email de contacto `contacto@palcotickets.com`.
 - Base del backend: salas, eventos, sectores, butacas, órdenes, entradas y reserva sin sobreventa.
+- Dashboard con login (Neon): panel admin con clientes, usuarios, comisión, auditoría y "Editar como el cliente".
 
 **Próximos pasos** (detalle técnico en [`docs/dashboard.md`](dashboard.md))
-1. Dashboard con login: panel admin y panel cliente.
+1. Panel cliente: sus secciones (los admins también pueden editarlas con "Editar como el cliente").
 2. Página pública del cliente con las plantillas, integrable a su web (`suweb.com/tickets`).
 3. Editor de mapas y eventos.
 4. Cobro con Mercado Pago Marketplace.
 5. Entradas con QR y app de puerta.
-6. Primeros clientes piloto: 2 o 3 teatros/salas para usarlo en eventos reales y ajustar.
+6. Panel admin: **Base de datos** (ver y exportar los datos del sistema) y **Estadísticas**
+   (ventas, comisión cobrada, clientes activos). Ya figuran en el menú como "Pronto".
+7. Primeros clientes piloto: 2 o 3 teatros/salas para usarlo en eventos reales y ajustar.
 
 ---
 
