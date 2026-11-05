@@ -222,7 +222,11 @@ export default function Home() {
               </div>
               <div className="ticket-der talon relative flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-palco-200 p-4 text-black sm:w-48">
                 <span className="troquel absolute inset-y-6 left-0 w-0.5 text-black/30" />
-                <OwlPeek className="right-0 top-1/2 -mt-10 h-36 w-[104px] bg-tinta/15" />
+                <OwlPeek
+                  className="bottom-0 right-0 h-40 w-[116px] bg-tinta/15"
+                  from="translate(100%, 100%) rotate(25deg)"
+                  to="translate(30%, 34%) rotate(-20deg)"
+                />
                 <span className="relative z-10 text-center text-lg font-semibold sm:text-xl">Pedir demo</span>
                 <ArrowRight className="relative z-10 h-6 w-6 transition group-hover:translate-x-1" />
               </div>
