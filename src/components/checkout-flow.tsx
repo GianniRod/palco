@@ -211,7 +211,7 @@ function StepPay({ c }: { c: Content }) {
       <p className="mt-1 font-display text-2xl font-semibold tracking-tight">Pago</p>
       <div className="mt-6 space-y-2 text-sm">
         <Row l={c.item} r={c.subtotal} />
-        <Row l="Cargo de servicio (10%)" r={c.fee} />
+        <Row l="Cargo de servicio" r={c.fee} />
         <div className="border-t border-black/10 pt-2">
           <Row l="Total" r={c.total} bold />
         </div>
