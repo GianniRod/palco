@@ -49,7 +49,7 @@ const faqs = [
   },
   {
     q: "¿Qué significa que sea white label?",
-    a: "Que la tecnología es nuestra pero la marca es tuya. Tu público ve tu logo, tus colores y tu dominio en la web, el pago, la entrada y los emails. Nightowl no aparece en ningún lado.",
+    a: "Que la tecnología es nuestra pero la marca es tuya. Tu público ve tu logo, tus colores y tu dominio en la web, el pago, la entrada y los emails.",
   },
   {
     q: "¿Puedo vender desde mi propia web?",
