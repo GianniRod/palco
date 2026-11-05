@@ -11,6 +11,7 @@ import { Reveal } from "@/components/reveal";
 import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { SegmentSwitch } from "@/components/segment-switch";
+import { OwlPeek } from "@/components/owl-peek";
 import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
 
@@ -93,9 +94,10 @@ export default function TeatrosPage() {
               <SegmentSwitch current="teatro" />
               <a
                 href={demoHref}
-                className="hidden rounded-full bg-white px-4 py-2 text-sm font-medium text-palco-900 transition hover:bg-dorado sm:inline-flex"
+                className="asoma relative hidden overflow-hidden rounded-full bg-white px-4 py-2 text-sm font-medium text-palco-900 transition hover:bg-dorado sm:inline-flex"
               >
-                Pedir demo
+                <OwlPeek className="-top-1 right-1 h-16 w-[46px] bg-palco-900/20" />
+                <span className="relative z-10">Pedir demo</span>
               </a>
             </div>
           </header>
@@ -118,10 +120,13 @@ export default function TeatrosPage() {
               </p>
               <a
                 href={demoHref}
-                className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-dorado px-6 py-3 font-medium text-palco-950 transition hover:bg-white md:self-auto"
+                className="asoma group relative inline-flex shrink-0 items-center self-start overflow-hidden rounded-full bg-dorado px-6 py-3 font-medium text-palco-950 transition hover:bg-white md:self-auto"
               >
-                Pedir una demo
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                <OwlPeek className="top-0 right-2 h-20 w-[58px] bg-palco-900/20" />
+                <span className="relative z-10 inline-flex items-center gap-2">
+                  Pedir una demo
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </span>
               </a>
             </div>
 
@@ -221,7 +226,7 @@ export default function TeatrosPage() {
           <Reveal>
             <a
               href={demoHref}
-              className="group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(31,3,10,0.3)]"
+              className="asoma group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(31,3,10,0.3)]"
             >
               <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-800 p-8 text-white sm:p-12">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">
@@ -237,8 +242,9 @@ export default function TeatrosPage() {
               </div>
               <div className="ticket-der talon relative flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-dorado p-4 text-palco-950 sm:w-48">
                 <span className="troquel absolute inset-y-6 left-0 w-0.5 text-palco-950/40" />
-                <span className="text-center text-lg font-semibold sm:text-xl">Pedir demo</span>
-                <ArrowRight className="h-6 w-6 transition group-hover:translate-x-1" />
+                <OwlPeek className="right-0 top-1/2 -mt-10 h-36 w-[104px] bg-palco-900/20" />
+                <span className="relative z-10 text-center text-lg font-semibold sm:text-xl">Pedir demo</span>
+                <ArrowRight className="relative z-10 h-6 w-6 transition group-hover:translate-x-1" />
               </div>
             </a>
           </Reveal>

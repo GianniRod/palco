@@ -10,6 +10,7 @@ import { Logo } from "@/components/logo";
 import { DemoDialog } from "@/components/demo-dialog";
 import { AudienceGate } from "@/components/audience-gate";
 import { SegmentSwitch } from "@/components/segment-switch";
+import { OwlPeek } from "@/components/owl-peek";
 import { PalcoMemorial } from "@/components/palco-memorial";
 import { contactHref, demoHref, site } from "@/lib/site";
 
@@ -90,7 +91,7 @@ export default function Home() {
                 href={demoHref}
                 className="asoma relative hidden overflow-hidden rounded-full border border-tinta/20 px-4 py-2 text-sm font-medium transition-colors duration-300 hover:bg-tinta hover:text-white sm:inline-flex"
               >
-                <span aria-hidden className="buho-asoma pointer-events-none absolute -top-1 right-1 block h-16 w-[46px] bg-white/40" />
+                <OwlPeek className="-top-1 right-1 h-16 w-[46px] bg-white/40" />
                 <span className="relative z-10">Pedir demo</span>
               </a>
             </div>
@@ -116,10 +117,13 @@ export default function Home() {
               </p>
               <a
                 href={demoHref}
-                className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-tinta px-6 py-3 font-medium text-white transition hover:bg-tinta/85 md:self-auto"
+                className="asoma group relative inline-flex shrink-0 items-center self-start overflow-hidden rounded-full bg-tinta px-6 py-3 font-medium text-white transition hover:bg-tinta/85 md:self-auto"
               >
-                Pedir una demo
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                <OwlPeek className="top-0 right-2 h-20 w-[58px] bg-white/40" />
+                <span className="relative z-10 inline-flex items-center gap-2">
+                  Pedir una demo
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </span>
               </a>
             </div>
 
@@ -206,7 +210,7 @@ export default function Home() {
         {/* ---------------- Cierre ---------------- */}
         <section className="bg-white px-6 pb-28">
           <Reveal>
-            <a href={demoHref} className="group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
+            <a href={demoHref} className="asoma group mx-auto flex max-w-4xl drop-shadow-[0_30px_40px_rgba(0,0,0,0.18)]">
               <div className="ticket-izq flex-1 rounded-l-3xl bg-palco-900 p-8 text-white sm:p-12">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">Demo personalizada</p>
                 <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
@@ -218,8 +222,9 @@ export default function Home() {
               </div>
               <div className="ticket-der talon relative flex w-32 flex-col items-center justify-center gap-3 rounded-r-3xl bg-palco-200 p-4 text-black sm:w-48">
                 <span className="troquel absolute inset-y-6 left-0 w-0.5 text-black/30" />
-                <span className="text-center text-lg font-semibold sm:text-xl">Pedir demo</span>
-                <ArrowRight className="h-6 w-6 transition group-hover:translate-x-1" />
+                <OwlPeek className="right-0 top-1/2 -mt-10 h-36 w-[104px] bg-tinta/15" />
+                <span className="relative z-10 text-center text-lg font-semibold sm:text-xl">Pedir demo</span>
+                <ArrowRight className="relative z-10 h-6 w-6 transition group-hover:translate-x-1" />
               </div>
             </a>
           </Reveal>
