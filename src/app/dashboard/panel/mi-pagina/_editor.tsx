@@ -144,18 +144,26 @@ async function logoToDataUrl(file: File) {
   return canvas.toDataURL("image/png");
 }
 
-// La portada ocupa todo el ancho: se achica hasta que pese lo que acepta el servidor.
+// Ancho mínimo para que la portada se vea nítida en una computadora.
+const COVER_GOOD_WIDTH = 1600;
+
+// La portada ocupa todo el ancho: se guarda lo más grande y nítida posible (WebP si el navegador
+// lo soporta, que pesa menos con la misma calidad) y se achica solo si no entra en el límite del servidor.
 async function coverToDataUrl(file: File) {
   const bitmap = await createImageBitmap(file);
   try {
-    for (const [maxWidth, quality] of [[1800, 0.82], [1400, 0.75], [1000, 0.7]]) {
+    const steps: [number, number][] = [[2400, 0.9], [2000, 0.86], [1600, 0.82], [1280, 0.78]];
+    for (const [maxWidth, quality] of steps) {
       const scale = Math.min(1, maxWidth / bitmap.width);
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(bitmap.width * scale);
       canvas.height = Math.round(bitmap.height * scale);
-      canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL("image/jpeg", quality);
-      if (dataUrl.length <= 1_100_000) return dataUrl;
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const webp = canvas.toDataURL("image/webp", quality);
+      const dataUrl = webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", quality);
+      if (dataUrl.length <= 2_100_000) return { dataUrl, width: bitmap.width };
     }
     throw new Error("Imagen demasiado pesada");
   } finally {
@@ -249,6 +257,7 @@ export function SiteEditor({
   const [device, setDevice] = useState<Device>("escritorio");
   const [logoError, setLogoError] = useState("");
   const [coverError, setCoverError] = useState("");
+  const [coverNotice, setCoverNotice] = useState("");
   const [handled, setHandled] = useState(state);
 
   // El servidor normaliza algunos campos (la web, el usuario de Instagram): se muestra lo guardado.
@@ -279,8 +288,15 @@ export function SiteEditor({
     event.target.value = "";
     if (!file) return;
     setCoverError("");
+    setCoverNotice("");
     try {
-      set("cover", await coverToDataUrl(file));
+      const { dataUrl, width } = await coverToDataUrl(file);
+      set("cover", dataUrl);
+      if (width < COVER_GOOD_WIDTH) {
+        setCoverNotice(
+          `Tu imagen mide ${width} px de ancho: en pantallas grandes se va a ver borrosa. Para que se vea bien, subí una de al menos 1920 px.`,
+        );
+      }
     } catch {
       setCoverError("No pudimos usar esa imagen. Probá con un JPG más liviano.");
     }
@@ -442,7 +458,14 @@ export function SiteEditor({
                     </button>
                   )}
                 </div>
-                <p className="mt-1 text-[11px] text-tinta/60">Una foto horizontal de tu sala o de tu evento.</p>
+                <p className="mt-1 text-[11px] text-tinta/60">
+                  Una foto horizontal de tu sala o de tu evento, de al menos 1920 px de ancho.
+                </p>
+                {coverNotice && site.cover && (
+                  <p role="status" className="mt-2 rounded-lg bg-palco-100 px-3 py-2 text-xs text-palco-800">
+                    {coverNotice}
+                  </p>
+                )}
                 <FormError message={coverError} />
               </div>
               <TextField label="Frase principal" id="tagline" name="tagline" maxLength={140} value={site.tagline} onChange={onText("tagline")} />

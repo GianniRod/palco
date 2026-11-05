@@ -138,7 +138,7 @@ test("rechaza valores peligrosos o inválidos", async () => {
     { logo: `data:image/png;base64,${"A".repeat(600 * 1024)}` },
     { cover: "data:image/svg+xml;base64,PHN2Zz4=" },
     { cover: "https://otro.sitio/portada.jpg" },
-    { cover: `data:image/jpeg;base64,${"A".repeat(1300 * 1024)}` },
+    { cover: `data:image/jpeg;base64,${"A".repeat(2200 * 1024)}` },
     { instagram: "no vale/con espacios" },
     { email: "sin-arroba" },
     { displayName: "   " },

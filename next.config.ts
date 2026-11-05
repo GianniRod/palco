@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   experimental: {
     // El logo y la portada de cada sitio viajan en el formulario de Mi página.
-    serverActions: { bodySizeLimit: "2mb" },
+    serverActions: { bodySizeLimit: "4mb" },
   },
   turbopack: {
     rules: {

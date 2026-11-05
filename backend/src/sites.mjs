@@ -9,7 +9,7 @@ const FONTS = ["clasica", "moderna"];
 const EDITOR_ROLES = ["owner", "editor", "soporte"];
 
 const MAX_LOGO_BYTES = 400 * 1024;
-const MAX_COVER_BYTES = 900 * 1024;
+const MAX_COVER_BYTES = 1600 * 1024; // portada nítida en pantallas grandes (hasta 2400 px)
 const LIMITS = { displayName: 80, tagline: 140, about: 1000, address: 160, phone: 40, email: 120 };
 
 export const canEditSite = (tenant) => EDITOR_ROLES.includes(tenant?.role);
