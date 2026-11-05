@@ -258,7 +258,6 @@ const type = (text: string, set: (s: State, v: string) => State, speed = 55): St
   Array.from(text, (_, i) => ({ wait: speed, apply: (s) => set(s, text.slice(0, i + 1)) }));
 
 function buildScript(sc: Scenario): Step[] {
-  const initial = initialState(sc);
   const steps: Step[] = [];
   const tap = (target: string, fn: (s: State) => State, wait?: number) => [
     move(target, wait),
@@ -342,7 +341,6 @@ function buildScript(sc: Scenario): Step[] {
   // 6. Publicar
   steps.push(...tap("btn-publicar", (s) => ({ ...s, focus: null, publishing: true }), 700));
   steps.push({ wait: 1100, apply: (s) => ({ ...s, publishing: false, published: true, cursor: null }) });
-  steps.push({ wait: 4200, apply: () => initial });
   return steps;
 }
 
@@ -351,10 +349,12 @@ const built = Object.fromEntries(
     const sc = scenarios[id];
     const script = buildScript(sc);
     const initial = initialState(sc);
-    const final = script.slice(0, -1).reduce((s, step) => step.apply(s), initial);
-    return [id, { script, initial, final }];
+    const final = script.reduce((s, step) => step.apply(s), initial);
+    // Tiempo acumulado al empezar cada paso, para la barra de progreso
+    const cum = script.reduce<number[]>((acc, step) => [...acc, acc[acc.length - 1] + step.wait], [0]);
+    return [id, { script, initial, final, cum }];
   }),
-) as Record<ScenarioId, { script: Step[]; initial: State; final: State }>;
+) as Record<ScenarioId, { script: Step[]; initial: State; final: State; cum: number[] }>;
 
 const pesos = (digits?: string) =>
   digits ? `$ ${Number(digits).toLocaleString("es-AR")}` : "";
@@ -399,27 +399,35 @@ function lookOf(s: State): Look {
 /* ------------------------------------------------------------------ */
 
 export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId }) {
-  const { script, initial, final } = built[scenario];
+  const { script, initial, final, cum } = built[scenario];
   const sc = scenarios[scenario];
   const [viewRef, inView] = useInView<HTMLDivElement>("-15% 0px");
   const reduced = useReducedMotion();
   const [state, setState] = useState<State>(initial);
   const [stepIdx, setStepIdx] = useState(0);
+  const [run, setRun] = useState(0); // se incrementa al tocar "Repetir" (reinicia la barra)
   const boxRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   const s = reduced ? final : state;
 
-  // Avanza el guion mientras la sección está en pantalla
+  // Avanza el guion mientras la sección está en pantalla; al terminar se queda en el final
+  const done = stepIdx >= script.length;
   useEffect(() => {
-    if (!inView || reduced) return;
+    if (!inView || reduced || done) return;
     const step = script[stepIdx];
     const id = setTimeout(() => {
       setState(step.apply);
-      setStepIdx((i) => (i + 1) % script.length);
+      setStepIdx((i) => i + 1);
     }, step.wait);
     return () => clearTimeout(id);
-  }, [stepIdx, inView, reduced, script]);
+  }, [stepIdx, inView, reduced, done, script]);
+
+  // Barra de progreso: mientras corre un paso, avanza linealmente hasta el final de ese paso
+  const total = cum[cum.length - 1];
+  const playing = inView && !reduced && !done;
+  const progress = reduced || done ? 1 : (playing ? cum[stepIdx + 1] : cum[stepIdx]) / total;
+  const progressMs = playing ? script[stepIdx].wait : 0;
 
   // Ubica el cursor sobre el elemento objetivo
   useLayoutEffect(() => {
@@ -455,11 +463,24 @@ export function SiteBuilder({ scenario = "boliche" }: { scenario?: ScenarioId })
             onClick={() => {
               setState(initial);
               setStepIdx(0);
+              setRun((r) => r + 1);
             }}
             className="ml-auto flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-tinta/50 transition hover:bg-tinta/5 hover:text-tinta"
           >
             <RotateCcw className="h-3 w-3" /> Repetir
           </button>
+        </div>
+
+        {/* Progreso de la animación */}
+        <div className="h-[3px] bg-tinta/10" aria-hidden>
+          <div
+            key={run}
+            className="h-full origin-left bg-tinta/70"
+            style={{
+              transform: `scaleX(${progress})`,
+              transition: `transform ${progressMs}ms linear`,
+            }}
+          />
         </div>
 
         <div className="grid md:grid-cols-[310px_1fr]">
