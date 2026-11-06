@@ -236,7 +236,12 @@ const nightowlMes = Math.round(ventaMes * ejemplo.comision);
 // Montos en pesos: mínimo, base y máximo. Dólar de referencia del Excel: $1.570.
 const presupuesto = {
   dolar: 1570,
-  gmvPorEvento: 6_150_000, // venta de entradas de una noche de boliche (supuesto del Excel)
+  // Una noche de boliche vendida por Nightowl: la general va de $8.000 a $14.000 según la tanda
+  // (≈ $11.000 promedio) y el VIP de $35.000 a $50.000 (≈ $42.500). Parte del VIP se vende por RRPP.
+  noche: { general: 500, precioGeneral: 11_000, vip: 20, precioVip: 42_500 },
+  get gmvPorEvento() {
+    return this.noche.general * this.noche.precioGeneral + this.noche.vip * this.noche.precioVip;
+  },
   eventosPorMes: 8,
   categorias: [
     { t: "Tecnología y seguridad", x: "Auditoría de código y seguridad (25 h de un ingeniero Sr.) e infraestructura del mes 1", min: 1_410_000, base: 1_996_250, max: 2_585_000 },
@@ -855,6 +860,7 @@ const slides: Slide[] = [
               <dl className="mt-6 space-y-2 border-t border-white/15 pt-5 text-sm">
                 {(
                   [
+                    ["Nightowl por noche (8%)", pesos(Math.round(presupuesto.gmvPorEvento * ejemplo.comision))],
                     ["Venta de entradas para recuperarlo", millones(total("base") / ejemplo.comision)],
                     ["Escenario mínimo", `${Math.ceil(eventosParaRecuperar(total("min")))} noches · USD ${usd(total("min")).toLocaleString("es-AR")}`],
                     ["Escenario máximo", `${Math.ceil(eventosParaRecuperar(total("max")))} noches · USD ${usd(total("max")).toLocaleString("es-AR")}`],
@@ -871,7 +877,9 @@ const slides: Slide[] = [
         </div>
         <In d={1}>
           <p className="mt-10 text-xs leading-relaxed text-black/35">
-            Con la comisión del 8% y {millones(presupuesto.gmvPorEvento)} de venta por noche de boliche. Dólar de referencia $
+            Una noche de boliche: {presupuesto.noche.general} entradas generales a {pesos(presupuesto.noche.precioGeneral)} de promedio
+            (de $ 8.000 a $ 14.000 según la tanda) y {presupuesto.noche.vip} VIP a {pesos(presupuesto.noche.precioVip)} = {millones(presupuesto.gmvPorEvento)} de
+            venta, de la que Nightowl se lleva el 8%. Dólar de referencia $
             {presupuesto.dolar.toLocaleString("es-AR")}. No incluye 6 meses de mantenimiento. El capital social de la SAS ($
             797.600) no es un gasto: queda en la sociedad para pagar estos mismos costos.
           </p>
