@@ -151,7 +151,7 @@ function ResultScreen({ scan, onAgain, onClose }: { scan: ScanResult; onAgain: (
           ) : (
             <>
               <p className="text-lg font-semibold">
-                Prueba {scan.number}
+                {scan.label ?? `Prueba ${scan.number}`}
                 {scan.holder && ` · ${scan.holder}`}
               </p>
               {scan.result === "valid" && scan.checkedInAt && (

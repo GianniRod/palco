@@ -170,6 +170,55 @@ export async function getScanAccess(db, session) {
 const TICKET_COLUMNS = `t.id, t.number, t.holder, t.organization_id as "organizationId",
   t.checked_in_at as "checkedInAt", u.email as "checkedInBy"`;
 
+// Una entrada vendida. Devuelve null si el id no es de una entrada real (puede ser una de prueba).
+async function scanSoldTicket(db, session, access, id) {
+  const { rows: [found] } = await db.query(
+    `select tickets.id, orders.status, events.organization_id as "organizationId", events.status as "eventStatus"
+     from tickets
+     join orders on orders.id = tickets.order_id
+     join performances on performances.id = orders.performance_id
+     join events on events.id = performances.event_id
+     where tickets.id = $1`,
+    [id],
+  );
+  if (!found) return null;
+
+  const invalid = async (reason) => {
+    await db.query("insert into qr_scans (sold_ticket_id, result, scanned_by) values ($1, 'invalid', $2)", [id, session.userId]);
+    return { result: "invalid", reason };
+  };
+  if (!access.all && found.organizationId !== access.organizationId) {
+    return invalid("Esta entrada es de otro organizador: no es para este evento.");
+  }
+  if (found.status !== "paid") return invalid("Esta entrada no está paga o fue devuelta.");
+  if (found.eventStatus === "cancelled") return invalid("Este evento fue cancelado.");
+
+  // Un solo update condicionado: si dos porteros escanean la misma entrada a la vez, entra uno solo.
+  const { rowCount } = await db.query(
+    "update tickets set checked_in_at = now(), checked_in_by = $2 where id = $1 and checked_in_at is null",
+    [id, session.userId],
+  );
+  const result = rowCount === 1 ? "valid" : "duplicate";
+  await db.query("insert into qr_scans (sold_ticket_id, result, scanned_by) values ($1, $2, $3)", [id, result, session.userId]);
+
+  const { rows: [ticket] } = await db.query(
+    `select
+       tickets.id, orders.buyer_name as holder, tickets.checked_in_at as "checkedInAt", users.email as "checkedInBy",
+       events.organization_id as "organizationId",
+       concat_ws(' · ', events.title, sectors.name, case when seats.id is not null then 'Fila ' || seats.row_label || ' Butaca ' || seats.number end) as label
+     from tickets
+     join orders on orders.id = tickets.order_id
+     join performances on performances.id = orders.performance_id
+     join events on events.id = performances.event_id
+     join sectors on sectors.id = tickets.sector_id
+     left join seats on seats.id = tickets.seat_id
+     left join users on users.id = tickets.checked_in_by
+     where tickets.id = $1`,
+    [id],
+  );
+  return { result, ticket };
+}
+
 /**
  * Escanea un código. Resultados:
  * - valid: primera vez que entra (queda marcada).
@@ -188,6 +237,9 @@ export async function scanTicket(db, session, code) {
     await logInvalid();
     return { result: "invalid", reason: "Este QR no es una entrada de Nightowl o fue modificado." };
   }
+
+  const sold = await scanSoldTicket(db, session, access, id);
+  if (sold) return sold;
 
   const { rows: [found] } = await db.query("select organization_id from qr_test_tickets where id = $1", [id]);
   if (!found) {

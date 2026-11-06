@@ -15,7 +15,7 @@ export async function holdSeats(db, { performanceId, seatIds, buyerEmail }) {
   }
 
   try {
-    const { rows } = await db.query("select hold_seats($1, $2::uuid[], $3) as order_id", [
+    const { rows } = await db.query("select hold_order($1, $2::uuid[], '[]'::jsonb, $3, '', null) as order_id", [
       performanceId,
       seatIds,
       buyerEmail,

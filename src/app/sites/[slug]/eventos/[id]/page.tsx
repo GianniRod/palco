@@ -6,6 +6,7 @@ import { getDb } from "@backend/db.mjs";
 import { getPublicEvent } from "@backend/sites.mjs";
 import { SiteFrame, formatPrice } from "@/components/public-site";
 import { VenueMap } from "@/components/venue-map";
+import { checkoutEnabled } from "@/lib/checkout";
 
 type Props = PageProps<"/sites/[slug]/eventos/[id]">;
 
@@ -69,7 +70,7 @@ async function Content({ params }: { params: Props["params"] }) {
               <h2 className="flex items-center gap-2 font-bold"><CalendarDays className="size-4" aria-hidden /> Funciones</h2>
               <ul className="mt-3 divide-y divide-[var(--site-line)]">
                 {event.performances.map((performance: Performance) => (
-                  <li key={performance.id} className="py-2 capitalize">{dateFormat.format(new Date(performance.startsAt))}</li>
+                  <li key={performance.id} className="py-2 first-letter:uppercase">{dateFormat.format(new Date(performance.startsAt))}</li>
                 ))}
               </ul>
               {event.performances.length === 0 && <p className="mt-3 text-[var(--site-muted)]">No hay funciones próximas.</p>}
@@ -82,7 +83,11 @@ async function Content({ params }: { params: Props["params"] }) {
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 rounded-md bg-[var(--site-accent)] px-4 py-3 text-center font-bold text-[var(--site-on-accent)]">Entradas muy pronto</p>
+              {checkoutEnabled && event.performances.length > 0 ? (
+                <a href={`/eventos/${event.id}/comprar`} className="mt-4 block rounded-md bg-[var(--site-accent)] px-4 py-3 text-center font-bold text-[var(--site-on-accent)] transition hover:opacity-90">Comprar entradas</a>
+              ) : (
+                <p className="mt-4 rounded-md bg-[var(--site-accent)] px-4 py-3 text-center font-bold text-[var(--site-on-accent)]">Entradas muy pronto</p>
+              )}
             </div>
             <VenueMap
               map={event.map}

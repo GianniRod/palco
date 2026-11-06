@@ -24,7 +24,7 @@ async function createEvent(title, seats) {
     [clientId, venueId, title],
   );
   const { rows: [performance] } = await db.query(
-    "insert into performances (event_id, starts_at) values ($1, now()) returning id",
+    "insert into performances (event_id, starts_at) values ($1, now() + interval '1 day') returning id",
     [event.id],
   );
   const { rows: [sector] } = await db.query(
