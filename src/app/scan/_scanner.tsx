@@ -23,7 +23,7 @@ const VIBRATION: Record<ScanResult["result"], number[]> = {
   invalid: [400],
 };
 
-export function Scanner({ light = false }: { light?: boolean }) {
+export function Scanner({ light = false, eventId = null }: { light?: boolean; eventId?: string | null }) {
   const router = useRouter();
   const video = useRef<HTMLVideoElement>(null);
   const scanner = useRef<QrScannerType | null>(null);
@@ -42,7 +42,7 @@ export function Scanner({ light = false }: { light?: boolean }) {
           instance.stop();
           setPhase({ kind: "checking" });
           try {
-            const scan = await scanCodeAction(data);
+            const scan = await scanCodeAction(data, eventId);
             navigator.vibrate?.(VIBRATION[scan.result]);
             setPhase({ kind: "done", scan });
             router.refresh();
@@ -69,7 +69,7 @@ export function Scanner({ light = false }: { light?: boolean }) {
       scanner.current?.destroy();
       scanner.current = null;
     };
-  }, [phase.kind, router]);
+  }, [phase.kind, router, eventId]);
 
   const close = () => setPhase({ kind: "idle" });
   const again = () => setPhase({ kind: "scanning" });

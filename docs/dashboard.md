@@ -126,11 +126,16 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
   Un usuario de cliente con **Puede escanear QR** (`memberships.can_scan`, o rol portero) valida **solo las de
   los eventos de su cliente**: una entrada de otro organizador sale "inválida" (`getScanAccess` / `scanTicket`
   en `backend/src/qr.mjs`).
+- **Se elige el evento antes de escanear:** un QR de un evento no sirve para otro. El usuario de cliente
+  elige uno de los eventos de su cliente (si hay uno solo, entra directo); el admin puede elegir uno o
+  "Cualquier evento". Una entrada de otro evento sale inválida con el nombre de su evento
+  (`listScanEvents`, `resolveScanEvent`; el evento elegido viaja en `?evento=` y en `scanCodeAction`).
 - **Panel del cliente → Equipo** (`src/app/dashboard/panel/equipo`, `backend/src/team.mjs`): el dueño crea las
   cuentas de su gente (portero, editor, ventas, dueño) y elige quién puede escanear. El admin también puede
   hacerlo desde la ficha del cliente.
-- **Pruebas:** panel admin → **Puerta (prueba)**: el admin crea entradas de prueba con QR real, eligiendo de qué
-  cliente son (o generales, solo para admins), y las escanea desde scan.palcotickets.com.
+- **Pruebas:** panel admin → **Puerta (prueba)**: el admin crea entradas de prueba con QR real para un **evento
+  puntual** de un cliente (o generales, solo para admins; migración 009, `qr_test_tickets.event_id`) y las escanea
+  desde scan.palcotickets.com eligiendo ese evento.
 - El QR lleva `NO1.<id>.<firma Ed25519>` (`backend/src/qr.mjs`). Sin datos personales; solo Nightowl puede
   fabricarlos y con la clave pública se pueden verificar sin internet (para la app offline).
 - Duplicados: la entrada se marca con un solo `update ... where checked_in_at is null`, así dos escaneos

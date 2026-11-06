@@ -1,8 +1,9 @@
 import { Suspense, type ReactNode } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LogOut, Smartphone } from "lucide-react";
+import { ChevronRight, LogOut, Smartphone } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
-import { getScanAccess } from "@backend/qr.mjs";
+import { getScanAccess, getScanEvent, listScanEvents } from "@backend/qr.mjs";
 import { Logo } from "@/components/logo";
 import { getCurrentSession } from "@/lib/dashboard/session";
 import { DASHBOARD_URL } from "@/lib/dashboard/config";
@@ -36,7 +37,21 @@ function Notice({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-async function Content() {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+type ScanEvent = { id: string; title: string; organizationName: string; nextAt: Date | null };
+
+const eventDate = new Intl.DateTimeFormat("es-AR", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "America/Argentina/Buenos_Aires",
+});
+
+async function Content({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
   const session = await getCurrentSession();
   if (!session) redirect("/login");
 
@@ -65,25 +80,88 @@ async function Content() {
     );
   }
 
+  // Antes de escanear se elige el evento: un QR de un evento no sirve para otro.
+  // Un usuario de cliente tiene que elegir uno de los suyos; un admin también puede elegir "cualquier evento".
+  const db = getDb();
+  const events: ScanEvent[] = await listScanEvents(db, session);
+  const requested = typeof params.evento === "string" ? params.evento : "";
+  const choosing = params.elegir === "1";
+  let event: ScanEvent | null = null;
+  let any = false;
+  if (!choosing && requested === "todos" && access.all) any = true;
+  else if (!choosing && requested) {
+    const found = await getScanEvent(db, session, requested);
+    event = found ? (events.find((item) => item.id === found.id) ?? { id: found.id, title: found.title, organizationName: "", nextAt: null }) : null;
+  } else if (!choosing && !access.all && events.length === 1) {
+    event = events[0];
+  }
+  const ready = any || event !== null;
+
   return (
     <Frame email={session.email}>
       {/* Solo en el celular: en la compu no hay cámara trasera para apuntar a la entrada */}
       <div className="flex flex-1 flex-col md:hidden">
-        <div className="mb-6 mt-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/40">Escaneando para</p>
-          <p className="mt-1 text-xl font-semibold">
-            {access.all ? "Todos los clientes (admin)" : access.organizationName}
-          </p>
-          <p className="mt-0.5 truncate text-sm text-white/45">{session.email}</p>
-        </div>
-        <div className="mt-auto">
-          <Scanner light />
-        </div>
-        <p className="mt-4 text-center text-xs text-white/35">
-          {access.all
-            ? "Como admin de Nightowl podés validar entradas de cualquier evento."
-            : `Solo se validan entradas de los eventos de ${access.organizationName}.`}
-        </p>
+        {ready ? (
+          <>
+            <div className="mb-6 mt-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/40">Escaneando</p>
+              <p className="mt-1 text-xl font-semibold [overflow-wrap:anywhere]">{any ? "Cualquier evento (admin)" : event!.title}</p>
+              <p className="mt-0.5 truncate text-sm text-white/45">
+                {any ? "Todos los clientes" : access.all ? event!.organizationName : access.organizationName} · {session.email}
+              </p>
+              <Link href="/?elegir=1" className="mt-3 inline-block rounded-full border border-white/20 px-3 py-1.5 text-xs font-medium text-white/80">
+                Cambiar evento
+              </Link>
+            </div>
+            <div className="mt-auto">
+              <Scanner key={any ? "todos" : event!.id} light eventId={any ? null : event!.id} />
+            </div>
+            <p className="mt-4 text-center text-xs text-white/35">
+              {any
+                ? "Como admin de Nightowl validás entradas de cualquier evento."
+                : "Solo se validan las entradas de este evento: las de otro evento salen como inválidas."}
+            </p>
+          </>
+        ) : (
+          <div className="mt-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+              {access.all ? "Todos los clientes (admin)" : access.organizationName}
+            </p>
+            <p className="mt-1 text-2xl font-semibold">¿Qué evento vas a escanear?</p>
+            {requested && !choosing && <p className="mt-2 text-sm text-amber-300">Ese evento no está disponible. Elegí otro.</p>}
+            <ul className="mt-5 space-y-2">
+              {access.all && (
+                <li>
+                  <Link href="/?evento=todos" className="flex items-center justify-between gap-3 rounded-xl border border-white/15 px-4 py-3.5">
+                    <span>
+                      <span className="block font-semibold">Cualquier evento</span>
+                      <span className="block text-sm text-white/50">Solo admins: valida entradas de todos los clientes</span>
+                    </span>
+                    <ChevronRight className="size-5 shrink-0 text-white/40" aria-hidden />
+                  </Link>
+                </li>
+              )}
+              {events.map((item) => (
+                <li key={item.id}>
+                  <Link href={`/?evento=${item.id}`} className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.06] px-4 py-3.5">
+                    <span className="min-w-0">
+                      <span className="block font-semibold [overflow-wrap:anywhere]">{item.title}</span>
+                      <span className="block text-sm capitalize text-white/50">
+                        {[access.all ? item.organizationName : null, item.nextAt ? eventDate.format(new Date(item.nextAt)) : "Sin próxima función"]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </span>
+                    <ChevronRight className="size-5 shrink-0 text-white/40" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {events.length === 0 && !access.all && (
+              <p className="mt-4 text-white/60">Todavía no hay eventos para escanear. Cuando el organizador cree uno, aparece acá.</p>
+            )}
+          </div>
+        )}
       </div>
       <div className="hidden flex-1 md:flex">
         <Notice title="Abrilo desde el celular">
@@ -96,10 +174,10 @@ async function Content() {
   );
 }
 
-export default function ScanPage() {
+export default function ScanPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense fallback={<div className="min-h-dvh bg-palco-950" />}>
-      <Content />
+      <Content searchParams={searchParams} />
     </Suspense>
   );
 }

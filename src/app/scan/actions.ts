@@ -24,11 +24,12 @@ type Scan =
 
 // Lo llama el escáner del celular con el texto leído del QR. El permiso se chequea en scanTicket:
 // admins de Nightowl → cualquier cliente; usuario con permiso → solo los eventos de su cliente.
-export async function scanCodeAction(code: string): Promise<ScanResult> {
+// eventId: el evento elegido en la pantalla del escáner (vacío = cualquiera, solo admins).
+export async function scanCodeAction(code: string, eventId: string | null = null): Promise<ScanResult> {
   const session = await requireSession();
   let scan: Scan;
   try {
-    scan = (await scanTicket(getDb(), session, String(code ?? "").slice(0, 300))) as Scan;
+    scan = (await scanTicket(getDb(), session, String(code ?? "").slice(0, 300), eventId ? String(eventId).slice(0, 40) : null)) as Scan;
   } catch (error) {
     if (error instanceof QrError) return { result: "invalid", reason: error.message };
     throw error;

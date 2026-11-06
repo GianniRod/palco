@@ -15,7 +15,7 @@ export async function createTestTicketsAction(_: TestTicketFormState, data: Form
     await createTestTickets(getDb(), actor, {
       count: Number(data.get("count") ?? 1),
       holder: String(data.get("holder") ?? ""),
-      organizationId: String(data.get("organizationId") ?? "") || null,
+      eventId: String(data.get("eventId") ?? "") || null,
     });
   } catch (error) {
     if (error instanceof QrError) return { error: error.message };
