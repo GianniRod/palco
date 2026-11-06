@@ -2,8 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ExternalLink, ScanLine } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
-import { listOrganizations } from "@backend/admin.mjs";
-import { listTestTickets } from "@backend/qr.mjs";
+import { listEventsForTests, listTestTickets } from "@backend/qr.mjs";
 import { requireAdmin } from "@/lib/dashboard/session";
 import { brandedQrSvg } from "@/lib/branded-qr";
 import { SCAN_URL } from "@/lib/dashboard/config";
@@ -22,6 +21,7 @@ type TestTicket = {
   number: number;
   holder: string;
   organizationName: string | null;
+  eventTitle: string | null;
   checkedInAt: Date | null;
   checkedInBy: string | null;
   scans: number;
@@ -56,9 +56,10 @@ function ScanLink() {
 async function Content() {
   const actor = await requireAdmin();
   const db = getDb();
-  const [tickets, clients]: [TestTicket[], { id: string; name: string }[]] = await Promise.all([
+  type EventOption = { id: string; title: string; status: string; organizationName: string };
+  const [tickets, events]: [TestTicket[], EventOption[]] = await Promise.all([
     listTestTickets(db, actor),
-    listOrganizations(db, actor),
+    listEventsForTests(db, actor),
   ]);
   const qrs = tickets.map((t) => brandedQrSvg(t.code));
   const used = tickets.filter((t) => t.checkedInAt).length;
@@ -81,7 +82,7 @@ async function Content() {
                   <span className="min-w-0">
                     <span className="font-medium text-palco-900">Prueba {t.number}</span>
                     <span className="block truncate text-xs text-palco-500">
-                      {t.organizationName ?? "General (admins)"}
+                      {t.organizationName ? `${t.organizationName} · ${t.eventTitle ?? "sin evento"}` : "General (admins)"}
                       {t.holder && ` · ${t.holder}`}
                     </span>
                   </span>
@@ -117,7 +118,7 @@ async function Content() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
           <Card title="Crear entradas de prueba">
-            <CreateTestTicketsForm clients={clients.map(({ id, name }) => ({ id, name }))} />
+            <CreateTestTicketsForm events={events} />
           </Card>
           {tickets.length > 0 && (
             <Card title={`${used} de ${tickets.length} usadas`}>
@@ -145,7 +146,7 @@ async function Content() {
                   <div className="min-w-0">
                     <p className="font-semibold text-palco-900">Prueba {t.number}</p>
                     <p className="truncate text-xs text-palco-500">
-                      {t.organizationName ?? "General (solo admins)"}
+                      {t.organizationName ? `${t.organizationName} · ${t.eventTitle ?? "sin evento"}` : "General (solo admins)"}
                       {t.holder && ` · ${t.holder}`}
                     </p>
                   </div>

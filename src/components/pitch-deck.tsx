@@ -232,6 +232,36 @@ const entradasMes = Math.round(ejemplo.entradasNoche * ejemplo.noches * (52 / 12
 const ventaMes = entradasMes * ejemplo.precio;
 const nightowlMes = Math.round(ventaMes * ejemplo.comision);
 
+// Presupuesto de salida a mercado (assets/NIGHTOWL_Presupuesto_Salida_a_Mercado.xlsx).
+// Montos en pesos: mínimo, base y máximo. Dólar de referencia del Excel: $1.570.
+const presupuesto = {
+  dolar: 1570,
+  // Referencia: lo que se lleva Nightowl (8%) por cada noche de un boliche. Sale de generales de
+  // $8.000 a $14.000 según la tanda y VIP de $35.000 a $50.000 (parte del VIP se vende por RRPP).
+  nightowlPorNoche: 819_000,
+  get gmvPorEvento() {
+    return this.nightowlPorNoche / 0.08;
+  },
+  eventosPorMes: 8,
+  categorias: [
+    { t: "Tecnología y seguridad", x: "Auditoría de código y seguridad (25 h de un ingeniero Sr.) e infraestructura del mes 1", min: 1_410_000, base: 1_996_250, max: 2_585_000 },
+    { t: "Legal y societario", x: "SAS en CABA, marca en el INPI (clases 41 y 42) y contratos con boliches y público", min: 1_310_000, base: 1_550_000, max: 1_790_000 },
+    { t: "Impositivo y contable", x: "Alta en ARCA y AGIP, libros y contabilidad del mes de lanzamiento", min: 270_000, base: 370_000, max: 470_000 },
+    { t: "Comercial y operativo", x: "Compras reales de prueba en producción y movilidad para demos", min: 150_000, base: 225_750, max: 314_000 },
+  ],
+};
+const total = (k: "min" | "base" | "max") => presupuesto.categorias.reduce((sum, c) => sum + c[k], 0);
+const usd = (ars: number) => Math.round(ars / presupuesto.dolar);
+const eventosParaRecuperar = (ars: number) => ars / ejemplo.comision / presupuesto.gmvPorEvento;
+// Meses para recuperar la inversión con un solo boliche.
+const meses = (ars: number) => {
+  const m = Math.round((eventosParaRecuperar(ars) / presupuesto.eventosPorMes) * 10) / 10;
+  if (m < 1) return "menos de 1 mes";
+  return m === 1 ? "≈ 1 mes" : `≈ ${m.toLocaleString("es-AR")} meses`;
+};
+const pesos = (n: number) => `$ ${n.toLocaleString("es-AR")}`;
+const millones = (n: number) => `$ ${(n / 1e6).toLocaleString("es-AR", { maximumFractionDigits: 1 })} M`;
+
 const slides: Slide[] = [
   // 1. Portada
   {
@@ -741,7 +771,10 @@ const slides: Slide[] = [
           </In>
           <In d={0.25}>
             <p className="mt-6 text-[clamp(2.4rem,5vw,4rem)] font-semibold tracking-tight">
-              [Monto a definir]
+              USD <CountUp to={usd(total("base"))} />
+            </p>
+            <p className="mt-1 text-white/55">
+              ≈ {millones(total("base"))} · escenario base para salir a mercado
             </p>
           </In>
         </div>
@@ -769,14 +802,94 @@ const slides: Slide[] = [
             </In>
           ))}
           <In d={0.9}>
-            <p className="pt-1 text-xs text-white/30">El monto se define con el presupuesto de cada punto.</p>
+            <p className="pt-1 text-xs text-white/30">
+              Rango según el escenario: USD {usd(total("min")).toLocaleString("es-AR")} a USD {usd(total("max")).toLocaleString("es-AR")}.
+              El detalle, en la próxima diapositiva.
+            </p>
           </In>
         </div>
       </div>
     ),
   },
 
-  // 13. Cierre
+  // 13. Presupuesto y recupero
+  {
+    render: () => (
+      <div>
+        <In>
+          <Eyebrow>Presupuesto de salida a mercado</Eyebrow>
+        </In>
+        <In d={0.1}>
+          <H className="mt-4 max-w-4xl">En qué se usa y cuándo vuelve.</H>
+        </In>
+        <div className="mt-12 grid items-start gap-10 lg:grid-cols-[1.35fr_1fr]">
+          <div className="space-y-5">
+            {presupuesto.categorias.map((c, i) => (
+              <In key={c.t} d={0.25 + i * 0.12}>
+                <div className="flex items-baseline justify-between gap-4">
+                  <p className="font-semibold">{c.t}</p>
+                  <p className="shrink-0 font-semibold tabular-nums">
+                    {pesos(c.base)} <span className="text-sm font-normal text-black/40">· {Math.round((c.base / total("base")) * 100)}%</span>
+                  </p>
+                </div>
+                <div className="mt-2 h-2.5">
+                  <Bar pct={(c.base / presupuesto.categorias[0].base) * 100} delay={0.35 + i * 0.12} className="bg-black" />
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-black/50">{c.x}</p>
+              </In>
+            ))}
+            <In d={0.8}>
+              <div className="flex items-baseline justify-between gap-4 border-t border-black/15 pt-4">
+                <p className="font-semibold">Total (escenario base)</p>
+                <p className="text-right font-semibold tabular-nums">
+                  {pesos(total("base"))}
+                  <span className="block text-sm font-normal text-black/45">≈ USD {usd(total("base")).toLocaleString("es-AR")}</span>
+                </p>
+              </div>
+            </In>
+          </div>
+
+          <In d={0.5}>
+            <div className="rounded-2xl bg-black p-7 text-white">
+              <p className="text-sm text-white/50">Se recupera con</p>
+              <p className="mt-2 text-[clamp(2.4rem,5vw,3.6rem)] font-semibold leading-none tracking-tight">
+                <CountUp to={Math.ceil(eventosParaRecuperar(total("base")))} /> noches
+              </p>
+              <p className="mt-2 text-white/60">
+                de un solo boliche: {meses(total("base"))} con {presupuesto.eventosPorMes} eventos por mes.
+              </p>
+              <dl className="mt-6 space-y-2 border-t border-white/15 pt-5 text-sm">
+                {(
+                  [
+                    ["Nightowl por noche (8%)", pesos(presupuesto.nightowlPorNoche)],
+                    ["Venta de entradas para recuperarlo", millones(total("base") / ejemplo.comision)],
+                    ["Escenario mínimo", `${Math.ceil(eventosParaRecuperar(total("min")))} noches · USD ${usd(total("min")).toLocaleString("es-AR")}`],
+                    ["Escenario máximo", `${Math.ceil(eventosParaRecuperar(total("max")))} noches · USD ${usd(total("max")).toLocaleString("es-AR")}`],
+                  ] as const
+                ).map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-4">
+                    <dt className="text-white/50">{k}</dt>
+                    <dd className="text-right font-medium tabular-nums">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </In>
+        </div>
+        <In d={1}>
+          <p className="mt-10 text-xs leading-relaxed text-black/35">
+            Referencia: Nightowl se lleva {pesos(presupuesto.nightowlPorNoche)} por noche de boliche, el 8% de ≈{" "}
+            {millones(presupuesto.gmvPorEvento)} en entradas (generales de $ 8.000 a $ 14.000 según la tanda y VIP de $ 35.000 a
+            $ 50.000). Dólar de referencia $
+            {presupuesto.dolar.toLocaleString("es-AR")}. No incluye 6 meses de mantenimiento. El capital social de la SAS ($
+            797.600) no es un gasto: queda en la sociedad para pagar estos mismos costos.
+          </p>
+        </In>
+      </div>
+    ),
+  },
+
+  // 14. Cierre
   {
     dark: true,
     render: () => (

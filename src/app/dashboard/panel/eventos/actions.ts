@@ -10,6 +10,7 @@ import {
   publishEvent,
   refreshEventMap,
   removePerformance,
+  saveEventLocations,
   savePricing,
   setEventStatus,
   setSeatsBlocked,
@@ -48,7 +49,10 @@ export async function createEventAction(_: EventFormState, data: FormData): Prom
     id = await createEvent(getDb(), tenant, {
       ...details(data),
       venueId: field(data, "venueId"),
+      venueName: field(data, "venueName"),
       startsAt: field(data, "startsAt"),
+      mode: field(data, "mode"),
+      locations: JSON.parse(field(data, "locations") || "[]"),
     });
   } catch (error) {
     if (error instanceof ValidationError) return { error: error.message };
@@ -68,6 +72,10 @@ export async function addPerformanceAction(_: EventFormState, data: FormData): P
 
 export async function removePerformanceAction(_: EventFormState, data: FormData): Promise<EventFormState> {
   return attempt((tenant) => removePerformance(getDb(), tenant, field(data, "id"), field(data, "performanceId")));
+}
+
+export async function saveLocationsAction(_: EventFormState, data: FormData): Promise<EventFormState> {
+  return attempt((tenant) => saveEventLocations(getDb(), tenant, field(data, "id"), JSON.parse(field(data, "locations") || "[]")));
 }
 
 export async function savePricingAction(_: EventFormState, data: FormData): Promise<EventFormState> {

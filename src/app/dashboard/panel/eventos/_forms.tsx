@@ -14,6 +14,7 @@ import {
   updateDetailsAction,
   type EventFormState,
 } from "./actions";
+import { DEFAULT_LOCATIONS, LocationsEditor, serializeLocations, type Location } from "./_locations";
 
 const initial: EventFormState = {};
 
@@ -77,25 +78,104 @@ function DescriptionField({ defaultValue }: { defaultValue?: string }) {
   );
 }
 
-export function CreateEventForm({ venues }: { venues: { id: string; name: string; sellable: boolean }[] }) {
+type VenueOption = { id: string; name: string; sellable: boolean };
+type SaleMode = "mapa" | "ubicaciones";
+
+const NEW_PLACE = "nuevo";
+
+function ModeOption({ mode, current, onPick, disabled, title, text }: { mode: SaleMode; current: SaleMode; onPick: (mode: SaleMode) => void; disabled?: boolean; title: string; text: string }) {
+  const active = mode === current;
+  return (
+    <label
+      className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition ${active ? "border-palco-900 bg-palco-50" : "border-palco-200 bg-white hover:bg-palco-50"} ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+    >
+      <input type="radio" name="mode" value={mode} checked={active} disabled={disabled} onChange={() => onPick(mode)} className="mt-1 accent-palco-900" />
+      <span>
+        <span className="block text-sm font-semibold text-palco-900">{title}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-palco-600">{text}</span>
+      </span>
+    </label>
+  );
+}
+
+export function CreateEventForm({ venues }: { venues: VenueOption[] }) {
   const [state, action] = useActionState(createEventAction, initial);
   const [image, setImage] = useState("");
+  const withMap = venues.filter((venue) => venue.sellable);
+  // Sin una sala con mapa, la única forma de vender es por ubicación.
+  const [mode, setMode] = useState<SaleMode>(withMap.length > 0 ? "mapa" : "ubicaciones");
+  const [place, setPlace] = useState(venues[0]?.id ?? NEW_PLACE);
+  const [locations, setLocations] = useState<Location[]>(DEFAULT_LOCATIONS);
+  const byLocation = mode === "ubicaciones";
+
   return (
     <form action={action} className="space-y-4">
       <Field label="Título" name="title" required maxLength={120} />
+
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-palco-900">¿Cómo vendés las entradas?</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ModeOption
+            mode="mapa"
+            current={mode}
+            onPick={setMode}
+            disabled={withMap.length === 0}
+            title="Con mapa de la sala"
+            text={withMap.length === 0 ? "Primero armá una sala con su mapa en Salas y mapas." : "El público ve el plano y elige su butaca o su sector."}
+          />
+          <ModeOption
+            mode="ubicaciones"
+            current={mode}
+            onPick={setMode}
+            title="Solo por ubicación"
+            text="Ideal para boliches: General, VIP, mesas... con su capacidad, sin dibujar un mapa."
+          />
+        </div>
+      </fieldset>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1 block text-sm font-medium text-palco-900">Sala</span>
-          <select name="venueId" required className={inputClass} defaultValue={venues.find((venue) => venue.sellable)?.id}>
-            {venues.map((venue) => (
-              <option key={venue.id} value={venue.id} disabled={!venue.sellable}>
-                {venue.name}{venue.sellable ? "" : " (sin mapa)"}
-              </option>
-            ))}
-          </select>
-        </label>
+        {byLocation ? (
+          <div className="space-y-2">
+            {venues.length > 0 && (
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-palco-900">Lugar</span>
+                <select value={place} onChange={(event) => setPlace(event.target.value)} className={inputClass}>
+                  {venues.map((venue) => (
+                    <option key={venue.id} value={venue.id}>{venue.name}</option>
+                  ))}
+                  <option value={NEW_PLACE}>Otro lugar…</option>
+                </select>
+              </label>
+            )}
+            <input type="hidden" name="venueId" value={place === NEW_PLACE ? "" : place} />
+            {place === NEW_PLACE && (
+              <Field label={venues.length > 0 ? "Nombre del lugar nuevo" : "Lugar"} name="venueName" required maxLength={80} placeholder="Ej.: Moscú, Costanera" />
+            )}
+          </div>
+        ) : (
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-palco-900">Sala</span>
+            <select name="venueId" required className={inputClass} defaultValue={withMap[0]?.id}>
+              {venues.map((venue) => (
+                <option key={venue.id} value={venue.id} disabled={!venue.sellable}>
+                  {venue.name}{venue.sellable ? "" : " (sin mapa)"}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <Field label="Primera función" name="startsAt" type="datetime-local" required hint="En hora de Argentina." />
       </div>
+
+      {byLocation && (
+        <div>
+          <p className="mb-1.5 text-sm font-medium text-palco-900">Ubicaciones</p>
+          <input type="hidden" name="locations" value={serializeLocations(locations)} />
+          <LocationsEditor value={locations} onChange={setLocations} />
+          <p className="mt-1.5 text-xs text-palco-500">Los precios y los lotes de cada una los cargás en el paso siguiente.</p>
+        </div>
+      )}
+
       <DescriptionField />
       <ImageField value={image} onChange={setImage} />
       <FormError message={state.error} />

@@ -97,6 +97,8 @@ async function Content({ params }: { params: Props["params"] }) {
               )}
               <div className="mt-4 flex justify-center"><MadeByNightowl color="var(--site-fg)" /></div>
             </div>
+            {/* Los eventos que se venden solo por ubicación no muestran plano */}
+            {event.map?.display !== "list" && (
             <VenueMap
               map={event.map}
               prices={prices}
@@ -104,6 +106,7 @@ async function Content({ params }: { params: Props["params"] }) {
               fg={dark ? "#f5f5f7" : "#16161a"}
               bg={dark ? "#0d0d10" : "#ffffff"}
             />
+            )}
           </aside>
         </div>
       </section>

@@ -92,30 +92,45 @@ export function verifyTicketCode(keys, code) {
 
 /* ---------------------------- Entradas de prueba ---------------------------- */
 
-/** @param {{ count?: number, holder?: string, organizationId?: string | null }} [options] */
+/** @param {{ count?: number, holder?: string, eventId?: string | null }} [options] */
 export async function createTestTickets(db, actor, options = {}) {
-  const { count = 1, holder = "", organizationId = null } = options;
+  const { count = 1, holder = "", eventId = null } = options;
   assertAdmin(actor);
   const n = Math.min(Math.max(Math.trunc(Number(count)) || 1, 1), 10);
   const { rows: [{ total }] } = await db.query("select count(*)::int as total from qr_test_tickets");
   if (total + n > MAX_TEST_TICKETS) {
     throw new QrError(`Ya hay ${total} entradas de prueba. Borralas antes de crear más (máximo ${MAX_TEST_TICKETS}).`);
   }
-  // Sin cliente: prueba general, solo la escanean los admins. Con cliente: solo sus usuarios con permiso (y los admins).
-  const org = organizationId && UUID.test(organizationId) ? organizationId : null;
-  if (organizationId && !org) throw new QrError("Ese cliente no existe");
-  if (org) {
-    const { rowCount } = await db.query("select 1 from organizations where id = $1", [org]);
-    if (!rowCount) throw new QrError("Ese cliente no existe");
+  // Sin evento: prueba general, solo la escanean los admins. Con evento: solo vale para ese evento
+  // y la escanean los usuarios con permiso de su cliente (y los admins).
+  let event = null;
+  if (eventId) {
+    if (!UUID.test(eventId)) throw new QrError("Ese evento no existe");
+    ({ rows: [event] } = await db.query("select id, organization_id from events where id = $1", [eventId]));
+    if (!event) throw new QrError("Ese evento no existe");
   }
   const name = String(holder ?? "").trim().slice(0, 60);
   for (let i = 0; i < n; i++) {
     await db.query(
-      `insert into qr_test_tickets (number, holder, created_by, organization_id)
-       values ((select coalesce(max(number), 0) + 1 from qr_test_tickets), $1, $2, $3)`,
-      [name, actor.userId, org],
+      `insert into qr_test_tickets (number, holder, created_by, organization_id, event_id)
+       values ((select coalesce(max(number), 0) + 1 from qr_test_tickets), $1, $2, $3, $4)`,
+      [name, actor.userId, event?.organization_id ?? null, event?.id ?? null],
     );
   }
+}
+
+// Eventos para los que el admin puede generar QR de prueba: los de todos los clientes, abiertos.
+export async function listEventsForTests(db, actor) {
+  assertAdmin(actor);
+  const { rows } = await db.query(
+    `select e.id, e.title, e.status, o.name as "organizationName",
+            (select min(starts_at) from performances p where p.event_id = e.id and p.starts_at >= now()) as "nextAt"
+     from events e
+     join organizations o on o.id = e.organization_id
+     where e.status in ('draft', 'published')
+     order by o.name, "nextAt" nulls last, e.created_at desc`,
+  );
+  return rows;
 }
 
 export async function listTestTickets(db, actor) {
@@ -123,11 +138,12 @@ export async function listTestTickets(db, actor) {
   const keys = await getSigningKeys(db);
   const { rows } = await db.query(
     `select t.id, t.number, t.holder, t.checked_in_at as "checkedInAt", u.email as "checkedInBy",
-            o.name as "organizationName",
+            o.name as "organizationName", e.title as "eventTitle",
             (select count(*)::int from qr_scans s where s.ticket_id = t.id) as scans
      from qr_test_tickets t
      left join users u on u.id = t.checked_in_by
      left join organizations o on o.id = t.organization_id
+     left join events e on e.id = t.event_id
      order by t.number desc`,
   );
   return rows.map((row) => ({ ...row, code: signTicketCode(keys, row.id) }));
@@ -167,13 +183,60 @@ export async function getScanAccess(db, session) {
   return row ? { all: false, organizationId: row.id, organizationName: row.name } : null;
 }
 
+/**
+ * Eventos que esta sesión puede elegir para escanear: los de su cliente o, para un admin, los de todos.
+ * Solo los abiertos (borrador para probar, publicado para la puerta).
+ */
+export async function listScanEvents(db, session) {
+  const access = await getScanAccess(db, session);
+  if (!access) return [];
+  const { rows } = await db.query(
+    `select e.id, e.title, o.name as "organizationName",
+            (select min(starts_at) from performances p
+             where p.event_id = e.id and p.starts_at >= now() - interval '12 hours') as "nextAt"
+     from events e
+     join organizations o on o.id = e.organization_id
+     where e.status in ('draft', 'published') and ($1::boolean or e.organization_id = $2)
+     order by "nextAt" nulls last, e.created_at desc
+     limit 100`,
+    [access.all, access.organizationId],
+  );
+  return rows;
+}
+
+// El evento elegido para escanear. Un usuario de cliente tiene que elegir uno de los suyos;
+// un admin puede no elegir ninguno ("cualquier evento").
+async function resolveScanEvent(db, access, eventId) {
+  if (!eventId) {
+    if (access.all) return null;
+    throw new QrError("Elegí el evento que vas a escanear");
+  }
+  if (!UUID.test(eventId)) throw new QrError("Ese evento no existe");
+  const { rows: [event] } = await db.query("select id, title, organization_id from events where id = $1", [eventId]);
+  if (!event || (!access.all && event.organization_id !== access.organizationId)) {
+    throw new QrError("No podés escanear ese evento");
+  }
+  return event;
+}
+
+export async function getScanEvent(db, session, eventId) {
+  const access = await getScanAccess(db, session);
+  if (!access || !eventId) return null;
+  try {
+    return await resolveScanEvent(db, access, eventId);
+  } catch {
+    return null;
+  }
+}
+
 const TICKET_COLUMNS = `t.id, t.number, t.holder, t.organization_id as "organizationId",
   t.checked_in_at as "checkedInAt", u.email as "checkedInBy"`;
 
 // Una entrada vendida. Devuelve null si el id no es de una entrada real (puede ser una de prueba).
-async function scanSoldTicket(db, session, access, id) {
+async function scanSoldTicket(db, session, access, event, id) {
   const { rows: [found] } = await db.query(
-    `select tickets.id, orders.status, events.organization_id as "organizationId", events.status as "eventStatus"
+    `select tickets.id, orders.status, events.id as "eventId", events.title as "eventTitle",
+            events.organization_id as "organizationId", events.status as "eventStatus"
      from tickets
      join orders on orders.id = tickets.order_id
      join performances on performances.id = orders.performance_id
@@ -190,6 +253,7 @@ async function scanSoldTicket(db, session, access, id) {
   if (!access.all && found.organizationId !== access.organizationId) {
     return invalid("Esta entrada es de otro organizador: no es para este evento.");
   }
+  if (event && found.eventId !== event.id) return invalid(`Esta entrada es de otro evento: ${found.eventTitle}.`);
   if (found.status !== "paid") return invalid("Esta entrada no está paga o fue devuelta.");
   if (found.eventStatus === "cancelled") return invalid("Este evento fue cancelado.");
 
@@ -225,9 +289,11 @@ async function scanSoldTicket(db, session, access, id) {
  * - duplicate: ya había entrado; devuelve cuándo y quién la escaneó.
  * - invalid: el código no es nuestro, fue modificado, la entrada no existe o es de otro organizador.
  */
-export async function scanTicket(db, session, code) {
+/** @param {string | null} [eventId] evento elegido en el escáner (null = cualquiera, solo admins) */
+export async function scanTicket(db, session, code, eventId = null) {
   const access = await getScanAccess(db, session);
   if (!access) throw new QrError("Tu cuenta no tiene permiso para escanear");
+  const event = await resolveScanEvent(db, access, eventId);
   const logInvalid = (ticketId = null) =>
     db.query("insert into qr_scans (ticket_id, result, scanned_by) values ($1, 'invalid', $2)", [ticketId, session.userId]);
 
@@ -238,10 +304,14 @@ export async function scanTicket(db, session, code) {
     return { result: "invalid", reason: "Este QR no es una entrada de Nightowl o fue modificado." };
   }
 
-  const sold = await scanSoldTicket(db, session, access, id);
+  const sold = await scanSoldTicket(db, session, access, event, id);
   if (sold) return sold;
 
-  const { rows: [found] } = await db.query("select organization_id from qr_test_tickets where id = $1", [id]);
+  const { rows: [found] } = await db.query(
+    `select t.organization_id, t.event_id, e.title as event_title
+     from qr_test_tickets t left join events e on e.id = t.event_id where t.id = $1`,
+    [id],
+  );
   if (!found) {
     await logInvalid();
     return { result: "invalid", reason: "La firma es válida pero la entrada ya no existe (fue borrada)." };
@@ -250,6 +320,14 @@ export async function scanTicket(db, session, code) {
   if (!access.all && found.organization_id !== access.organizationId) {
     await logInvalid(id);
     return { result: "invalid", reason: "Esta entrada es de otro organizador: no es para este evento." };
+  }
+  // Escaneando un evento puntual: solo entran las de ese evento (una de prueba general tampoco).
+  if (event && found.event_id !== event.id) {
+    await logInvalid(id);
+    return {
+      result: "invalid",
+      reason: found.event_title ? `Esta entrada es de otro evento: ${found.event_title}.` : "Esta entrada de prueba no es de este evento.",
+    };
   }
 
   // Un solo update condicionado: si dos porteros escanean la misma entrada a la vez, entra uno solo.

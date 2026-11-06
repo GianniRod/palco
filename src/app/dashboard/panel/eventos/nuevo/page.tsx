@@ -20,16 +20,7 @@ async function Content() {
     sellable: venue.map.sectors.some((sector: Sector) => sector.kind === "numbered" || sector.kind === "general"),
   }));
 
-  if (!options.some((venue: (typeof options)[number]) => venue.sellable)) {
-    return (
-      <Card>
-        <p className="text-sm text-palco-900">
-          Para crear un evento necesitás una sala con mapa.{" "}
-          <Link href="/panel/salas" className="font-medium underline">Armá tu sala</Link> y volvé.
-        </p>
-      </Card>
-    );
-  }
+  // Sin sala con mapa igual se puede crear: se vende solo por ubicación (General, VIP...).
   return (
     <Card>
       <CreateEventForm venues={options} />

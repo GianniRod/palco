@@ -17,11 +17,13 @@ import {
 } from "../actions";
 import { ActionButton, AddPerformanceForm, DetailsForm, PricingForm, SeatBlocker } from "../_forms";
 import { StatusPill } from "../_status";
+import { LocationsForm } from "../_locations";
 
 export const metadata: Metadata = { title: "Evento" };
 
 type Props = PageProps<"/dashboard/panel/eventos/[id]">;
 type Performance = { id: string; startsAt: Date; orderCount: number };
+type MapSectorLite = { key: string; name: string; capacity?: number };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -84,6 +86,30 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
             {open && <AddPerformanceForm eventId={id} />}
           </Card>
 
+          {event.map?.display === "list" ? (
+            <Card title={`Ubicaciones · ${event.venue}`}>
+              {event.status === "draft" ? (
+                <>
+                  <p className="mb-3 text-xs text-palco-600">
+                    Este evento se vende solo por ubicación, sin plano. Al publicar, las ubicaciones quedan fijas.
+                  </p>
+                  <LocationsForm
+                    eventId={id}
+                    initial={event.map.sectors.map((sector: MapSectorLite) => ({ key: sector.key, name: sector.name, capacity: String(sector.capacity ?? "") }))}
+                  />
+                </>
+              ) : (
+                <ul className="divide-y divide-palco-50 text-sm">
+                  {event.map.sectors.map((sector: MapSectorLite) => (
+                    <li key={sector.key} className="flex justify-between gap-3 py-2">
+                      <span className="text-palco-900">{sector.name}</span>
+                      <span className="tabular-nums text-palco-600">{sector.capacity} personas</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          ) : (
           <Card title={`Mapa · ${event.venue}`}>
             <VenueMap map={event.map} />
             {event.status === "draft" ? (
@@ -95,6 +121,7 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
               <p className="mt-3 text-xs text-palco-600">El mapa queda fijo: cambiar la sala no afecta este evento.</p>
             )}
           </Card>
+          )}
         </div>
       </div>
 
