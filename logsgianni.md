@@ -7,6 +7,13 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ---
 
+## 2026-11-06
+
+- **Web del cliente impecable en celular y compu + pluma y curvatura en el editor de salas**:
+  - Web pública (`src/components/public-site.tsx`, `src/app/sites/[slug]/eventos/[id]/page.tsx`): títulos con tamaños que siguen al ancho (`clamp` + `cqi`), textos largos que cortan en vez de salirse (`FIT`: overflow-wrap + hyphens), nombre del header con "…" sin empujar el botón Entradas, barrita de los títulos de sección alineada a la primera línea y portada de Cartelera con su proporción en el celular. Probado con textos extremos a 320, 390, 820 y 1366 px: nada se sale del ancho.
+  - Editor de salas: botón **Pluma** en el panel Forma (cuadrados = mover esquinas, círculos = curvar el lado, doble clic = agregar punto, Quitar punto, Volver a rectángulo) y deslizador de **Curvatura** (un lado o todos). En el celular el mapa va arriba. Las butacas se recortan con la forma. Archivos: `salas/[id]/_pen.tsx` y `_shape.ts` (nuevos), `_editor.tsx`, `src/components/venue-map.tsx` (`shape` en `MapSector`, `shapePath`), `docs/dashboard.md`.
+  - Backend: `backend/src/venues.mjs` acepta `shape` en cada sector (3 a 24 puntos, valores limitados); test nuevo `backend/tests/map-shape.test.mjs`. Sin migración: el mapa ya se guarda como JSON.
+
 ## 2026-11-05
 
 - **Escáner en scan.palcotickets.com + permiso de escaneo por usuario**:
