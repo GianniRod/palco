@@ -9,6 +9,12 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Landing con el zoom alejado / pantallas muy grandes**:
+  - Si la pantalla es más alta que la página, el footer se estira (`flex-1`) en lugar de dejar un hueco blanco
+    entre el contenido y el pie (antes el que crecía era `main`).
+  - Teatros: la cinta que se desplaza tiene la lista 4 veces por mitad (y 160 s para la misma velocidad),
+    así no queda un hueco a la derecha en pantallas anchas.
+  Archivos: `src/app/page.tsx`, `src/app/teatros/page.tsx`, `src/app/globals.css`.
 - **Landing responsive (celular)**, boliches y teatros:
   - Ticket final "Veamos Nightowl…": en el celular el talón "Pedir demo" va abajo con el troquel horizontal
     (antes el texto quedaba apretado en una columna angosta). Clase `.cierre` + reglas en `globals.css`.

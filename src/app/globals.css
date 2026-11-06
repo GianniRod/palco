@@ -108,7 +108,8 @@ body:has(.minimal) {
 
 /* ---------- Cinta de texto (versión teatros) ---------- */
 .cinta {
-  animation: cinta 40s linear infinite;
+  /* Cada mitad tiene la lista 4 veces: 160 s mantiene la velocidad de antes */
+  animation: cinta 160s linear infinite;
 }
 @keyframes cinta {
   to { transform: translateX(-50%); }

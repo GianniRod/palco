@@ -74,7 +74,7 @@ const faqs = [
 export default function Home() {
   return (
     <div className="minimal flex min-h-full flex-1 flex-col">
-      <main className="flex-1">
+      <main>
         {/* ---------------- Hero ---------------- */}
         <section className="relative overflow-hidden bg-white text-tinta">
           <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 pt-8">
@@ -258,7 +258,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-tinta/10 bg-papel">
+      <footer className="flex-1 border-t border-tinta/10 bg-papel">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-6 py-10 text-sm text-tinta/50 sm:flex-row">
           <Logo className="h-6" color="var(--color-tinta)" />
           <div className="text-center sm:text-right">

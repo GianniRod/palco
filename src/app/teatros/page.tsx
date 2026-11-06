@@ -76,7 +76,7 @@ const faqs = [
 export default function TeatrosPage() {
   return (
     <>
-      <main className="flex-1">
+      <main>
         {/* ---------------- Hero ---------------- */}
         <section className="relative overflow-hidden bg-palco-900 text-white">
           <div className="pointer-events-none absolute -right-40 -top-40 h-[600px] w-[600px] rounded-full bg-palco-600/30 blur-3xl" />
@@ -144,9 +144,10 @@ export default function TeatrosPage() {
           <div className="cinta flex w-max">
             {[0, 1].map((dup) => (
               <div key={dup} aria-hidden={dup === 1} className="flex shrink-0 items-center">
-                {cinta.map((w) => (
-                  <span key={w} className="flex items-center text-lg font-medium">
-                    <span className="px-7">{w}</span>
+                {/* La lista va 4 veces en cada mitad: así llena pantallas muy anchas (o con el zoom alejado) sin huecos */}
+                {[0, 1, 2, 3].flatMap((rep) => cinta.map((w) => `${rep}-${w}`)).map((key) => (
+                  <span key={key} className="flex items-center text-lg font-medium">
+                    <span className="px-7">{key.slice(2)}</span>
                     <span className="text-xs text-dorado/40">●</span>
                   </span>
                 ))}
@@ -262,7 +263,7 @@ export default function TeatrosPage() {
         </section>
       </main>
 
-      <footer className="border-t border-tinta/10 bg-papel">
+      <footer className="flex-1 border-t border-tinta/10 bg-papel">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-6 py-10 text-sm text-tinta/55 sm:flex-row">
           <Logo className="h-6" color="var(--color-palco-800)" />
           <div className="text-center sm:text-right">
