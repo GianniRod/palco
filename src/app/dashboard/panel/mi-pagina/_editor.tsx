@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Check, ExternalLink, ImagePlus, Loader2, Monitor, Smartphone } from "lucide-react";
+import { CheckoutPreview } from "@/components/checkout-preview";
 import { PublicSite, type SiteContent, type SiteEvent } from "@/components/public-site";
 import { publicSiteUrl } from "@/lib/dashboard/config";
 import { inputClass } from "../../_components/styles";
@@ -22,6 +23,7 @@ const TABS = [
   { id: "plantilla", label: "Plantilla" },
   { id: "colores", label: "Colores" },
   { id: "contenido", label: "Contenido" },
+  { id: "compra", label: "Compra" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -109,7 +111,7 @@ function Segmented<V extends string>({
   onChange: (value: V) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1 rounded-lg bg-tinta/5 p-1 text-xs font-medium">
+    <div className={`grid gap-1 rounded-lg bg-tinta/5 p-1 text-xs font-medium ${options.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
       {options.map((option) => (
         <label
           key={option.value}
@@ -352,7 +354,7 @@ export function SiteEditor({
       <div className="grid md:grid-cols-[310px_minmax(0,1fr)]">
         {/* noValidate: un campo inválido puede estar en otra pestaña, así que valida el servidor. */}
         <form action={action} noValidate className="flex flex-col border-b border-tinta/10 bg-papel/30 p-4 md:border-b-0 md:border-r">
-          <div role="tablist" aria-label="Secciones del editor" className="grid grid-cols-3 gap-0.5 rounded-lg bg-tinta/5 p-1 text-[11px] font-medium">
+          <div role="tablist" aria-label="Secciones del editor" className="grid grid-cols-4 gap-0.5 rounded-lg bg-tinta/5 p-1 text-[11px] font-medium">
             {TABS.map((item) => (
               <button
                 key={item.id}
@@ -521,6 +523,58 @@ export function SiteEditor({
               <TextField label="Email" id="email" name="email" type="email" maxLength={120} value={site.email} onChange={onText("email")} />
               <TextField label="Web" id="website" name="website" placeholder="tuweb.com" value={site.website} onChange={onText("website")} />
             </div>
+
+            <div hidden={tab !== "compra"} className="space-y-5">
+              <p className="text-[11px] leading-relaxed text-tinta/60">
+                Cómo se ve la compra de entradas. El plano sale de tu sala en Salas y mapas; los colores y la tipografía, de esta plantilla.
+              </p>
+              <div>
+                <Label>Fondo del plano</Label>
+                <Segmented
+                  name="planTheme"
+                  value={site.planTheme}
+                  onChange={(value) => set("planTheme", value)}
+                  options={[
+                    { value: "oscuro", label: "Oscuro" },
+                    { value: "claro", label: "Claro" },
+                    { value: "marca", label: "Tu color" },
+                  ]}
+                />
+              </div>
+              <div>
+                <Label>Forma de las butacas</Label>
+                <Segmented
+                  name="seatShape"
+                  value={site.seatShape}
+                  onChange={(value) => set("seatShape", value)}
+                  options={[
+                    { value: "butaca", label: "Butaca" },
+                    { value: "redonda", label: "Redonda" },
+                  ]}
+                />
+              </div>
+              <div>
+                <Label>Estilo de la entrada</Label>
+                <Segmented
+                  name="ticketStyle"
+                  value={site.ticketStyle}
+                  onChange={(value) => set("ticketStyle", value)}
+                  options={[
+                    { value: "troquelado", label: "Clásica" },
+                    { value: "marca", label: "Con tu color" },
+                  ]}
+                />
+              </div>
+              <TextField
+                label="Título de la compra"
+                id="checkoutTitle"
+                name="checkoutTitle"
+                maxLength={60}
+                placeholder="¿Dónde te ubicamos?"
+                value={site.checkoutTitle}
+                onChange={onText("checkoutTitle")}
+              />
+            </div>
           </div>
 
           <div className="mt-4 space-y-2">
@@ -562,7 +616,11 @@ export function SiteEditor({
             </div>
             <DevicePreview device={device}>
               <div key={site.template} className="[animation:subir_0.5s_ease-out_both]">
-                <PublicSite site={preview} events={events.length > 0 ? events : SAMPLE_EVENTS} className="min-h-[640px]" />
+                {tab === "compra" ? (
+                  <CheckoutPreview site={preview} />
+                ) : (
+                  <PublicSite site={preview} events={events.length > 0 ? events : SAMPLE_EVENTS} className="min-h-[640px]" />
+                )}
               </div>
             </DevicePreview>
             {state.done === "published" && upToDate && (

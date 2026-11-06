@@ -7,6 +7,7 @@ import { ValidationError } from "../src/auth.mjs";
 import {
   canEditSite,
   getPublicSite,
+  getPublicSiteContent,
   getSiteForEditing,
   publishSite,
   saveSiteDraft,
@@ -166,6 +167,25 @@ test("un sitio guardado antes de existir la portada sigue funcionando", async ()
 test("una plantilla, fondo o tipografía desconocidos caen en el valor por defecto", async () => {
   const saved = await saveSiteDraft(db, tenant, site({ template: "x", background: "x", titleFont: "x" }));
   assert.deepEqual([saved.template, saved.background, saved.titleFont], ["dividida", "claro", "clasica"]);
+});
+
+test("la compra se personaliza con el sitio, y un sitio viejo toma los valores por defecto", async () => {
+  const fresh = await createTenant();
+  await publishSite(db, fresh, site({ planTheme: "marca", seatShape: "redonda", ticketStyle: "marca", checkoutTitle: "  Elegí tu lugar " }));
+  const { content } = await getPublicSite(db, fresh.organization.slug);
+  assert.deepEqual(
+    [content.planTheme, content.seatShape, content.ticketStyle, content.checkoutTitle],
+    ["marca", "redonda", "marca", "Elegí tu lugar"],
+  );
+
+  const raro = await saveSiteDraft(db, fresh, site({ planTheme: "<script>", seatShape: "x", ticketStyle: "y" }));
+  assert.deepEqual([raro.planTheme, raro.seatShape, raro.ticketStyle], ["oscuro", "butaca", "troquelado"]);
+  await assert.rejects(saveSiteDraft(db, fresh, site({ checkoutTitle: "x".repeat(61) })), ValidationError);
+
+  await db.query("update sites set published = published - 'planTheme' - 'seatShape' - 'ticketStyle' - 'checkoutTitle' where organization_id = $1", [fresh.organization.id]);
+  const viejo = (await getPublicSite(db, fresh.organization.slug)).content;
+  assert.deepEqual([viejo.planTheme, viejo.seatShape, viejo.ticketStyle, viejo.checkoutTitle], ["oscuro", "butaca", "troquelado", ""]);
+  assert.equal((await getPublicSiteContent(db, fresh.organization.slug)).planTheme, "oscuro");
 });
 
 test("el campo desconocido no se guarda", async () => {

@@ -11,7 +11,7 @@ const MAX_PENDING_PER_IP = 6;
 const MAX_PENDING_PER_EMAIL = 3;
 
 export class TicketsUnavailableError extends Error {
-  constructor(message = "Alguien ganó esas entradas. Elegí otras") {
+  constructor(message = "Alguien te ganó de mano con esas entradas. Elegí otras") {
     super(message);
     this.name = "TicketsUnavailableError";
   }

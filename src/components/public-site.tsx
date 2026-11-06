@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-import { AtSign, CalendarDays, Globe, Mail, MapPin, Phone } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { site as nightowl } from "@/lib/site";
+import { AtSign, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { MadeByNightowl, Owl } from "@/components/made-by";
 
 // Las tres plantillas de la página pública. El mismo componente pinta la página real y la
 // vista previa del editor, por eso los cortes son por ancho del contenedor y no de la pantalla.
@@ -21,6 +20,10 @@ export type SiteContent = {
   email: string;
   website: string;
   instagram: string;
+  planTheme: "oscuro" | "claro" | "marca";
+  seatShape: "butaca" | "redonda";
+  ticketStyle: "troquelado" | "marca";
+  checkoutTitle: string;
 };
 
 export type SiteEvent = {
@@ -69,6 +72,28 @@ function luminance(hex: string) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+// Los colores del plano de la compra. Se calculan para que lo elegido siempre se distinga.
+function planColors(site: SiteContent, light: number) {
+  const accent = site.primaryColor;
+  const brand = site.planTheme === "marca";
+  const clear = site.planTheme === "claro";
+  const fg = brand ? (light > 0.179 ? "#111111" : "#ffffff") : clear ? "#16161a" : "#ffffff";
+  const legible = clear ? light < 0.45 : light > 0.08;
+  const pick = brand || !legible ? fg : accent;
+  return {
+    "--plan-bg": brand ? accent : clear ? "#ffffff" : "#0b0b10",
+    "--plan-fg": fg,
+    "--plan-muted": `color-mix(in srgb, ${fg} 62%, transparent)`,
+    "--plan-line": `color-mix(in srgb, ${fg} 14%, transparent)`,
+    "--plan-seat-line": `color-mix(in srgb, ${fg} 45%, transparent)`,
+    "--plan-seat": `color-mix(in srgb, ${fg} 7%, transparent)`,
+    "--plan-seat-hover": `color-mix(in srgb, ${fg} 25%, transparent)`,
+    "--plan-sold": `color-mix(in srgb, ${fg} 12%, transparent)`,
+    "--plan-pick": pick,
+    "--plan-on-pick": brand ? accent : luminance(pick) > 0.179 ? "#111111" : "#ffffff",
+  };
+}
+
 function themeStyle(site: SiteContent) {
   const dark = site.background === "oscuro";
   const light = luminance(site.primaryColor);
@@ -86,12 +111,13 @@ function themeStyle(site: SiteContent) {
     "--site-on-accent": light > 0.179 ? "#111111" : "#ffffff",
     "--site-accent-text": legible ? site.primaryColor : fg,
     "--site-shadow": dark ? "0 10px 30px rgba(0,0,0,.45)" : "0 10px 30px rgba(22,22,26,.08)",
+    ...planColors(site, light),
     backgroundColor: "var(--site-bg)",
     color: "var(--site-fg)",
   } as CSSProperties;
 }
 
-const titleFont = (site: SiteContent) =>
+export const titleFont = (site: SiteContent) =>
   site.titleFont === "clasica" ? "font-serif font-semibold" : "font-sans font-extrabold tracking-tight";
 const heroCase = (site: SiteContent) => (site.titleFont === "moderna" ? "uppercase" : "");
 
@@ -179,14 +205,15 @@ function EventCard({ site, event, index, link }: { site: SiteContent; event: Sit
 function EventSection({ site, events, title, linkEvents }: Props & { title: string }) {
   return (
     <section id="eventos" className={`${WRAP} scroll-mt-24 py-12 @3xl:py-20`}>
-      <div className="mb-7"><SectionTitle site={site}>{title}</SectionTitle></div>
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
+        <SectionTitle site={site}>{title}</SectionTitle>
+        <MadeByNightowl color="var(--site-fg)" />
+      </div>
       {events.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--site-line)] px-6 py-14 text-center">
-          <span className="flex size-14 items-center justify-center rounded-full bg-[var(--site-surface)] [box-shadow:var(--site-shadow)]">
-            <CalendarDays className="size-7 text-[var(--site-accent-text)]" aria-hidden />
-          </span>
-          <p className="mt-3 text-lg font-semibold">Estamos preparando las próximas fechas</p>
-          <p className="mt-1 text-[var(--site-muted)]">Muy pronto vas a poder ver los eventos acá.</p>
+          <Owl className="h-12 text-[var(--site-accent-text)]" />
+          <p className="mt-3 text-lg font-semibold">Estamos armando la próxima noche</p>
+          <p className="mt-1 text-[var(--site-muted)]">Volvé en un rato: las fechas nuevas aparecen acá.</p>
         </div>
       ) : (
         <ul className="grid gap-6 @xl:grid-cols-2 @4xl:grid-cols-3">
@@ -372,15 +399,7 @@ function Footer({ site }: { site: SiteContent }) {
             © {new Date().getFullYear()} {site.displayName}
           </p>
           {/* Crédito chico de la plataforma: lleva a la web de Nightowl */}
-          <a
-            href={nightowl.url}
-            target="_blank"
-            rel="noopener"
-            className="flex items-center gap-2 opacity-80 transition hover:opacity-100"
-          >
-            Tecnología de
-            <Logo className="h-4" color="var(--site-fg)" />
-          </a>
+          <MadeByNightowl color="var(--site-fg)" />
         </div>
       </div>
     </footer>

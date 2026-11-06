@@ -1,6 +1,6 @@
-import type { CSSProperties } from "react";
+import { memo, type CSSProperties } from "react";
 
-// El plano de una sala. Lo usan el editor del panel y la página pública.
+// El plano de una sala. Lo usan el editor del panel, la página del evento y la compra.
 // Las posiciones van en % para que se vea igual a cualquier tamaño.
 
 export type MapSector = {
@@ -18,23 +18,34 @@ export type MapSector = {
 
 export type VenueMapData = { sectors: MapSector[] };
 
-function SeatDots({ rows, aisles = [] }: { rows: number[]; aisles?: number[] }) {
-  const longest = Math.max(...rows);
-  const width = longest + aisles.length;
-  return (
-    <svg viewBox={`0 0 ${width} ${rows.length}`} className="min-h-0 w-full flex-1" aria-hidden>
-      {rows.flatMap((count, row) => {
-        const offset = (longest - count) / 2;
-        return Array.from({ length: count }, (_, seat) => {
-          const gaps = aisles.filter((aisle) => aisle <= seat + offset).length;
-          return <circle key={`${row}-${seat}`} cx={seat + offset + gaps + 0.5} cy={row + 0.5} r={0.36} fill="currentColor" />;
-        });
-      })}
-    </svg>
-  );
+// Dónde va cada butaca según la sala: filas centradas y pasillos. Una sola cuenta para todas las pantallas.
+export function seatLayout(rows: number[], aisles: number[] = []) {
+  const longest = Math.max(1, ...rows);
+  return {
+    width: longest + aisles.length,
+    height: Math.max(1, rows.length),
+    seats: rows.map((count, row) => {
+      const offset = (longest - count) / 2;
+      return Array.from({ length: count }, (_, seat) => ({
+        x: seat + offset + aisles.filter((aisle) => aisle <= seat + offset).length + 0.5,
+        y: row + 0.5,
+      }));
+    }),
+  };
 }
 
-export function SectorBody({ sector, price }: { sector: MapSector; price?: string }) {
+const SeatDots = memo(function SeatDots({ rows, aisles }: { rows: number[]; aisles?: number[] }) {
+  const layout = seatLayout(rows, aisles);
+  return (
+    <svg viewBox={`0 0 ${layout.width} ${layout.height}`} className="min-h-0 w-full flex-1" aria-hidden>
+      {layout.seats.flat().map((seat) => (
+        <circle key={`${seat.x}-${seat.y}`} cx={seat.x} cy={seat.y} r={0.36} fill="currentColor" />
+      ))}
+    </svg>
+  );
+});
+
+export function SectorBody({ sector, price, active = false }: { sector: MapSector; price?: string; active?: boolean }) {
   if (sector.kind === "label") {
     return <span className="flex size-full items-center justify-center text-center text-[11px] font-medium opacity-70">{sector.name}</span>;
   }
@@ -47,8 +58,11 @@ export function SectorBody({ sector, price }: { sector: MapSector; price?: strin
   }
   return (
     <span
-      className="flex size-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-md p-1.5 text-center leading-tight"
-      style={{ background: "color-mix(in srgb, var(--map-accent) 16%, transparent)", border: "1px solid color-mix(in srgb, var(--map-accent) 45%, transparent)" }}
+      className="flex size-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-md p-1.5 text-center leading-tight transition-colors"
+      style={{
+        background: `color-mix(in srgb, var(--map-accent) ${active ? 38 : 16}%, transparent)`,
+        border: `1px solid color-mix(in srgb, var(--map-accent) ${active ? 100 : 45}%, transparent)`,
+      }}
     >
       <span className="text-[11px] font-bold">{sector.name}</span>
       {price && <span className="text-[11px] font-semibold opacity-80">{price}</span>}
@@ -71,6 +85,9 @@ export function VenueMap({
   fg = "#16161a",
   bg = "#ffffff",
   className = "",
+  selectedKey,
+  onSelect,
+  badges = {},
 }: {
   map: VenueMapData;
   prices?: Record<string, string>;
@@ -78,23 +95,51 @@ export function VenueMap({
   fg?: string;
   bg?: string;
   className?: string;
+  // Con onSelect, los sectores que se venden se pueden tocar.
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+  badges?: Record<string, number>;
 }) {
   return (
     <div
-      role="img"
+      role={onSelect ? "group" : "img"}
       aria-label={`Plano: ${map.sectors.map((sector) => sector.name).join(", ")}`}
       style={{ ...mapStyle(accent, fg, bg), background: "color-mix(in srgb, var(--map-fg) 4%, transparent)", color: "var(--map-fg)" }}
       className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl ${className}`}
     >
-      {map.sectors.map((sector) => (
-        <div
-          key={sector.key}
-          className="absolute"
-          style={{ left: `${sector.x}%`, top: `${sector.y}%`, width: `${sector.w}%`, height: `${sector.h}%` }}
-        >
-          <SectorBody sector={sector} price={prices[sector.key]} />
-        </div>
-      ))}
+      {map.sectors.map((sector) => {
+        const position = { left: `${sector.x}%`, top: `${sector.y}%`, width: `${sector.w}%`, height: `${sector.h}%` };
+        const sellable = sector.kind === "numbered" || sector.kind === "general";
+        const active = selectedKey === sector.key;
+        if (onSelect && sellable) {
+          return (
+            <button
+              key={sector.key}
+              type="button"
+              onClick={() => onSelect(sector.key)}
+              aria-pressed={active}
+              aria-label={`Ver ${sector.name}${prices[sector.key] ? `, ${prices[sector.key]}` : ""}`}
+              className="absolute cursor-pointer rounded-md outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-[var(--map-fg)]"
+              style={position}
+            >
+              <SectorBody sector={sector} price={prices[sector.key]} active={active} />
+              {badges[sector.key] > 0 && (
+                <span
+                  className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full text-[11px] font-bold"
+                  style={{ background: "var(--map-fg)", color: "var(--map-bg)" }}
+                >
+                  {badges[sector.key]}
+                </span>
+              )}
+            </button>
+          );
+        }
+        return (
+          <div key={sector.key} className="absolute" style={position}>
+            <SectorBody sector={sector} price={prices[sector.key]} />
+          </div>
+        );
+      })}
     </div>
   );
 }

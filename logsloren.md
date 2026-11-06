@@ -7,6 +7,40 @@ Formato: fecha y hora, qué se cambió, archivos tocados y algo a tener en cuent
 
 ---
 
+## 2026-11-06 00:28: las entradas usan el QR con búho de Gianni
+
+- Las entradas compradas ahora usan `brandedQrSvg` (`src/lib/branded-qr.ts`), el mismo generador de /admin/puerta: módulos redondeados, búho en el medio y corrección alta. A 224 px.
+- Traídos de main sin cambios: `src/lib/branded-qr.ts`, `src/lib/owl-mark.ts` y `src/app/dashboard/admin/puerta/page.tsx`.
+- Probado: la librería del escáner (qr-scanner) lee el QR con búho de la entrada y la validación da entrada válida. Falta probar con cámara real.
+- Archivo: `src/app/sites/[slug]/compra/[token]/page.tsx`.
+
+## 2026-11-06 00:27: compra dentro de las plantillas, con el mapa de Salas
+
+- El plano de la compra usa el mapa de Salas y mapas: mismas filas, pasillos y lado del escenario. Se sacó el abanico.
+- Nueva pestaña Compra en Mi página, con vista previa: fondo del plano, forma de butaca, estilo de entrada y título. Sin migración.
+- La plantilla también cambia la compra: banda grande en Portada, resumen a la izquierda en Cartelera, y la tipografía de títulos.
+- Arreglos: los toques rápidos ya no se pierden, en el celular baja a las butacas, lo ocupado se actualiza cada 30 segundos y la compra no pide la lista de eventos.
+- QR: comprobado que las entradas compradas pasan por la misma validación del escáner que los QR de /admin/puerta (válida, duplicada, alterada y de otro cliente). Falta probar con cámara real.
+- Regla de memoria entre chats en `CLAUDE.md` y primer resumen en `Memoria_EntreChats`.
+- Archivos: `src/components/checkout-scene.tsx`, `checkout-heading.tsx`, `checkout-preview.tsx`, `ticket-card.tsx`, `venue-map.tsx`, `public-site.tsx`, `src/app/sites/[slug]/eventos/[id]/comprar`, `src/app/sites/[slug]/compra/[token]`, `src/app/dashboard/panel/mi-pagina/_editor.tsx`, `backend/src/sites.mjs`, `backend/tests/sites.test.mjs`, `CLAUDE.md`.
+
+## 2026-11-05 23:43: rediseño de la compra sobre el plano
+
+- Elegir entradas: el plano de la sala se toca por sector; las butacas tienen forma de butaca, en abanico y sobre fondo oscuro, con leyenda y escenario. Ubicación general con contador grande.
+- Resumen con forma de ticket, donde se puede quitar cada entrada. En el celular, una barra lleva hasta el resumen.
+- Pago: reserva y medio de pago en dos tarjetas, con cuenta regresiva que se resalta en el último minuto.
+- Entradas: diseño de ticket con troquel y talón con el QR.
+- Firma "Made by Nightowl" a la vista en los pasos de compra, en la página del evento, en la lista de eventos y en cada entrada.
+- Archivos: `src/components/checkout-steps.tsx`, `src/components/venue-map.tsx`, `src/components/public-site.tsx`, `src/app/sites/[slug]/eventos/[id]/page.tsx`, `src/app/sites/[slug]/eventos/[id]/comprar`, `src/app/sites/[slug]/compra/[token]`.
+
+## 2026-11-05 23:35: personalidad de Nightowl y firma "Made by Nightowl"
+
+- Firma "Made by Nightowl" con el búho en la página de cada cliente, login, panel, escáner y 404. Reemplaza al "Tecnología de" del pie.
+- Mails rediseñados con la marca: cabecera negra con logo, tono de Nightowl y firma, también en la versión de texto.
+- Textos con la voz de Nightowl en compra, confirmación, panel y login. Los mensajes sobre plata quedan claros y sin chistes.
+- Archivos: `src/components/made-by.tsx`, `src/lib/dashboard/email-templates.ts`, `src/lib/dashboard/email.ts`, `src/components/public-site.tsx`, `src/app/dashboard/_components/shell.tsx`, `src/app/dashboard/login`, `src/app/dashboard/olvide-contrasena`, `src/app/dashboard/panel/eventos/page.tsx`, `src/app/scan/layout.tsx`, `src/app/not-found.tsx`, `src/app/sites/[slug]/compra`, `src/app/sites/[slug]/eventos/[id]/comprar/_picker.tsx`, `backend/src/checkout.mjs`.
+- Tener en cuenta: la firma es más visible en la página de cada cliente, que antes tenía solo una mención chica. No se probó un envío real de mail.
+
 ## 2026-11-05 22:39: etapa 5 sin Mercado Pago, compra con pago simulado
 
 - Compra en la página del cliente: elegir función, butacas y ubicación general (`/eventos/[id]/comprar`), reserva de 10 minutos con cuenta regresiva y orden con sus QR (`/compra/[token]`).

@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CheckCircle2, MapPin } from "lucide-react";
-import QRCode from "qrcode";
 import { getDb } from "@backend/db.mjs";
 import { getOrderByToken } from "@backend/checkout.mjs";
-import { getPublicSite } from "@backend/sites.mjs";
-import { formatPrice, SiteFrame } from "@/components/public-site";
+import { getPublicSiteContent } from "@backend/sites.mjs";
+import { CheckoutSteps } from "@/components/checkout-steps";
+import { MadeByNightowl, Owl } from "@/components/made-by";
+import { formatPrice, SiteFrame, titleFont, type SiteContent } from "@/components/public-site";
+import { TicketCard } from "@/components/ticket-card";
+import { brandedQrSvg } from "@/lib/branded-qr";
 import { checkoutEnabled } from "@/lib/checkout";
 import { cancelAction } from "./actions";
 import { Countdown, PayForm } from "./_pay";
@@ -43,24 +45,29 @@ const dateFormat = new Intl.DateTimeFormat("es-AR", {
 
 const itemLabel = (item: Item) => (item.row ? `${item.sector}, fila ${item.row}, butaca ${item.number}` : `${item.sector}, ubicación general`);
 
-async function Ticket({ item, title, date }: { item: Item; title: string; date: string }) {
-  const svg = await QRCode.toString(item.code!, { type: "svg", margin: 1, width: 176, errorCorrectionLevel: "M" });
+function Ticket({ item, site, title, date, venue, index, count }: { item: Item; site: SiteContent; title: string; date: string; venue: string; index: number; count: number }) {
+  // El mismo QR de Nightowl que /admin/puerta: módulos redondeados y búho en el medio.
+  const svg = brandedQrSvg(item.code!);
   return (
-    <li className="grid items-center gap-5 overflow-hidden rounded-xl bg-[var(--site-surface)] p-5 [box-shadow:var(--site-shadow)] @xl:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="min-w-0">
-        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--site-accent-text)]">{item.sector}</p>
-        <p className="mt-1 text-xl font-extrabold tracking-tight">{title}</p>
-        <p className="mt-1 text-[var(--site-muted)] first-letter:uppercase">{date}</p>
-        <p className="mt-1 text-[var(--site-muted)]">{itemLabel(item)}</p>
-        {item.checkedInAt && <p className="mt-2 text-sm font-semibold">Esta entrada ya se usó.</p>}
-      </div>
-      {/* Blanco siempre: un QR sobre fondo oscuro cuesta más de leer en la puerta. */}
-      <div
-        role="img"
-        aria-label={`Código QR de ${itemLabel(item)}`}
-        style={{ width: 176, height: 176 }}
-        className="mx-auto shrink-0 overflow-hidden rounded-lg bg-white"
-        dangerouslySetInnerHTML={{ __html: svg }}
+    <li>
+      <TicketCard
+        style={site.ticketStyle}
+        titleClass={titleFont(site)}
+        kicker={`Entrada ${index + 1} de ${count}`}
+        title={title}
+        date={date}
+        venue={venue}
+        place={itemLabel(item)}
+        note={item.checkedInAt ? "Esta entrada ya entró." : undefined}
+        qr={
+          <div
+            role="img"
+            aria-label={`Código QR de ${itemLabel(item)}`}
+            style={{ width: 224, height: 224 }}
+            className="shrink-0 overflow-hidden rounded-lg bg-white [&>svg]:size-full"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        }
       />
     </li>
   );
@@ -68,10 +75,12 @@ async function Ticket({ item, title, date }: { item: Item; title: string; date: 
 
 function Message({ title, children, eventId }: { title: string; children: string; eventId: string }) {
   return (
-    <div className="mx-auto max-w-xl rounded-xl bg-[var(--site-surface)] p-8 text-center [box-shadow:var(--site-shadow)]">
+    <div className="mx-auto flex max-w-xl flex-col items-center rounded-2xl bg-[var(--site-surface)] p-8 text-center [box-shadow:var(--site-shadow)]">
+      <Owl className="mb-3 h-12 text-[var(--site-accent-text)]" />
       <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
       <p className="mt-2 text-[var(--site-muted)]">{children}</p>
       <a href={`/eventos/${eventId}`} className="mt-5 inline-block rounded-md bg-[var(--site-accent)] px-5 py-3 font-bold text-[var(--site-on-accent)]">Volver al evento</a>
+      <div className="mt-6"><MadeByNightowl color="var(--site-fg)" /></div>
     </div>
   );
 }
@@ -79,64 +88,78 @@ function Message({ title, children, eventId }: { title: string; children: string
 async function Content({ params }: { params: Props["params"] }) {
   const { slug, token } = await params;
   const db = getDb();
-  const [order, site] = await Promise.all([getOrderByToken(db, slug, token), getPublicSite(db, slug)]);
+  const [order, site] = await Promise.all([getOrderByToken(db, slug, token), getPublicSiteContent(db, slug)]);
   if (!order || !site) notFound();
   const items: Item[] = order.items;
   const date = dateFormat.format(new Date(order.startsAt));
+  const venue = order.address ? `${order.venue} · ${order.address}` : order.venue;
 
   return (
-    <SiteFrame site={site.content} className="min-h-screen" homeHref="/">
-      <section className="mx-auto w-full max-w-4xl flex-1 px-5 py-8 @3xl:px-8 @3xl:py-12">
+    <SiteFrame site={site} className="min-h-screen" homeHref="/">
+      <section className="mx-auto w-full max-w-5xl flex-1 px-5 py-8 @3xl:px-8 @3xl:py-12">
         {order.status === "paid" && (
           <>
+            <div className="mb-8"><CheckoutSteps current={2} /></div>
             <div className="mb-6 flex items-start gap-3">
-              <CheckCircle2 className="mt-1 size-7 shrink-0 text-[var(--site-accent-text)]" aria-hidden />
+              <Owl className="h-12 shrink-0 text-[var(--site-accent-text)]" />
               <div>
-                <h1 className="text-3xl font-extrabold tracking-tight">¡Listo, {order.buyerName}!</h1>
-                <p className="mt-1 text-[var(--site-muted)]">Te mandamos las entradas a {order.buyerEmail}. Mostrá el QR en la entrada; cada uno sirve una sola vez.</p>
+                <h1 className={`text-3xl ${titleFont(site)}`}>¡Ya estás adentro, {order.buyerName}!</h1>
+                <p className="mt-1 text-[var(--site-muted)]">Te mandamos las entradas a {order.buyerEmail}. Mostrá el QR en la puerta: cada uno entra una sola vez. Nos vemos en la noche.</p>
               </div>
             </div>
-            <p className="mb-5 flex items-center gap-2 text-[var(--site-muted)]">
-              <MapPin className="size-4 shrink-0" aria-hidden />
-              {order.venue}{order.address ? ` · ${order.address}` : ""}
-            </p>
             <ul className="space-y-4">
-              {items.map((item) => <Ticket key={item.id} item={item} title={order.title} date={date} />)}
+              {items.map((item, index) => <Ticket key={item.id} item={item} site={site} title={order.title} date={date} venue={venue} index={index} count={items.length} />)}
             </ul>
           </>
         )}
 
         {order.status === "pending" && (checkoutEnabled ? (
-          <div className="mx-auto max-w-xl rounded-xl bg-[var(--site-surface)] p-6 [box-shadow:var(--site-shadow)]">
-            <h1 className="text-2xl font-extrabold tracking-tight">Confirmá tu compra</h1>
-            <p className="mt-1 font-semibold">{order.title}</p>
-            <p className="text-[var(--site-muted)] first-letter:uppercase">{date}</p>
-            <div className="mt-3"><Countdown expiresAt={new Date(order.expiresAt).toISOString()} /></div>
-            <ul className="mt-4 divide-y divide-[var(--site-line)] border-y border-[var(--site-line)] text-sm">
-              {items.map((item) => (
-                <li key={item.id} className="flex justify-between gap-3 py-2.5">
-                  <span>{itemLabel(item)}{item.lot ? ` · ${item.lot}` : ""}</span>
-                  <span className="tabular-nums">{formatPrice(item.unitPrice)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="my-4 flex items-baseline justify-between">
-              <span className="font-semibold">Total</span>
-              <span className="text-2xl font-bold tabular-nums">{formatPrice(order.total)}</span>
+          <>
+            <CheckoutSteps current={1} />
+            <h1 className={`mt-6 mb-5 text-3xl @3xl:text-4xl ${titleFont(site)}`}>Ya casi estás adentro</h1>
+            <div className="grid items-start gap-6 @3xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+              <div className="overflow-hidden rounded-2xl bg-[var(--site-surface)] [box-shadow:var(--site-shadow)]">
+                <div className="p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--site-accent-text)]">Tu reserva</p>
+                  <p className="mt-1 text-xl font-extrabold tracking-tight">{order.title}</p>
+                  <p className="mt-1 text-sm text-[var(--site-muted)] first-letter:uppercase">{date}</p>
+                  <p className="text-sm text-[var(--site-muted)]">{venue}</p>
+                </div>
+                <div aria-hidden className="relative h-0 border-t-2 border-dashed border-[var(--site-line)]">
+                  <span className="absolute -left-2.5 -top-2.5 size-5 rounded-full bg-[var(--site-bg)]" />
+                  <span className="absolute -right-2.5 -top-2.5 size-5 rounded-full bg-[var(--site-bg)]" />
+                </div>
+                <ul className="divide-y divide-[var(--site-line)] px-6 py-2 text-sm">
+                  {items.map((item) => (
+                    <li key={item.id} className="flex justify-between gap-3 py-3">
+                      <span>{itemLabel(item)}{item.lot ? <span className="text-[var(--site-muted)]"> · {item.lot}</span> : null}</span>
+                      <span className="font-semibold tabular-nums">{formatPrice(item.unitPrice)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-baseline justify-between border-t border-[var(--site-line)] px-6 py-4">
+                  <span className="font-semibold">Total</span>
+                  <span className="text-2xl font-extrabold tabular-nums">{formatPrice(order.total)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 rounded-2xl bg-[var(--site-surface)] p-6 [box-shadow:var(--site-shadow)]">
+                <Countdown expiresAt={new Date(order.expiresAt).toISOString()} />
+                <PayForm slug={slug} token={token} total={formatPrice(order.total)} />
+                <form action={cancelAction} className="text-center">
+                  <input type="hidden" name="slug" value={slug} />
+                  <input type="hidden" name="token" value={token} />
+                  <button type="submit" className="text-sm text-[var(--site-muted)] underline">Soltar las entradas</button>
+                </form>
+              </div>
             </div>
-            <PayForm slug={slug} token={token} />
-            <form action={cancelAction} className="mt-3 text-center">
-              <input type="hidden" name="slug" value={slug} />
-              <input type="hidden" name="token" value={token} />
-              <button type="submit" className="text-sm text-[var(--site-muted)] underline">Cancelar y liberar las entradas</button>
-            </form>
-          </div>
+          </>
         ) : (
           <Message title="Reserva pendiente" eventId={order.eventId}>Todavía no se puede pagar en esta página.</Message>
         ))}
 
-        {order.status === "expired" && <Message title="La reserva venció" eventId={order.eventId}>Se te pasaron los 10 minutos y liberamos las entradas. Podés volver a elegirlas.</Message>}
-        {order.status === "cancelled" && <Message title="Compra cancelada" eventId={order.eventId}>Liberamos tus entradas. No se te cobró nada.</Message>}
+        {order.status === "expired" && <Message title="Se te fue la reserva" eventId={order.eventId}>Pasaron los 10 minutos y las entradas volvieron a la pista. Todavía podés elegirlas de nuevo.</Message>}
+        {order.status === "cancelled" && <Message title="Listo, las soltamos" eventId={order.eventId}>Tus entradas volvieron a la pista. No se te cobró nada.</Message>}
         {order.status === "refund_pending" && <Message title="No pudimos confirmar tu compra" eventId={order.eventId}>Tu pago llegó cuando la reserva ya había vencido y esas entradas se vendieron. Te vamos a devolver el dinero.</Message>}
       </section>
     </SiteFrame>
