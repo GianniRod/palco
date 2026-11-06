@@ -18,6 +18,8 @@ const ACTION_LABELS: Record<string, string> = {
   "user.password_reset": "Reseteó una contraseña",
   "user.disabled": "Desactivó un usuario",
   "user.enabled": "Reactivó un usuario",
+  "user.scan_enabled": "Le permitió escanear QR",
+  "user.scan_disabled": "Le quitó el permiso de escanear",
   "impersonation.started": "Entró a editar como el cliente",
   "impersonation.stopped": "Salió de editar como el cliente",
   "password.changed": "Cambió su contraseña",

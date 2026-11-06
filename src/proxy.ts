@@ -1,5 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { DASHBOARD_HOSTS, PUBLIC_PATHS, SESSION_COOKIE, siteSlugFromHost } from "@/lib/dashboard/config";
+import {
+  DASHBOARD_HOSTS,
+  PUBLIC_PATHS,
+  SCAN_HOSTS,
+  SCAN_PUBLIC_PATHS,
+  SESSION_COOKIE,
+  siteSlugFromHost,
+} from "@/lib/dashboard/config";
 
 // Decide qué sitio mostrar según el dominio. El panel vive en src/app/dashboard,
 // pero desde afuera se ve en la raíz de dashboard.palcotickets.com.
@@ -10,6 +17,16 @@ export function proxy(request: NextRequest) {
   const host = forwarded.split(",")[0].trim().split(":")[0].toLowerCase();
   const { pathname } = request.nextUrl;
 
+  // Escáner de QR: scan.palcotickets.com → src/app/scan.
+  if (SCAN_HOSTS.includes(host)) {
+    if (!request.cookies.has(SESSION_COOKIE) && !SCAN_PUBLIC_PATHS.includes(pathname)) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = `/scan${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   if (!DASHBOARD_HOSTS.includes(host)) {
     // Cada cliente tiene su página en su subdominio, servida desde src/app/sites/[slug].
     const slug = siteSlugFromHost(host);
@@ -19,7 +36,7 @@ export function proxy(request: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
-    const isInternalPath = /^\/(dashboard|sites)(\/|$)/.test(pathname);
+    const isInternalPath = /^\/(dashboard|sites|scan)(\/|$)/.test(pathname);
     return isInternalPath ? new NextResponse(null, { status: 404 }) : NextResponse.next();
   }
 

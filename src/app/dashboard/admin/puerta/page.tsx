@@ -1,23 +1,27 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import QRCode from "qrcode";
-import { Smartphone } from "lucide-react";
+import { ExternalLink, ScanLine } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
+import { listOrganizations } from "@backend/admin.mjs";
 import { listTestTickets } from "@backend/qr.mjs";
 import { requireAdmin } from "@/lib/dashboard/session";
+import { SCAN_URL } from "@/lib/dashboard/config";
 import { Card, formatDate, Loading, PageTitle } from "../../_components/shell";
 import { SubmitButton } from "../../_components/ui";
 import { deleteTestTicketsAction, resetTestTicketsAction } from "./actions";
 import { CreateTestTicketsForm } from "./_forms";
-import { Scanner } from "./_scanner";
 import { AutoRefresh } from "./_auto-refresh";
 
 export const metadata: Metadata = { title: "Puerta (prueba)" };
+
+const scanHost = SCAN_URL.replace(/^https?:\/\//, "");
 
 type TestTicket = {
   id: string;
   number: number;
   holder: string;
+  organizationName: string | null;
   checkedInAt: Date | null;
   checkedInBy: string | null;
   scans: number;
@@ -26,15 +30,36 @@ type TestTicket = {
 
 function Status({ ticket }: { ticket: TestTicket }) {
   return ticket.checkedInAt ? (
-    <span className="rounded-full bg-palco-900 px-2 py-0.5 text-[11px] font-medium text-white">Usada</span>
+    <span className="shrink-0 rounded-full bg-palco-900 px-2 py-0.5 text-[11px] font-medium text-white">Usada</span>
   ) : (
-    <span className="rounded-full bg-palco-100 px-2 py-0.5 text-[11px] font-medium text-palco-700">Sin usar</span>
+    <span className="shrink-0 rounded-full bg-palco-100 px-2 py-0.5 text-[11px] font-medium text-palco-700">
+      Sin usar
+    </span>
+  );
+}
+
+function ScanLink() {
+  return (
+    <a
+      href={SCAN_URL}
+      target="_blank"
+      rel="noopener"
+      className="flex items-center justify-center gap-2 rounded-2xl bg-palco-950 px-6 py-6 font-semibold text-white"
+    >
+      <ScanLine className="size-6" aria-hidden />
+      Abrir el escáner en {scanHost}
+      <ExternalLink className="size-4 opacity-60" aria-hidden />
+    </a>
   );
 }
 
 async function Content() {
   const actor = await requireAdmin();
-  const tickets: TestTicket[] = await listTestTickets(getDb(), actor);
+  const db = getDb();
+  const [tickets, clients]: [TestTicket[], { id: string; name: string }[]] = await Promise.all([
+    listTestTickets(db, actor),
+    listOrganizations(db, actor),
+  ]);
   const qrs = await Promise.all(
     tickets.map((t) => QRCode.toString(t.code, { type: "svg", margin: 1, errorCorrectionLevel: "M" })),
   );
@@ -43,22 +68,24 @@ async function Content() {
   return (
     <>
       <PageTitle>Puerta (prueba)</PageTitle>
+      <AutoRefresh />
 
-      {/* ---------- Celular: el escáner ---------- */}
+      {/* ---------- Celular: el escáner está en su propio subdominio ---------- */}
       <div className="space-y-6 md:hidden">
-        <Scanner />
+        <ScanLink />
         <Card title={`Entradas de prueba · ${used}/${tickets.length} usadas`}>
           {tickets.length === 0 ? (
-            <p className="text-sm text-palco-600">
-              Todavía no hay. Creálas desde la computadora en esta misma sección y escaneá el QR de la pantalla.
-            </p>
+            <p className="text-sm text-palco-600">Todavía no hay. Creálas desde la computadora en esta sección.</p>
           ) : (
             <ul className="divide-y divide-palco-50 text-sm">
               {tickets.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span>
+                  <span className="min-w-0">
                     <span className="font-medium text-palco-900">Prueba {t.number}</span>
-                    {t.holder && <span className="text-palco-500"> · {t.holder}</span>}
+                    <span className="block truncate text-xs text-palco-500">
+                      {t.organizationName ?? "General (admins)"}
+                      {t.holder && ` · ${t.holder}`}
+                    </span>
                   </span>
                   <Status ticket={t} />
                 </li>
@@ -70,27 +97,29 @@ async function Content() {
 
       {/* ---------- Computadora: crear entradas y mostrar los QR ---------- */}
       <div className="hidden space-y-6 md:block">
-        <AutoRefresh />
         <Card title="Cómo probar">
           <ol className="list-decimal space-y-1.5 pl-5 text-sm text-palco-700">
-            <li>Creá algunas entradas de prueba acá abajo: cada una tiene un QR real y firmado.</li>
             <li>
-              En el celular entrá a <strong>dashboard.palcotickets.com</strong> con tu cuenta de admin y andá a{" "}
-              <strong>Puerta</strong> (o tocá el botón <strong>Escanear QR</strong>).
+              Creá entradas de prueba acá abajo. Elegí de qué cliente son: cada QR solo lo valida la gente de ese
+              cliente con permiso de escaneo (y ustedes, los admins, que validan todo).
+            </li>
+            <li>
+              En el celular abrí <strong>{scanHost}</strong> e ingresá con tu cuenta (o con la de un usuario del cliente
+              que tenga <strong>Puede escanear QR</strong>).
             </li>
             <li>Escaneá un QR de esta pantalla: tiene que salir <strong>Entrada válida</strong> en verde.</li>
-            <li>Escaneá el mismo otra vez: tiene que salir <strong>Ya fue usada</strong> en amarillo, con la hora.</li>
-            <li>Cualquier otro QR (un link, un QR de otra cosa) sale <strong>Entrada inválida</strong> en rojo.</li>
+            <li>El mismo otra vez: <strong>Ya fue usada</strong> en amarillo, con la hora.</li>
+            <li>
+              Un QR de otro cliente con un usuario de cliente, o cualquier otro QR: <strong>Entrada inválida</strong> en
+              rojo.
+            </li>
           </ol>
-          <p className="mt-4 flex items-center gap-2 text-xs text-palco-500">
-            <Smartphone className="size-4" aria-hidden /> El escáner solo aparece en el celular: la cámara necesita
-            https, así que no funciona en dashboard.localhost desde el teléfono.
-          </p>
+          <p className="mt-4 text-xs text-palco-500">Esta pantalla se actualiza sola mientras escaneás.</p>
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
           <Card title="Crear entradas de prueba">
-            <CreateTestTicketsForm />
+            <CreateTestTicketsForm clients={clients.map(({ id, name }) => ({ id, name }))} />
           </Card>
           {tickets.length > 0 && (
             <Card title={`${used} de ${tickets.length} usadas`}>
@@ -115,9 +144,12 @@ async function Content() {
             {tickets.map((t, i) => (
               <li key={t.id} className="rounded-xl border border-palco-100 bg-white p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold text-palco-900">Prueba {t.number}</p>
-                    {t.holder && <p className="text-xs text-palco-500">{t.holder}</p>}
+                    <p className="truncate text-xs text-palco-500">
+                      {t.organizationName ?? "General (solo admins)"}
+                      {t.holder && ` · ${t.holder}`}
+                    </p>
                   </div>
                   <Status ticket={t} />
                 </div>

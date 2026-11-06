@@ -89,6 +89,7 @@ export async function createMemberAction(_: AdminFormState, data: FormData): Pro
       organizationId: field(data, "organizationId"),
       email: field(data, "email"),
       role: field(data, "role"),
+      canScan: data.get("canScan") === "on",
     }),
   }));
 }

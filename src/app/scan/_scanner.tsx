@@ -23,7 +23,7 @@ const VIBRATION: Record<ScanResult["result"], number[]> = {
   invalid: [400],
 };
 
-export function Scanner() {
+export function Scanner({ light = false }: { light?: boolean }) {
   const router = useRouter();
   const video = useRef<HTMLVideoElement>(null);
   const scanner = useRef<QrScannerType | null>(null);
@@ -79,11 +79,13 @@ export function Scanner() {
       <button
         type="button"
         onClick={again}
-        className="flex w-full flex-col items-center justify-center gap-3 rounded-2xl bg-palco-950 px-6 py-10 text-white shadow-lg active:scale-[0.99]"
+        className={`flex w-full flex-col items-center justify-center gap-3 rounded-2xl px-6 shadow-lg active:scale-[0.99] ${
+          light ? "bg-white py-16 text-black" : "bg-palco-950 py-10 text-white"
+        }`}
       >
         <ScanLine className="size-12" strokeWidth={1.5} aria-hidden />
         <span className="text-xl font-semibold">Escanear QR</span>
-        <span className="text-sm text-white/60">Apuntá la cámara a la entrada</span>
+        <span className={`text-sm ${light ? "text-black/50" : "text-white/60"}`}>Apuntá la cámara a la entrada</span>
       </button>
 
       {phase.kind !== "idle" && (

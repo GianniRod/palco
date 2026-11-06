@@ -115,8 +115,17 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
 - Exportar a Excel/CSV.
 
 ### 3.6 Puerta (control de acceso)
-**Ya hay un sistema de prueba** en el panel admin → **Puerta (prueba)** (`src/app/dashboard/admin/puerta`):
-- En la compu el admin crea entradas de prueba y ve sus QR; en el celular toca **Escanear QR**.
+**El escáner vive en `scan.palcotickets.com`** (`src/app/scan`, ruteado en `src/proxy.ts`), con su propio login
+(mismo usuario y contraseña; la cookie `__Host-` no se comparte entre subdominios). Solo en el celular.
+- **Quién escanea:** los admins de Nightowl (`is_platform_admin`) validan entradas de **todos** los clientes.
+  Un usuario de cliente con **Puede escanear QR** (`memberships.can_scan`, o rol portero) valida **solo las de
+  los eventos de su cliente**: una entrada de otro organizador sale "inválida" (`getScanAccess` / `scanTicket`
+  en `backend/src/qr.mjs`).
+- **Panel del cliente → Equipo** (`src/app/dashboard/panel/equipo`, `backend/src/team.mjs`): el dueño crea las
+  cuentas de su gente (portero, editor, ventas, dueño) y elige quién puede escanear. El admin también puede
+  hacerlo desde la ficha del cliente.
+- **Pruebas:** panel admin → **Puerta (prueba)**: el admin crea entradas de prueba con QR real, eligiendo de qué
+  cliente son (o generales, solo para admins), y las escanea desde scan.palcotickets.com.
 - El QR lleva `NO1.<id>.<firma Ed25519>` (`backend/src/qr.mjs`). Sin datos personales; solo Nightowl puede
   fabricarlos y con la clave pública se pueden verificar sin internet (para la app offline).
 - Duplicados: la entrada se marca con un solo `update ... where checked_in_at is null`, así dos escaneos

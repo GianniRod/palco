@@ -9,6 +9,21 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ## 2026-11-05
 
+- **Escáner en scan.palcotickets.com + permiso de escaneo por usuario**:
+  - Nueva app `src/app/scan` (login propio con la misma cuenta, solo celular). `src/proxy.ts` rutea `scan.palcotickets.com`
+    y `scan.localhost`; `scan` quedó reservado como subdominio (no puede ser slug de cliente).
+  - Admins de Nightowl (Gianni y Lorenzo) escanean entradas de **todos** los clientes. Un usuario de cliente con
+    "Puede escanear QR" (o portero) **solo las de su cliente**; las de otro organizador salen inválidas.
+  - **Panel del cliente → Equipo** (nuevo): el dueño crea cuentas (portero, editor, ventas, dueño), elige si pueden escanear
+    y lo puede cambiar después. También el admin con "Editar como el cliente". Auditado.
+  - Admin → ficha del cliente: al crear usuario, casilla "Puede escanear QR"; la lista muestra quién puede.
+  - Admin → **Puerta (prueba)**: ya no tiene el escáner; crea los QR de prueba eligiendo de qué cliente son
+    (o generales, solo admins). El botón "Escanear QR" del celular abre scan.palcotickets.com.
+  - **Migración nueva `007_escaneo.sql`**: `memberships.can_scan` (dueños y porteros existentes quedan en true) y
+    `qr_test_tickets.organization_id`. **Hay que correr `npm run db:migrate` en `backend/`.**
+  Archivos: `src/app/scan/*`, `src/app/dashboard/panel/equipo/*`, `backend/src/team.mjs` (nuevo), `backend/src/qr.mjs`,
+  `backend/src/admin.mjs`, `src/lib/dashboard/config.ts`, `src/proxy.ts`, `admin/puerta/*`, `admin/clientes/*`,
+  `admin/_scan-fab.tsx`, `panel/layout.tsx`, `_components/auth-forms.tsx`, `docs/dashboard.md`.
 - **Landing con el zoom alejado / pantallas muy grandes**:
   - Si la pantalla es más alta que la página, el footer se estira (`flex-1`) en lugar de dejar un hueco blanco
     entre el contenido y el pie (antes el que crecía era `main`).

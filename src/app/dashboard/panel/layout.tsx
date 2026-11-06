@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { BarChart3, CalendarDays, CreditCard, Database, Globe, Home, Map, QrCode, Receipt } from "lucide-react";
+import { BarChart3, CalendarDays, CreditCard, Database, Globe, Home, Map, QrCode, Receipt, Users } from "lucide-react";
 import { requireTenant } from "@/lib/dashboard/session";
 import { stopImpersonationAction } from "../admin/actions";
 import { NavLink } from "../_components/nav-link";
@@ -33,6 +33,10 @@ function Nav() {
       <NavLink href="/panel/eventos" segment="eventos">
         <CalendarDays className="size-4" aria-hidden />
         Eventos
+      </NavLink>
+      <NavLink href="/panel/equipo" segment="equipo">
+        <Users className="size-4" aria-hidden />
+        Equipo
       </NavLink>
       {upcoming.map(({ label, icon: Icon }) => (
         <span

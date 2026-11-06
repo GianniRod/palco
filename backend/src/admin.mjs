@@ -100,6 +100,7 @@ export async function getOrganization(db, actor, id) {
   const { rows: users } = await db.query(
     `select
        users.id, users.email, memberships.role,
+       (memberships.can_scan or memberships.role = 'portero') as "canScan",
        users.must_change_password as "mustChangePassword",
        users.disabled_at as "disabledAt", users.last_login_at as "lastLoginAt"
      from memberships
@@ -192,11 +193,14 @@ export async function setOrganizationSuspended(db, actor, id, suspended) {
 }
 
 // Crea el usuario y devuelve su contraseña inicial: es la única vez que existe en texto.
-export async function createMember(db, actor, { organizationId, email, role = "owner" }) {
+export async function createMember(db, actor, { organizationId, email, role = "owner", canScan }) {
   assertAdmin(actor);
   const normalized = normalizeEmail(email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) throw new ValidationError("El email no es válido");
   if (!MEMBER_ROLES.includes(role)) throw new ValidationError("El rol no es válido");
+
+  // Puede escanear los QR de su cliente. Sin elegir: el dueño y el portero sí, el resto no.
+  const scan = role === "portero" || (canScan === undefined ? role === "owner" : Boolean(canScan));
 
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
@@ -208,10 +212,10 @@ export async function createMember(db, actor, { organizationId, email, role = "o
         [normalized, passwordHash],
       );
       await tx.query(
-        "insert into memberships (user_id, organization_id, role) values ($1, $2, $3)",
-        [user.id, organizationId, role],
+        "insert into memberships (user_id, organization_id, role, can_scan) values ($1, $2, $3, $4)",
+        [user.id, organizationId, role, scan],
       );
-      await audit(tx, actor, "user.created", organizationId, { email: normalized, role });
+      await audit(tx, actor, "user.created", organizationId, { email: normalized, role, canScan: scan });
     });
   } catch (error) {
     if (error.code === "23505") throw new ValidationError("Ya existe un usuario con ese email");

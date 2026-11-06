@@ -131,6 +131,10 @@ export function AddMemberForm({ organizationId }: { organizationId: string }) {
             <option value="portero">Portero</option>
           </select>
         </label>
+        <label className="flex items-center gap-2 pb-2 text-sm text-palco-800">
+          <input type="checkbox" name="canScan" defaultChecked className="size-4 accent-palco-900" />
+          Puede escanear QR
+        </label>
         <SubmitButton>Crear usuario</SubmitButton>
       </form>
       <FormError message={state.error} />

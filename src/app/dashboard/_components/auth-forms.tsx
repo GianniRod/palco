@@ -14,7 +14,8 @@ import { Field, FormError, SubmitButton } from "./ui";
 const MIN_LENGTH = 10;
 const initial: AuthFormState = {};
 
-export function LoginForm() {
+// forgotHref: el escáner (otro subdominio) manda a recuperar la contraseña al panel.
+export function LoginForm({ forgotHref = "/olvide-contrasena" }: { forgotHref?: string }) {
   const [state, action] = useActionState(loginAction, initial);
   return (
     <form action={action} className="space-y-4">
@@ -31,7 +32,7 @@ export function LoginForm() {
       <FormError message={state.error} />
       <SubmitButton className="w-full">Entrar</SubmitButton>
       <p className="text-center text-sm">
-        <Link href="/olvide-contrasena" className="text-palco-600 hover:underline">
+        <Link href={forgotHref} className="text-palco-600 hover:underline">
           Olvidé mi contraseña
         </Link>
       </p>

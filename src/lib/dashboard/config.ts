@@ -5,13 +5,19 @@ export const DASHBOARD_HOSTS = ["dashboard.palcotickets.com", "dashboard.localho
 
 export const DASHBOARD_URL = isProduction ? "https://dashboard.palcotickets.com" : "http://dashboard.localhost:3000";
 
+// El escáner de QR vive aparte, en su propio subdominio (src/app/scan). Tiene su propio login:
+// la cookie __Host- no se comparte entre subdominios.
+export const SCAN_HOSTS = ["scan.palcotickets.com", "scan.localhost"];
+export const SCAN_URL = isProduction ? "https://scan.palcotickets.com" : "http://scan.localhost:3000";
+export const SCAN_PUBLIC_PATHS = ["/login"];
+
 // __Host- obliga a Secure y a que la cookie no se comparta con los subdominios de los clientes.
 export const SESSION_COOKIE = isProduction ? "__Host-palco_session" : "palco_session";
 
 export const PUBLIC_PATHS = ["/login", "/olvide-contrasena", "/restablecer"];
 
 const SITE_ROOT_DOMAINS = ["palcotickets.com", "localhost"];
-const OUR_SUBDOMAINS = ["www", "dashboard"];
+const OUR_SUBDOMAINS = ["www", "dashboard", "scan"];
 
 // "teatro-colon.palcotickets.com" → "teatro-colon". Null si no es la página de un cliente.
 export function siteSlugFromHost(host: string) {

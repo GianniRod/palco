@@ -34,6 +34,7 @@ type Member = {
   email: string;
   role: string;
   mustChangePassword: boolean;
+  canScan: boolean;
   disabledAt: Date | null;
   lastLoginAt: Date | null;
 };
@@ -45,6 +46,7 @@ function MemberRow({ member }: { member: Member }) {
         <p className="font-medium text-palco-900">{member.email}</p>
         <p className="text-xs text-palco-500">
           {ROLE_LABELS[member.role] ?? member.role}
+          {member.canScan ? " · Puede escanear QR" : ""}
           {member.disabledAt ? " · Desactivado" : ""}
           {member.mustChangePassword ? " · Pendiente de cambiar contraseña" : ""}
           {" · Último ingreso: "}
