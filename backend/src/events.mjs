@@ -162,17 +162,72 @@ export async function getEvent(db, tenant, id) {
   return { ...event, performances, sectors };
 }
 
-// Crea el evento en borrador, con una copia del mapa de la sala.
-export async function createEvent(db, tenant, { venueId, startsAt, ...details }) {
-  assertManager(tenant);
-  const parsed = parseDetails(details);
-  const date = parseFutureDate(startsAt);
+const MAX_LOCATIONS = 20;
+const MAX_LOCATION_CAPACITY = 200000;
 
-  return withTransaction(db, async (tx) => {
-    const { rows: [venue] } = await tx.query("select id, map from venues where id = $1 and organization_id = $2", [
+// Ubicaciones de un evento que se vende sin plano. Se guardan como un mapa de sectores
+// generales marcado "list": así la compra, los cupos y el escáner funcionan igual que siempre.
+export function locationsMap(input) {
+  const list = (Array.isArray(input) ? input : []).filter((item) => String(item?.name ?? "").trim());
+  if (list.length === 0) throw new ValidationError("Agregá al menos una ubicación (por ejemplo General)");
+  if (list.length > MAX_LOCATIONS) throw new ValidationError(`Podés tener hasta ${MAX_LOCATIONS} ubicaciones`);
+  const columns = Math.min(list.length, 3);
+  const rows = Math.ceil(list.length / columns);
+  const w = 100 / columns;
+  const h = 100 / rows;
+  return parseMap({
+    display: "list",
+    sectors: list.map((item, index) => ({
+      key: String(item?.key ?? "").trim() || `u${index + 1}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: "general",
+      name: item.name,
+      capacity: Number(item.capacity),
+      x: (index % columns) * w + 1,
+      y: Math.floor(index / columns) * h + 1,
+      w: w - 2,
+      h: h - 2,
+    })).map((sector) => {
+      if (!Number.isInteger(sector.capacity) || sector.capacity < 1 || sector.capacity > MAX_LOCATION_CAPACITY) {
+        throw new ValidationError(`La capacidad de "${String(sector.name).trim()}" tiene que ser un número entre 1 y ${MAX_LOCATION_CAPACITY}`);
+      }
+      return sector;
+    }),
+  });
+}
+
+// Lugar de un evento por ubicación: una sala existente o, si todavía no hay, una nueva con ese nombre.
+async function venueForLocations(tx, tenant, venueId, venueName) {
+  if (venueId) {
+    const { rows: [venue] } = await tx.query("select id from venues where id = $1 and organization_id = $2", [
       venueId,
       tenant.organization.id,
     ]);
+    if (!venue) throw new ValidationError("Elegí un lugar");
+    return venue.id;
+  }
+  const name = String(venueName ?? "").trim();
+  if (!name) throw new ValidationError("Escribí el nombre del lugar");
+  if (name.length > 80) throw new ValidationError("El nombre del lugar puede tener hasta 80 caracteres");
+  const { rows: [venue] } = await tx.query(
+    "insert into venues (organization_id, name, map) values ($1, $2, $3) returning id",
+    [tenant.organization.id, name, { sectors: [] }],
+  );
+  await audit(tx, tenant, "venue.created", { name });
+  return venue.id;
+}
+
+// Crea el evento en borrador: con una copia del mapa de la sala o, si se vende por ubicación, con sus ubicaciones.
+export async function createEvent(db, tenant, { venueId, venueName, startsAt, mode, locations, ...details }) {
+  assertManager(tenant);
+  const parsed = parseDetails(details);
+  const date = parseFutureDate(startsAt);
+  const byLocation = mode === "ubicaciones";
+  const listMap = byLocation ? locationsMap(locations) : null;
+
+  return withTransaction(db, async (tx) => {
+    const venue = byLocation
+      ? { id: await venueForLocations(tx, tenant, venueId, venueName), map: listMap }
+      : (await tx.query("select id, map from venues where id = $1 and organization_id = $2", [venueId, tenant.organization.id])).rows[0];
     if (!venue) throw new ValidationError("Elegí una sala");
     if (!venue.map.sectors.some((sector) => SELLABLE_KINDS.includes(sector.kind))) {
       throw new ValidationError("Esa sala todavía no tiene sectores para vender. Armá su mapa primero");
@@ -207,11 +262,32 @@ export async function refreshEventMap(db, tenant, id) {
   await withTransaction(db, async (tx) => {
     const event = await findOwnEvent(tx, tenant, id, { lock: true });
     if (event.status !== "draft") throw new ValidationError("El mapa solo se puede actualizar en borrador");
+    if (event.map?.display === "list") throw new ValidationError("Este evento se vende por ubicación: editá sus ubicaciones");
     const { rows: [venue] } = await tx.query("select map from venues where id = $1", [event.venueId]);
     if (!venue.map.sectors.some((sector) => SELLABLE_KINDS.includes(sector.kind))) {
       throw new ValidationError("Esa sala no tiene sectores para vender");
     }
     await copyMap(tx, id, venue.map);
+  });
+}
+
+// Ubicaciones de un evento que se vende sin plano. Solo en borrador, igual que el mapa.
+// Los precios ya cargados se conservan para las ubicaciones que siguen con el mismo nombre.
+export async function saveEventLocations(db, tenant, id, locations) {
+  assertManager(tenant);
+  const map = locationsMap(locations);
+  await withTransaction(db, async (tx) => {
+    const event = await findOwnEvent(tx, tenant, id, { lock: true });
+    if (event.map?.display !== "list") throw new ValidationError("Este evento se vende con mapa");
+    if (event.status !== "draft") throw new ValidationError("Las ubicaciones solo se pueden cambiar en borrador");
+    // Renombrar: los sectores se reconocen por su clave. En dos pasos, por si se intercambian nombres.
+    const keys = map.sectors.map((sector) => sector.key);
+    await tx.query("update sectors set name = id::text where event_id = $1 and map_key = any($2::text[])", [id, keys]);
+    for (const sector of map.sectors) {
+      await tx.query("update sectors set name = $3 where event_id = $1 and map_key = $2", [id, sector.key, sector.name]);
+    }
+    await copyMap(tx, id, map);
+    await audit(tx, tenant, "event.locations_saved", { title: event.title, count: map.sectors.length });
   });
 }
 

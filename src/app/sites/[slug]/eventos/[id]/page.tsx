@@ -95,6 +95,8 @@ async function Content({ params }: { params: Props["params"] }) {
                 <p className="mt-4 rounded-md bg-[var(--site-accent)] px-4 py-3 text-center font-bold text-[var(--site-on-accent)]">Entradas muy pronto</p>
               )}
             </div>
+            {/* Los eventos que se venden solo por ubicación no muestran plano */}
+            {event.map?.display !== "list" && (
             <VenueMap
               map={event.map}
               prices={prices}
@@ -102,6 +104,7 @@ async function Content({ params }: { params: Props["params"] }) {
               fg={dark ? "#f5f5f7" : "#16161a"}
               bg={dark ? "#0d0d10" : "#ffffff"}
             />
+            )}
           </aside>
         </div>
       </section>

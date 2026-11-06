@@ -105,6 +105,7 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
 
 ### 3.3 Eventos
 - Crear evento: título, descripción, imagen, sala, **una o varias funciones** (fecha y hora).
+- **Cómo se vende**, al crear el evento: **con mapa de la sala** (el público ve el plano) o **solo por ubicación** (General, VIP, mesas… con su capacidad, sin dibujar un mapa; pensado para boliches). Por ubicación no hace falta tener una sala armada: alcanza con escribir el nombre del lugar. Las ubicaciones se pueden cambiar mientras el evento está en borrador.
 - Por evento/función: precio por sector y **lotes de preventa** (precio y cupo propios, fecha de inicio y fin).
 - Bloquear butacas (invitaciones, producción, sin visión).
 - Estados: borrador → publicado → finalizado / cancelado.

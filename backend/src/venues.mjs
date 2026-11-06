@@ -108,7 +108,8 @@ export function parseMap(raw) {
   }
   const seats = parsed.reduce((total, sector) => total + (sector.rows ?? []).reduce((a, b) => a + b, 0), 0);
   if (seats > MAX_SEATS) throw new ValidationError(`El mapa puede tener hasta ${MAX_SEATS} butacas`);
-  return { sectors: parsed };
+  // "list": evento que se vende solo por ubicación (General, VIP...), sin mostrar un plano.
+  return raw?.display === "list" ? { sectors: parsed, display: "list" } : { sectors: parsed };
 }
 
 export async function listVenues(db, tenant) {
