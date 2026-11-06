@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import QRCode from "qrcode";
 import { ExternalLink, ScanLine } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
 import { listOrganizations } from "@backend/admin.mjs";
 import { listTestTickets } from "@backend/qr.mjs";
 import { requireAdmin } from "@/lib/dashboard/session";
+import { brandedQrSvg } from "@/lib/branded-qr";
 import { SCAN_URL } from "@/lib/dashboard/config";
 import { Card, formatDate, Loading, PageTitle } from "../../_components/shell";
 import { SubmitButton } from "../../_components/ui";
@@ -60,9 +60,7 @@ async function Content() {
     listTestTickets(db, actor),
     listOrganizations(db, actor),
   ]);
-  const qrs = await Promise.all(
-    tickets.map((t) => QRCode.toString(t.code, { type: "svg", margin: 1, errorCorrectionLevel: "M" })),
-  );
+  const qrs = tickets.map((t) => brandedQrSvg(t.code));
   const used = tickets.filter((t) => t.checkedInAt).length;
 
   return (
@@ -155,7 +153,7 @@ async function Content() {
                 </div>
                 <div
                   className="mx-auto mt-3 w-full max-w-56 [&>svg]:h-auto [&>svg]:w-full"
-                  // SVG generado acá mismo por la librería qrcode a partir de nuestro código firmado.
+                  // SVG con el búho generado acá mismo (src/lib/branded-qr.ts) a partir de nuestro código firmado.
                   dangerouslySetInnerHTML={{ __html: qrs[i] }}
                 />
                 <p className="mt-2 text-xs text-palco-500">
