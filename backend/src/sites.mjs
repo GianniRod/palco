@@ -209,15 +209,8 @@ export async function getPublicSite(db, slug) {
   return { content: { cover: "", ...site.content }, events: await upcomingEvents(db, site.organizationId) };
 }
 
-// El precio que paga hoy el público: el del primer lote vigente o, si no hay, el del sector.
-const CURRENT_PRICE = `coalesce(
-  (select l.price from price_lots l
-   where l.sector_id = sectors.id
-     and (l.starts_at is null or l.starts_at <= now())
-     and (l.ends_at is null or l.ends_at > now())
-   order by l.position limit 1),
-  sectors.price
-)`;
+// El precio que paga hoy el público: el del primer lote vigente con cupo o, si no hay, el del sector.
+const CURRENT_PRICE = "(current_price(sectors.id)).price";
 
 const imageUrl = (event) => (event.hasImage ? `/api/event-images/${event.id}?v=${new Date(event.updatedAt).getTime()}` : null);
 

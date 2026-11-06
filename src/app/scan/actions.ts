@@ -7,7 +7,8 @@ import { requireSession } from "@/lib/dashboard/session";
 export type ScanResult =
   | {
       result: "valid" | "duplicate";
-      number: number;
+      number: number | null;
+      label: string | null;
       holder: string;
       checkedInAt: string | null;
       checkedInBy: string | null;
@@ -18,7 +19,7 @@ type Scan =
   | { result: "invalid"; reason: string }
   | {
       result: "valid" | "duplicate";
-      ticket: { number: number; holder: string; checkedInAt: Date | null; checkedInBy: string | null };
+      ticket: { number?: number; label?: string; holder: string; checkedInAt: Date | null; checkedInBy: string | null };
     };
 
 // Lo llama el escáner del celular con el texto leído del QR. El permiso se chequea en scanTicket:
@@ -36,7 +37,8 @@ export async function scanCodeAction(code: string): Promise<ScanResult> {
   const { ticket } = scan;
   return {
     result: scan.result,
-    number: ticket.number,
+    number: ticket.number ?? null,
+    label: ticket.label ?? null,
     holder: ticket.holder,
     checkedInAt: ticket.checkedInAt ? new Date(ticket.checkedInAt).toISOString() : null,
     checkedInBy: ticket.checkedInBy ?? null,
