@@ -95,6 +95,10 @@ Una organización puede tener una o varias salas físicas. Para cada sala, un
 - Sectores de **butacas numeradas** (filas, cantidad de butacas, pasillos, palcos).
 - Sectores de **ubicación general** (campo, tribuna sin numerar) con **capacidad**.
 - Escenario y referencias visuales.
+- **Pluma** para darle a cada elemento la forma real de la sala: se arrastran las esquinas
+  (cuadrados), se curva cada lado (círculos), doble clic agrega un punto, y hay "Quitar
+  punto" y "Volver a rectángulo". La **curvatura** también se elige con un deslizador, para un
+  lado o para todos a la vez. Las butacas se recortan con la forma dibujada.
 
 El mapa de la sala es una **plantilla**: cuando se crea un evento, se copia al evento.
 Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.

@@ -5,7 +5,7 @@ import { CalendarDays, MapPin } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
 import { getPublicEvent } from "@backend/sites.mjs";
 import { MadeByNightowl } from "@/components/made-by";
-import { SiteFrame, formatPrice } from "@/components/public-site";
+import { FIT, SiteFrame, formatPrice } from "@/components/public-site";
 import { VenueMap } from "@/components/venue-map";
 import { checkoutEnabled } from "@/lib/checkout";
 
@@ -58,12 +58,18 @@ async function Content({ params }: { params: Props["params"] }) {
               // eslint-disable-next-line @next/next/no-img-element -- el flyer se sirve desde nuestra API.
               <img src={event.image} alt={event.title} className="mb-6 aspect-video w-full rounded-2xl object-cover" />
             )}
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-balance @3xl:text-5xl">{event.title}</h1>
-            <p className="mt-3 flex items-center gap-2 text-[var(--site-muted)]">
-              <MapPin className="size-4 shrink-0" aria-hidden />
-              {event.venue}{event.address ? ` · ${event.address}` : ""}
+            <h1 className={`text-[clamp(1.9rem,8.5cqi,3rem)] font-extrabold leading-tight tracking-tight text-balance @3xl:text-5xl ${FIT}`}>
+              {event.title}
+            </h1>
+            <p className="mt-3 flex items-start gap-2 text-[var(--site-muted)]">
+              <MapPin className="mt-1 size-4 shrink-0" aria-hidden />
+              <span className={FIT}>{event.venue}{event.address ? ` · ${event.address}` : ""}</span>
             </p>
-            {event.description && <p className="mt-6 whitespace-pre-line text-lg leading-relaxed text-[var(--site-muted)]">{event.description}</p>}
+            {event.description && (
+              <p className={`mt-6 whitespace-pre-line text-base leading-relaxed text-[var(--site-muted)] @md:text-lg ${FIT}`}>
+                {event.description}
+              </p>
+            )}
           </div>
 
           <aside className="min-w-0 space-y-6">
@@ -79,8 +85,8 @@ async function Content({ params }: { params: Props["params"] }) {
               <ul className="mt-2 divide-y divide-[var(--site-line)]">
                 {sectors.map((sector) => (
                   <li key={sector.mapKey} className="flex items-baseline justify-between gap-3 py-2">
-                    <span>{sector.name}</span>
-                    <span className="font-semibold tabular-nums">{formatPrice(sector.price)}</span>
+                    <span className={FIT}>{sector.name}</span>
+                    <span className="shrink-0 font-semibold tabular-nums">{formatPrice(sector.price)}</span>
                   </li>
                 ))}
               </ul>

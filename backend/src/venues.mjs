@@ -8,6 +8,7 @@ const MAX_SECTORS = 60;
 const MAX_ROWS = 100;
 const MAX_SEATS_PER_ROW = 200;
 const MAX_SEATS = 20000;
+const MAX_SHAPE_POINTS = 24;
 
 export const SELLABLE_KINDS = ["numbered", "general"];
 export const canManage = (tenant) => EDITOR_ROLES.includes(tenant?.role);
@@ -38,6 +39,25 @@ const percent = (value) => {
   return Number.isFinite(number) ? Math.round(Math.min(100, Math.max(0, number)) * 10) / 10 : 0;
 };
 
+// Forma libre de un sector (la "pluma" del editor): puntos en % de su recuadro.
+// Cada punto puede traer un punto de control (cx, cy) que curva el lado que va hasta el siguiente.
+const shapeCoord = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(Math.min(300, Math.max(-200, number)) * 10) / 10 : 0;
+};
+
+function parseShape(raw) {
+  if (!Array.isArray(raw) || raw.length < 3 || raw.length > MAX_SHAPE_POINTS) return undefined;
+  return raw.map((point) => {
+    const parsed = { x: shapeCoord(point?.x), y: shapeCoord(point?.y) };
+    if (point?.cx !== undefined && point?.cy !== undefined) {
+      parsed.cx = shapeCoord(point.cx);
+      parsed.cy = shapeCoord(point.cy);
+    }
+    return parsed;
+  });
+}
+
 function parseCount(value, label, max) {
   const number = Number(value);
   if (!Number.isInteger(number) || number < 1 || number > max) {
@@ -57,6 +77,8 @@ function parseSector(raw, index) {
     w: Math.max(3, percent(raw?.w)),
     h: Math.max(3, percent(raw?.h)),
   };
+  const shape = parseShape(raw?.shape);
+  if (shape) sector.shape = shape;
   if (kind === "numbered") {
     if (!Array.isArray(raw?.rows) || raw.rows.length === 0 || raw.rows.length > MAX_ROWS) {
       throw new ValidationError(`"${sector.name}" tiene que tener entre 1 y ${MAX_ROWS} filas`);

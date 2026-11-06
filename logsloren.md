@@ -7,6 +7,12 @@ Formato: fecha y hora, qué se cambió, archivos tocados y algo a tener en cuent
 
 ---
 
+## 2026-11-06 00:51: rama actualizada con main y PR nueva
+
+- Merge de main en `dashboard/marca-nightowl`. Se mantienen las formas libres de Gianni en el plano y el plano se puede tocar en la compra, también con forma libre.
+- El pie de las páginas de cliente mantiene "Made by Nightowl" en lugar de "Tecnología de".
+- No se suben `CLAUDE.md`, `Memoria_EntreChats/` ni `.claude/launch.json`.
+
 ## 2026-11-06 00:28: las entradas usan el QR con búho de Gianni
 
 - Las entradas compradas ahora usan `brandedQrSvg` (`src/lib/branded-qr.ts`), el mismo generador de /admin/puerta: módulos redondeados, búho en el medio y corrección alta. A 224 px.

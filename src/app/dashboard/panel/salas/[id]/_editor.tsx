@@ -5,6 +5,21 @@ import { Armchair, Copy, MicVocal, Tag, Trash2, Users } from "lucide-react";
 import { mapStyle, SectorBody, type MapSector, type VenueMapData } from "@/components/venue-map";
 import { Field, FormError, FormSaved, SubmitButton } from "../../../_components/ui";
 import { deleteVenueAction, saveVenueAction, type VenueFormState } from "../actions";
+import { PenHandles, ShapePanel, type PenHandleKind, type PenSelection } from "./_pen";
+import {
+  bendEdgeTo,
+  clampCanvas,
+  edgeMiddle,
+  fitToShape,
+  longestEdge,
+  removePoint,
+  shapeOf,
+  shortestEdge,
+  splitEdge,
+  toCanvas,
+  toLocal,
+  withCurvature,
+} from "./_shape";
 
 type Venue = { id: string; name: string; address: string | null; map: VenueMapData; eventCount: number };
 type Drag = { key: string; mode: "move" | "resize"; startX: number; startY: number; origin: MapSector };
@@ -119,10 +134,66 @@ export function VenueEditor({ venue }: { venue: Venue }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const canvas = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
+  // Pluma: qué elemento se está dibujando y qué punto o lado está elegido.
+  const [pen, setPen] = useState<{ key: string; selection: PenSelection } | null>(null);
+  const penDrag = useRef<{ key: string; kind: PenHandleKind; index: number } | null>(null);
 
   const selected = sectors.find((sector) => sector.key === selectedKey) ?? null;
   const update = (key: string, patch: Partial<MapSector>) =>
     setSectors((current) => current.map((sector) => (sector.key === key ? { ...sector, ...patch } : sector)));
+
+  const penActive = Boolean(selected && pen?.key === selected.key);
+  const penSelection = penActive ? (pen?.selection ?? null) : null;
+  const selectHandle = (selection: PenSelection) => selected && setPen({ key: selected.key, selection });
+
+  function startPenDrag(event: PointerEvent, kind: PenHandleKind, index: number) {
+    if (!selected) return;
+    event.stopPropagation();
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    penDrag.current = { key: selected.key, kind, index };
+    selectHandle({ kind, index });
+  }
+
+  function onPenDrag(event: PointerEvent) {
+    const current = penDrag.current;
+    const rect = canvas.current?.getBoundingClientRect();
+    if (!current || !rect) return;
+    const pointer = clampCanvas({ x: ((event.clientX - rect.left) / rect.width) * 100, y: ((event.clientY - rect.top) / rect.height) * 100 });
+    setSectors((all) =>
+      all.map((sector) => {
+        if (sector.key !== current.key) return sector;
+        const shape = shapeOf(sector);
+        const local = toLocal(sector, pointer);
+        const next =
+          current.kind === "point"
+            ? shape.map((point, i) => (i === current.index ? { ...point, x: local.x, y: local.y } : point))
+            : bendEdgeTo(shape, current.index, local);
+        return { ...sector, shape: next };
+      }),
+    );
+  }
+
+  function endPenDrag() {
+    const current = penDrag.current;
+    penDrag.current = null;
+    if (!current) return;
+    setSectors((all) => all.map((sector) => (sector.key === current.key ? { ...sector, ...fitToShape(sector, shapeOf(sector)) } : sector)));
+  }
+
+  // Con el teclado: flechas mueven el punto (o curvan el lado) medio paso; con Shift, dos.
+  function nudgeHandle(kind: PenHandleKind, index: number, dx: number, dy: number) {
+    if (!selected) return;
+    const shape = shapeOf(selected);
+    const from = toCanvas(selected, kind === "point" ? shape[index] : edgeMiddle(shape, index));
+    const local = toLocal(selected, clampCanvas({ x: from.x + dx, y: from.y + dy }));
+    const next =
+      kind === "point"
+        ? shape.map((point, i) => (i === index ? { ...point, x: local.x, y: local.y } : point))
+        : bendEdgeTo(shape, index, local);
+    selectHandle({ kind, index });
+    update(selected.key, fitToShape(selected, next));
+  }
 
   function add(kind: MapSector["kind"]) {
     const sector = { ...NEW_SECTOR[kind], key: newKey() };
@@ -179,7 +250,7 @@ export function VenueEditor({ venue }: { venue: Venue }) {
     <div className="space-y-4">
       <div className="overflow-hidden rounded-2xl border border-palco-100 bg-white shadow-sm">
         <div className="grid md:grid-cols-[280px_minmax(0,1fr)]">
-          <form action={saveAction} noValidate className="flex flex-col gap-4 border-b border-palco-100 p-4 md:border-b-0 md:border-r">
+          <form action={saveAction} noValidate className="flex flex-col gap-4 border-t border-palco-100 p-4 md:border-r md:border-t-0">
             <input type="hidden" name="id" value={venue.id} />
             <input type="hidden" name="map" value={JSON.stringify({ sectors })} />
             <Field label="Nombre de la sala" name="name" maxLength={80} value={name} onChange={(event) => setName(event.target.value)} />
@@ -213,9 +284,44 @@ export function VenueEditor({ venue }: { venue: Venue }) {
                     setSelectedKey(null);
                   }}
                 />
+                <div className="mt-3">
+                  <ShapePanel
+                    sector={selected}
+                    active={penActive}
+                    selection={penSelection}
+                    onToggle={() => {
+                      setPen(penActive ? null : { key: selected.key, selection: null });
+                      // En el celular el mapa queda arriba: lo traemos a la vista para empezar a dibujar.
+                      if (!penActive) canvas.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                    }}
+                    onCurvature={(value) => {
+                      let shape = shapeOf(selected);
+                      const one = penSelection?.kind === "edge";
+                      const reference = one ? undefined : shortestEdge(selected, shape);
+                      const edges = one ? [penSelection.index] : shape.map((_, index) => index);
+                      for (const index of edges) shape = withCurvature(selected, shape, index, value, reference);
+                      update(selected.key, { shape });
+                    }}
+                    onAddPoint={() => {
+                      const shape = shapeOf(selected);
+                      const index = penSelection?.kind === "edge" ? penSelection.index : longestEdge(selected, shape);
+                      update(selected.key, { shape: splitEdge(shape, index) });
+                      selectHandle({ kind: "point", index: index + 1 });
+                    }}
+                    onRemovePoint={() => {
+                      if (penSelection?.kind !== "point") return;
+                      update(selected.key, fitToShape(selected, removePoint(shapeOf(selected), penSelection.index)));
+                      selectHandle(null);
+                    }}
+                    onReset={() => {
+                      update(selected.key, { shape: undefined });
+                      selectHandle(null);
+                    }}
+                  />
+                </div>
               </div>
             ) : (
-              <p className="text-xs text-palco-600">Tocá un elemento del mapa para editarlo. Arrastralo para moverlo y usá la esquina para cambiar su tamaño.</p>
+              <p className="text-xs text-palco-600">Tocá un elemento del mapa para editarlo. Arrastralo para moverlo y usá la esquina para cambiar su tamaño. Con la pluma le das la forma de tu sala y la curvás.</p>
             )}
 
             <div className="mt-auto space-y-2 border-t border-palco-100 pt-4">
@@ -230,7 +336,8 @@ export function VenueEditor({ venue }: { venue: Venue }) {
             </div>
           </form>
 
-          <div className="min-w-0 bg-palco-50 p-4 sm:p-6">
+          {/* En el celular el mapa va arriba, así la pluma y el panel quedan cerca */}
+          <div className="order-first min-w-0 bg-palco-50 p-3 sm:p-6 md:order-none">
             <div
               ref={canvas}
               onPointerDown={() => setSelectedKey(null)}
@@ -253,7 +360,7 @@ export function VenueEditor({ venue }: { venue: Venue }) {
                   style={{ left: `${sector.x}%`, top: `${sector.y}%`, width: `${sector.w}%`, height: `${sector.h}%` }}
                 >
                   <SectorBody sector={sector} />
-                  {selectedKey === sector.key && (
+                  {selectedKey === sector.key && !penActive && (
                     <span
                       aria-hidden
                       onPointerDown={(event) => startDrag(event, sector, "resize")}
@@ -264,6 +371,20 @@ export function VenueEditor({ venue }: { venue: Venue }) {
                   )}
                 </div>
               ))}
+              {penActive && selected && (
+                <PenHandles
+                  sector={selected}
+                  selection={penSelection}
+                  onStart={startPenDrag}
+                  onMove={onPenDrag}
+                  onEnd={endPenDrag}
+                  onSplit={(index) => {
+                    update(selected.key, { shape: splitEdge(shapeOf(selected), index) });
+                    selectHandle({ kind: "point", index: index + 1 });
+                  }}
+                  onNudge={nudgeHandle}
+                />
+              )}
               {sectors.length === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
                   <p className="font-semibold">Empezá con un modelo o agregá elementos</p>
