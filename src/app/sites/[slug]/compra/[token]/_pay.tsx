@@ -6,25 +6,29 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { payAction, type PayState } from "./actions";
 
-function PayButton() {
+function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="flex w-full items-center justify-center gap-2 rounded-md bg-[var(--site-accent)] px-4 py-3 font-bold text-[var(--site-on-accent)] transition hover:opacity-90 disabled:opacity-60">
       {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-      Pagar (prueba)
+      {label}
     </button>
   );
 }
 
-export function PayForm({ slug, token }: { slug: string; token: string }) {
+export function PayForm({ slug, token, mercadoPago }: { slug: string; token: string; mercadoPago: boolean }) {
   const [state, action] = useActionState(payAction, {} as PayState);
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="token" value={token} />
       {state.error && <p role="alert" className="rounded-md bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{state.error}</p>}
-      <PayButton />
-      <p className="text-center text-xs text-[var(--site-muted)]">Modo de prueba: no se cobra nada.</p>
+      <PayButton label={mercadoPago ? "Pagar con Mercado Pago" : "Pagar (prueba)"} />
+      <p className="text-center text-xs text-[var(--site-muted)]">
+        {mercadoPago
+          ? "Te llevamos a Mercado Pago para pagar con tarjeta de crédito, débito o dinero en cuenta."
+          : "Modo de prueba: no se cobra nada."}
+      </p>
     </form>
   );
 }

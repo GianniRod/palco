@@ -7,6 +7,7 @@ import { getDb } from "@backend/db.mjs";
 import { getOrderByToken } from "@backend/checkout.mjs";
 import { getPublicSite } from "@backend/sites.mjs";
 import { formatPrice, SiteFrame } from "@/components/public-site";
+import { isMercadoPagoConfigured } from "@backend/mercadopago.mjs";
 import { checkoutEnabled } from "@/lib/checkout";
 import { cancelAction } from "./actions";
 import { Countdown, PayForm } from "./_pay";
@@ -76,8 +77,15 @@ function Message({ title, children, eventId }: { title: string; children: string
   );
 }
 
-async function Content({ params }: { params: Props["params"] }) {
-  const { slug, token } = await params;
+// Lo que trae la vuelta de Mercado Pago (src/app/api/mercadopago/vuelta).
+const NOTICES: Record<string, string> = {
+  rechazado: "Mercado Pago no aprobó el pago. Podés probar con otra tarjeta mientras la reserva siga vigente.",
+  confirmando: "Estamos confirmando tu pago con Mercado Pago. Si ya pagaste, en unos segundos vas a ver tus entradas.",
+};
+
+async function Content({ params, searchParams }: { params: Props["params"]; searchParams: Props["searchParams"] }) {
+  const [{ slug, token }, query] = await Promise.all([params, searchParams]);
+  const notice = typeof query.pago === "string" ? NOTICES[query.pago] : undefined;
   const db = getDb();
   const [order, site] = await Promise.all([getOrderByToken(db, slug, token), getPublicSite(db, slug)]);
   if (!order || !site) notFound();
@@ -112,6 +120,7 @@ async function Content({ params }: { params: Props["params"] }) {
             <p className="mt-1 font-semibold">{order.title}</p>
             <p className="text-[var(--site-muted)] first-letter:uppercase">{date}</p>
             <div className="mt-3"><Countdown expiresAt={new Date(order.expiresAt).toISOString()} /></div>
+            {notice && <p role="status" className="mt-3 rounded-md bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{notice}</p>}
             <ul className="mt-4 divide-y divide-[var(--site-line)] border-y border-[var(--site-line)] text-sm">
               {items.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3 py-2.5">
@@ -124,7 +133,7 @@ async function Content({ params }: { params: Props["params"] }) {
               <span className="font-semibold">Total</span>
               <span className="text-2xl font-bold tabular-nums">{formatPrice(order.total)}</span>
             </div>
-            <PayForm slug={slug} token={token} />
+            <PayForm slug={slug} token={token} mercadoPago={isMercadoPagoConfigured()} />
             <form action={cancelAction} className="mt-3 text-center">
               <input type="hidden" name="slug" value={slug} />
               <input type="hidden" name="token" value={token} />
@@ -143,10 +152,10 @@ async function Content({ params }: { params: Props["params"] }) {
   );
 }
 
-export default function OrderPage({ params }: Props) {
+export default function OrderPage({ params, searchParams }: Props) {
   return (
     <Suspense>
-      <Content params={params} />
+      <Content params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
