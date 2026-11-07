@@ -2,7 +2,7 @@
 // Etapa 1: todas las ventas se cobran con el token de Nightowl (MP_ACCESS_TOKEN, de prueba).
 // Etapa 2: cada cliente conecta su cuenta por OAuth y se cobra con su token + marketplace_fee.
 // Nada de acá emite entradas por su cuenta: lo aprobado pasa por confirmPayment.
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { ValidationError } from "./auth.mjs";
 import { confirmPayment, getOrderByToken } from "./checkout.mjs";
 
@@ -40,7 +40,13 @@ async function mpFetch(path, { env, fetchImpl = fetch, method = "GET", body, ide
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     // Preferencias y pagos responden { message }; la Orders API responde { errors: [{ code, message, details }] }.
-    const detail = Array.isArray(data?.errors) && data.errors.length ? JSON.stringify(data.errors).slice(0, 1500) : data?.message;
+    // En texto plano: el visor de logs de Vercel pliega el JSON y no se ve el motivo.
+    const detail = Array.isArray(data?.errors) && data.errors.length
+      ? data.errors
+          .map((e) => [e?.code, e?.message, ...(Array.isArray(e?.details) ? e.details : [])].filter(Boolean).join(" | "))
+          .join(" || ")
+          .slice(0, 1500)
+      : data?.message;
     throw new MercadoPagoError(`Mercado Pago respondió ${res.status} en ${method} ${path.split("?")[0]}: ${detail ?? "sin detalle"}`, res.status);
   }
   return data;
@@ -174,13 +180,15 @@ export async function createMercadoPagoOrder(db, slug, token, { siteUrl, siteNam
   if (order.status === "expired") throw new ValidationError("La reserva venció. Volvé a elegir tus entradas");
   if (order.status !== "pending") throw new ValidationError("Esta orden ya no se puede pagar");
 
+  const body = mercadoPagoOrderBody({ ...order, token }, { siteUrl, siteName });
   const created = await mpFetch("/v1/orders", {
     env,
     fetchImpl,
     method: "POST",
-    // Un reintento (doble clic, volver atrás) devuelve la misma order mientras dure la reserva.
-    idempotencyKey: `order-${order.id}-${new Date(order.expiresAt).getTime()}`,
-    body: mercadoPagoOrderBody({ ...order, token }, { siteUrl, siteName }),
+    // La clave sale del cuerpo: un doble clic en el mismo segundo devuelve la misma order, y un reintento
+    // (con otro vencimiento) es una order nueva. Misma clave con otro cuerpo, Mercado Pago responde 409.
+    idempotencyKey: `order-${order.id}-${createHash("sha256").update(JSON.stringify(body)).digest("hex").slice(0, 32)}`,
+    body,
   });
   if (!created?.checkout_url) throw new MercadoPagoError("Mercado Pago no devolvió el link de pago");
   return created.checkout_url;
