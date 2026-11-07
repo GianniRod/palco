@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDb } from "@backend/db.mjs";
 import { getOrderByToken } from "@backend/checkout.mjs";
+import { isMercadoPagoConfigured } from "@backend/mercadopago.mjs";
 import { getPublicSiteContent } from "@backend/sites.mjs";
 import { CheckoutSteps } from "@/components/checkout-steps";
 import { MadeByNightowl, Owl } from "@/components/made-by";
@@ -85,8 +86,15 @@ function Message({ title, children, eventId }: { title: string; children: string
   );
 }
 
-async function Content({ params }: { params: Props["params"] }) {
-  const { slug, token } = await params;
+// Lo que trae la vuelta de Mercado Pago (src/app/api/mercadopago/vuelta).
+const NOTICES: Record<string, string> = {
+  rechazado: "Mercado Pago no aprobó el pago. Podés probar con otra tarjeta mientras la reserva siga vigente.",
+  confirmando: "Estamos confirmando tu pago con Mercado Pago. Si ya pagaste, en unos segundos vas a ver tus entradas.",
+};
+
+async function Content({ params, searchParams }: { params: Props["params"]; searchParams: Props["searchParams"] }) {
+  const [{ slug, token }, query] = await Promise.all([params, searchParams]);
+  const notice = typeof query.pago === "string" ? NOTICES[query.pago] : undefined;
   const db = getDb();
   const [order, site] = await Promise.all([getOrderByToken(db, slug, token), getPublicSiteContent(db, slug)]);
   if (!order || !site) notFound();
@@ -151,7 +159,8 @@ async function Content({ params }: { params: Props["params"] }) {
 
               <div className="space-y-4 rounded-2xl bg-[var(--site-surface)] p-6 [box-shadow:var(--site-shadow)]">
                 <Countdown expiresAt={new Date(order.expiresAt).toISOString()} />
-                <PayForm slug={slug} token={token} total={formatPrice(order.amountDue)} />
+                {notice && <p role="status" className="rounded-lg bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{notice}</p>}
+                <PayForm slug={slug} token={token} total={formatPrice(order.amountDue)} mercadoPago={isMercadoPagoConfigured()} />
                 <form action={cancelAction} className="text-center">
                   <input type="hidden" name="slug" value={slug} />
                   <input type="hidden" name="token" value={token} />
@@ -172,10 +181,10 @@ async function Content({ params }: { params: Props["params"] }) {
   );
 }
 
-export default function OrderPage({ params }: Props) {
+export default function OrderPage({ params, searchParams }: Props) {
   return (
     <Suspense>
-      <Content params={params} />
+      <Content params={params} searchParams={searchParams} />
     </Suspense>
   );
 }

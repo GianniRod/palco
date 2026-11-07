@@ -7,6 +7,14 @@ Formato: fecha y hora, qué se cambió, archivos tocados y algo a tener en cuent
 
 ---
 
+## 2026-11-07 00:27: main con Mercado Pago adentro de la rama de la PR #7
+
+- Merge de main: se mantiene el diseño de la compra (pasos, reserva, comisión, firma) y se suma el cobro con Mercado Pago de Gianni: botón, medio de pago y aviso de pago rechazado o en confirmación.
+- **Ojo Gianni:** `createPreference` cobraba `order.total`, y `confirmPayment` exige entradas más comisión: todo pago aprobado se iba a rechazar. Ahora cobra `order.amountDue`, con una prueba nueva.
+- `sendTicketsOnce` manda todos los datos que pide la plantilla del mail: comprador, fecha, lugar y entradas.
+- Archivos: `src/app/sites/[slug]/compra/[token]/_pay.tsx`, `actions.ts`, `page.tsx`, `backend/src/mercadopago.mjs`, `src/lib/payments.ts`, `backend/tests/checkout.test.mjs`.
+- Tener en cuenta: la migración 010 de Gianni tiene que estar en Neon antes de cobrar con Mercado Pago. No se probó un pago real contra Mercado Pago ni se miró la pantalla de pago después del merge.
+
 ## 2026-11-06 23:35: QR del cliente en el Inicio del panel
 
 - El Inicio de la cuenta del cliente muestra cuántos QR tiene en total, usados y sin usar.

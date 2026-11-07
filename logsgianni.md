@@ -7,6 +7,10 @@ Formato: fecha, qué se cambió, archivos tocados y algo a tener en cuenta si ha
 
 ---
 
+## 2026-11-07
+
+- **Cobro con Mercado Pago, etapa 1 (token de prueba de Nightowl)**: el botón "Pagar con Mercado Pago" crea una preferencia de Checkout Pro (una línea con el total, `external_reference` = id de la orden, vence con la reserva, `binary_mode`, sin Rapipago/Pago Fácil/cajeros) y lleva al comprador a Mercado Pago. Lo aprobado entra por dos lados y los dos llaman a `confirmPayment`: el **webhook** `POST /api/webhooks/mercadopago` (firma `x-signature` validada igual que el SDK oficial, consulta el pago a Mercado Pago) y la **vuelta** `GET /api/mercadopago/vuelta` en el dominio del cliente (consulta el pago y redirige a la orden; con rechazo muestra aviso). El mail con las entradas sale una sola vez (`orders.tickets_emailed_at`). Sin `MP_ACCESS_TOKEN` sigue el pago simulado en desarrollo. En producción la compra sigue apagada salvo `CHECKOUT_ENABLED=true`. Todavía sin split ni `marketplace_fee` (etapa 2: OAuth por boliche). Migración nueva `010_mercadopago.sql` (ya aplicada). Archivos: `backend/src/mercadopago.mjs` y `backend/tests/mercadopago.test.mjs` (nuevos), `src/app/api/webhooks/mercadopago/route.ts`, `src/app/api/mercadopago/vuelta/route.ts`, `src/lib/payments.ts` (nuevos), `src/app/sites/[slug]/compra/[token]/actions.ts`, `_pay.tsx`, `page.tsx`, `src/lib/checkout.ts`, `.env.example`. Ojo Lorenzo: no toqué `checkout.mjs`; el mail de compra ahora pasa por `sendTicketsOnce` (también el del pago simulado).
+
 ## 2026-11-06
 
 - **Plan de integración de Mercado Pago** (`docs/pagos-mercadopago.html`, nuevo): pasos a seguir para cobrar con Mercado Pago Marketplace (Checkout Pro + `marketplace_fee`): crear la app, tabla `payment_accounts`, OAuth "Conectar Mercado Pago", preferencia con el token del boliche, webhook con firma que llama a `confirmPayment`, página de vuelta, devoluciones, renovación de tokens, encendido y checklist de sandbox. Solo documentación, sin código.

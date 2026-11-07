@@ -6,17 +6,17 @@ import { useRouter } from "next/navigation";
 import { CreditCard, Loader2 } from "lucide-react";
 import { payAction, type PayState } from "./actions";
 
-function PayButton({ total }: { total: string }) {
+function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--site-accent)] px-4 py-3.5 font-bold text-[var(--site-on-accent)] transition hover:opacity-90 disabled:opacity-60">
       {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-      Pagar {total}
+      {label}
     </button>
   );
 }
 
-export function PayForm({ slug, token, total }: { slug: string; token: string; total: string }) {
+export function PayForm({ slug, token, total, mercadoPago }: { slug: string; token: string; total: string; mercadoPago: boolean }) {
   const [state, action] = useActionState(payAction, {} as PayState);
   return (
     <form action={action} className="space-y-3">
@@ -28,12 +28,16 @@ export function PayForm({ slug, token, total }: { slug: string; token: string; t
           <CreditCard className="size-4" aria-hidden />
         </span>
         <span>
-          <span className="block text-sm font-semibold">Pago de prueba</span>
-          <span className="block text-xs text-[var(--site-muted)]">Modo de prueba: no se cobra nada.</span>
+          <span className="block text-sm font-semibold">{mercadoPago ? "Mercado Pago" : "Pago de prueba"}</span>
+          <span className="block text-xs text-[var(--site-muted)]">
+            {mercadoPago
+              ? "Te llevamos a Mercado Pago para pagar con tarjeta de crédito, débito o dinero en cuenta."
+              : "Modo de prueba: no se cobra nada."}
+          </span>
         </span>
       </div>
       {state.error && <p role="alert" className="rounded-lg bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{state.error}</p>}
-      <PayButton total={total} />
+      <PayButton label={mercadoPago ? `Pagar ${total} con Mercado Pago` : `Pagar ${total}`} />
     </form>
   );
 }

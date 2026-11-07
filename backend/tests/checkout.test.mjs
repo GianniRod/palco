@@ -15,6 +15,7 @@ import {
   TicketsUnavailableError,
 } from "../src/checkout.mjs";
 import { createEvent, getEvent, publishEvent, savePricing, setEventStatus, setSeatsBlocked } from "../src/events.mjs";
+import { applyPayment, createPreference } from "../src/mercadopago.mjs";
 import { getSigningKeys, getTicketCounts, scanTicket, verifyTicketCode } from "../src/qr.mjs";
 import { publishSite } from "../src/sites.mjs";
 import { createVenue, saveVenue } from "../src/venues.mjs";
@@ -98,6 +99,24 @@ test("una compra mezcla butacas y ubicación general, con su total y comisión",
   assert.equal(order.commissionAmount, 300);
   assert.equal(Number(order.commissionPercent), 10);
   assert.equal(order.amountDue, 3300);
+});
+
+test("Mercado Pago cobra entradas más comisión, y ese pago confirma la orden", async () => {
+  const ctx = await setup();
+  const token = await buy(ctx, { seatIds: [ctx.seats[0].id] });
+  const order = await getOrderByToken(db, ctx.slug, token);
+  let sent;
+  const fetchImpl = async (_, init) => {
+    sent = JSON.parse(init.body);
+    return { ok: true, json: async () => ({ init_point: "https://mercadopago.test/pagar" }) };
+  };
+  const link = await createPreference(db, ctx.slug, token, { siteUrl: "http://localhost", apiUrl: "http://localhost", siteName: "Sitio" }, { MP_ACCESS_TOKEN: "prueba" }, fetchImpl);
+  assert.equal(link, "https://mercadopago.test/pagar");
+  assert.equal(sent.items[0].unit_price, 1100);
+
+  const payment = { id: 1, status: "approved", currency_id: "ARS", external_reference: order.id };
+  await assert.rejects(applyPayment(db, { ...payment, transaction_amount: order.total }), PaymentMismatchError);
+  assert.equal(await applyPayment(db, { ...payment, transaction_amount: sent.items[0].unit_price }), "paid");
 });
 
 test("el comprador paga entradas más comisión: solo las entradas no alcanza", async () => {
