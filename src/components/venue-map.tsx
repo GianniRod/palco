@@ -20,7 +20,7 @@ export type MapSector = {
   shape?: ShapePoint[];
 };
 
-export type VenueMapData = { sectors: MapSector[] };
+export type VenueMapData = { sectors: MapSector[]; display?: "list" };
 
 // Dónde va cada butaca según la sala: filas centradas y pasillos. Una sola cuenta para todas las pantallas.
 export function seatLayout(rows: number[], aisles: number[] = []) {

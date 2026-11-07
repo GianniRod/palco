@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useMemo, useRef } from "react";
 import { Minus, Plus } from "lucide-react";
-import { formatPrice, type SiteContent } from "@/components/public-site";
+import { FIT, formatPrice, type SiteContent } from "@/components/public-site";
 import { seatLayout, VenueMap, type MapSector, type VenueMapData } from "@/components/venue-map";
 
 // El plano de la compra. Dibuja lo que se armó en Salas y mapas: mismas filas, mismos pasillos y
@@ -190,6 +190,83 @@ function Legend({ shape }: { shape: SeatShape }) {
   );
 }
 
+function PlaceStepper({
+  sector,
+  quantity,
+  full,
+  onChange,
+}: {
+  sector: CheckoutSector;
+  quantity: number;
+  full: boolean;
+  onChange: (sector: CheckoutSector, delta: number) => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-4">
+      <button
+        type="button"
+        aria-label={`Quitar una entrada de ${sector.name}`}
+        disabled={!quantity}
+        onClick={() => onChange(sector, -1)}
+        className="flex size-11 items-center justify-center rounded-full border border-[var(--plan-seat-line)] transition hover:bg-[var(--plan-seat-hover)] disabled:opacity-30"
+      >
+        <Minus className="size-4" aria-hidden />
+      </button>
+      <span aria-live="polite" className="w-8 text-center text-3xl font-extrabold tabular-nums">{quantity}</span>
+      <button
+        type="button"
+        aria-label={`Sumar una entrada de ${sector.name}`}
+        disabled={full || quantity >= (sector.remaining ?? 0)}
+        onClick={() => onChange(sector, 1)}
+        className="flex size-11 items-center justify-center rounded-full bg-[var(--plan-pick)] text-[var(--plan-on-pick)] transition hover:opacity-90 disabled:opacity-30"
+      >
+        <Plus className="size-4" aria-hidden />
+      </button>
+    </div>
+  );
+}
+
+// Eventos que se venden solo por ubicación: sin plano, igual que en la página del evento.
+function LocationList({
+  sectors,
+  places,
+  full,
+  onChange,
+}: {
+  sectors: CheckoutSector[];
+  places: Record<string, number>;
+  full: boolean;
+  onChange: (sector: CheckoutSector, delta: number) => void;
+}) {
+  return (
+    <div className="min-w-0 overflow-hidden rounded-2xl bg-[var(--plan-bg)] p-4 text-[var(--plan-fg)] shadow-xl @xl:p-6">
+      <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--plan-muted)]">Elegí tu ubicación</p>
+      <ul className="space-y-3">
+        {sectors.map((sector) => {
+          const quantity = places[sector.id] ?? 0;
+          const soldOut = (sector.remaining ?? 0) <= 0;
+          return (
+            <li
+              key={sector.id}
+              className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl bg-[var(--plan-seat)] p-4 ${quantity > 0 ? "ring-2 ring-[var(--plan-pick)]" : ""}`}
+            >
+              <div className={`min-w-0 flex-1 basis-28 ${soldOut ? "opacity-60" : ""}`}>
+                <h2 className={`text-lg font-bold leading-tight ${FIT}`}>{sector.name}</h2>
+                <p className="mt-0.5 font-semibold tabular-nums text-[var(--plan-muted)]">{formatPrice(sector.price)}</p>
+              </div>
+              {soldOut ? (
+                <p className="font-semibold text-[var(--plan-muted)]">Agotado</p>
+              ) : (
+                <PlaceStepper sector={sector} quantity={quantity} full={full} onChange={onChange} />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function CheckoutScene({
   map,
   sectors,
@@ -221,6 +298,9 @@ export function CheckoutScene({
   const active = sectors.find((sector) => sector.id === activeId) ?? sectors[0];
   const mapSector = map.sectors.find((sector) => sector.key === active?.mapKey);
   const activeSeats = useMemo(() => seats.filter((seat) => seat.sectorId === active?.id), [seats, active?.id]);
+  if (map.display === "list") {
+    return <LocationList sectors={sectors} places={places} full={count >= max} onChange={onChangePlaces} />;
+  }
   const freeInActive = activeSeats.filter((seat) => seat.available).length;
   const stage = stageSide(map, mapSector);
 
@@ -282,27 +362,7 @@ export function CheckoutScene({
                 <p className="font-semibold">{(active.remaining ?? 0) > 0 ? "Ubicación general" : "Agotado"}</p>
                 <p className="text-sm text-[var(--plan-muted)]">Sin butaca asignada. Elegí cuántas querés.</p>
               </div>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  aria-label={`Quitar una entrada de ${active.name}`}
-                  disabled={!places[active.id]}
-                  onClick={() => onChangePlaces(active, -1)}
-                  className="flex size-11 items-center justify-center rounded-full border border-[var(--plan-seat-line)] transition hover:bg-[var(--plan-seat-hover)] disabled:opacity-30"
-                >
-                  <Minus className="size-4" aria-hidden />
-                </button>
-                <span aria-live="polite" className="w-8 text-center text-3xl font-extrabold tabular-nums">{places[active.id] ?? 0}</span>
-                <button
-                  type="button"
-                  aria-label={`Sumar una entrada de ${active.name}`}
-                  disabled={count >= max || (places[active.id] ?? 0) >= (active.remaining ?? 0)}
-                  onClick={() => onChangePlaces(active, 1)}
-                  className="flex size-11 items-center justify-center rounded-full bg-[var(--plan-pick)] text-[var(--plan-on-pick)] transition hover:opacity-90 disabled:opacity-30"
-                >
-                  <Plus className="size-4" aria-hidden />
-                </button>
-              </div>
+              <PlaceStepper sector={active} quantity={places[active.id] ?? 0} full={count >= max} onChange={onChangePlaces} />
             </div>
           ) : (
             <>

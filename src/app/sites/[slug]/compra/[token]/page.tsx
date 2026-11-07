@@ -43,7 +43,7 @@ const dateFormat = new Intl.DateTimeFormat("es-AR", {
   timeZone: "America/Argentina/Buenos_Aires",
 });
 
-const itemLabel = (item: Item) => (item.row ? `${item.sector}, fila ${item.row}, butaca ${item.number}` : `${item.sector}, ubicación general`);
+const itemLabel = (item: Item) => (item.row ? `${item.sector}, fila ${item.row}, butaca ${item.number}` : item.sector);
 
 function Ticket({ item, site, title, date, venue, index, count }: { item: Item; site: SiteContent; title: string; date: string; venue: string; index: number; count: number }) {
   // El mismo QR de Nightowl que /admin/puerta: módulos redondeados y búho en el medio.
@@ -136,16 +136,22 @@ async function Content({ params }: { params: Props["params"] }) {
                       <span className="font-semibold tabular-nums">{formatPrice(item.unitPrice)}</span>
                     </li>
                   ))}
+                  {order.commissionAmount > 0 && (
+                    <li className="flex justify-between gap-3 py-3">
+                      <span>Comisión por uso <span className="text-[var(--site-muted)]">· {Number(order.commissionPercent).toLocaleString("es-AR")}%</span></span>
+                      <span className="font-semibold tabular-nums">{formatPrice(order.commissionAmount)}</span>
+                    </li>
+                  )}
                 </ul>
                 <div className="flex items-baseline justify-between border-t border-[var(--site-line)] px-6 py-4">
                   <span className="font-semibold">Total</span>
-                  <span className="text-2xl font-extrabold tabular-nums">{formatPrice(order.total)}</span>
+                  <span className="text-2xl font-extrabold tabular-nums">{formatPrice(order.amountDue)}</span>
                 </div>
               </div>
 
               <div className="space-y-4 rounded-2xl bg-[var(--site-surface)] p-6 [box-shadow:var(--site-shadow)]">
                 <Countdown expiresAt={new Date(order.expiresAt).toISOString()} />
-                <PayForm slug={slug} token={token} total={formatPrice(order.total)} />
+                <PayForm slug={slug} token={token} total={formatPrice(order.amountDue)} />
                 <form action={cancelAction} className="text-center">
                   <input type="hidden" name="slug" value={slug} />
                   <input type="hidden" name="token" value={token} />

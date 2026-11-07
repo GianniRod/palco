@@ -122,7 +122,9 @@ export async function startOrder(db, { performanceId, seatIds, general, buyerNam
 export async function getOrderByToken(db, slug, token) {
   const { rows: [order] } = await db.query(
     `select
-       orders.id, orders.status, orders.total, orders.buyer_name as "buyerName", orders.buyer_email as "buyerEmail",
+       orders.id, orders.status, orders.total, orders.commission_percent as "commissionPercent",
+       orders.commission_amount as "commissionAmount", orders.total + orders.commission_amount as "amountDue",
+       orders.buyer_name as "buyerName", orders.buyer_email as "buyerEmail",
        orders.expires_at as "expiresAt", (orders.status = 'pending' and orders.expires_at <= now()) as lapsed,
        performances.starts_at as "startsAt", events.id as "eventId", events.title, venues.name as venue,
        venues.address, organizations.slug
@@ -206,7 +208,7 @@ export async function confirmPayment(db, { orderId, provider, reference, amount 
   const keys = await getSigningKeys(db);
   return withTransaction(db, async (tx) => {
     const { rows: [order] } = await tx.query(
-      `select orders.id, orders.status, orders.total, orders.expires_at <= now() as lapsed,
+      `select orders.id, orders.status, orders.total + orders.commission_amount as "amountDue", orders.expires_at <= now() as lapsed,
          orders.performance_id, performances.event_id
        from orders join performances on performances.id = orders.performance_id
        where orders.id = $1 for update of orders`,
@@ -214,7 +216,8 @@ export async function confirmPayment(db, { orderId, provider, reference, amount 
     );
     if (!order) throw new ValidationError("No encontramos esa orden");
     if (order.status === "paid" || order.status === "refund_pending") return order.status;
-    if (Number(amount) !== order.total) throw new PaymentMismatchError();
+    // El comprador paga las entradas más la comisión por uso.
+    if (Number(amount) !== order.amountDue) throw new PaymentMismatchError();
 
     // Mismo orden de bloqueo que hold_order: los lugares se cuentan sin que nadie los cambie.
     await tx.query("select 1 from sectors where event_id = $1 order by id for update", [order.event_id]);
@@ -260,6 +263,6 @@ export async function simulatePayment(db, slug, token, env = process.env) {
     orderId: order.id,
     provider: "simulated",
     reference: `sim-${order.id}`,
-    amount: order.total,
+    amount: order.amountDue,
   });
 }

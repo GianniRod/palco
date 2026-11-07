@@ -15,7 +15,7 @@ import {
   TicketsUnavailableError,
 } from "../src/checkout.mjs";
 import { createEvent, getEvent, publishEvent, savePricing, setEventStatus, setSeatsBlocked } from "../src/events.mjs";
-import { getSigningKeys, scanTicket, verifyTicketCode } from "../src/qr.mjs";
+import { getSigningKeys, getTicketCounts, scanTicket, verifyTicketCode } from "../src/qr.mjs";
 import { publishSite } from "../src/sites.mjs";
 import { createVenue, saveVenue } from "../src/venues.mjs";
 
@@ -95,6 +95,40 @@ test("una compra mezcla butacas y ubicación general, con su total y comisión",
   const { rows: [row] } = await db.query("select commission_percent, commission_amount from orders where id = $1", [order.id]);
   assert.equal(Number(row.commission_percent), 10);
   assert.equal(row.commission_amount, 300);
+  assert.equal(order.commissionAmount, 300);
+  assert.equal(Number(order.commissionPercent), 10);
+  assert.equal(order.amountDue, 3300);
+});
+
+test("el comprador paga entradas más comisión: solo las entradas no alcanza", async () => {
+  const ctx = await setup();
+  const token = await buy(ctx, { seatIds: [ctx.seats[0].id] });
+  const order = await getOrderByToken(db, ctx.slug, token);
+  assert.equal(order.total, 1000);
+  assert.equal(order.amountDue, 1100);
+
+  const payment = { orderId: order.id, provider: "prueba", reference: `c-${order.id}` };
+  await assert.rejects(confirmPayment(db, { ...payment, amount: order.total }), PaymentMismatchError);
+  assert.equal((await getOrderByToken(db, ctx.slug, token)).status, "pending");
+  assert.equal(await confirmPayment(db, { ...payment, amount: 1100 }), "paid");
+});
+
+test("la comisión se redondea al peso, respeta el porcentaje de la orden y puede ser cero", async () => {
+  const ctx = await setup();
+  await db.query("update organizations set commission_percent = 7.5 where id = $1", [ctx.tenant.organization.id]);
+  const token = await buy(ctx, { general: [{ sectorId: ctx.campo.id, quantity: 1 }] });
+  const order = await getOrderByToken(db, ctx.slug, token);
+  assert.equal(order.commissionAmount, 38); // 7,5% de $500 = 37,5
+  assert.equal(order.amountDue, 538);
+
+  // Cambiar el porcentaje después no altera la orden ya hecha.
+  await db.query("update organizations set commission_percent = 0 where id = $1", [ctx.tenant.organization.id]);
+  assert.equal((await getOrderByToken(db, ctx.slug, token)).amountDue, 538);
+  assert.equal(await simulatePayment(db, ctx.slug, token), "paid");
+
+  const free = await getOrderByToken(db, ctx.slug, await buy(ctx, { seatIds: [ctx.seats[0].id] }));
+  assert.equal(free.commissionAmount, 0);
+  assert.equal(free.amountDue, free.total);
 });
 
 test("valida comprador, cantidad y que haya algo elegido", async () => {
@@ -218,8 +252,8 @@ test("al pagar, la butaca queda vendida y cada entrada tiene un QR firmado", asy
 test("un aviso de pago repetido, aun a la vez, no duplica entradas", async () => {
   const ctx = await setup();
   const token = await buy(ctx, { seatIds: [ctx.seats[0].id, ctx.seats[1].id] });
-  const { id, total } = await getOrderByToken(db, ctx.slug, token);
-  const payment = { orderId: id, provider: "prueba", reference: `r-${id}`, amount: total };
+  const { id, amountDue } = await getOrderByToken(db, ctx.slug, token);
+  const payment = { orderId: id, provider: "prueba", reference: `r-${id}`, amount: amountDue };
 
   const results = await Promise.all(Array.from({ length: 10 }, () => confirmPayment(db, payment)));
   assert.deepEqual([...new Set(results)], ["paid"]);
@@ -247,11 +281,11 @@ test("un pago que llega tarde vale si lo reservado sigue libre; si no, queda par
   };
 
   const free = await late(ctx.seats[0]);
-  assert.equal(await confirmPayment(db, { orderId: free.id, provider: "prueba", reference: `a-${free.id}`, amount: free.total }), "paid");
+  assert.equal(await confirmPayment(db, { orderId: free.id, provider: "prueba", reference: `a-${free.id}`, amount: free.amountDue }), "paid");
 
   const taken = await late(ctx.seats[1]);
   await buy(ctx, { seatIds: [ctx.seats[1].id] });
-  assert.equal(await confirmPayment(db, { orderId: taken.id, provider: "prueba", reference: `b-${taken.id}`, amount: taken.total }), "refund_pending");
+  assert.equal(await confirmPayment(db, { orderId: taken.id, provider: "prueba", reference: `b-${taken.id}`, amount: taken.amountDue }), "refund_pending");
   const { rows: [{ n }] } = await db.query("select count(*)::int as n from tickets where order_id = $1", [taken.id]);
   assert.equal(n, 0);
 });
@@ -313,22 +347,72 @@ test("el escáner valida una entrada comprada una sola vez, y solo el portero de
   await simulatePayment(db, ctx.slug, token);
   const { items: [{ code }] } = await getOrderByToken(db, ctx.slug, token);
 
-  const foreign = await scanTicket(db, await scanner(other.tenant.organization.id), code);
+  const foreign = await scanTicket(db, await scanner(other.tenant.organization.id), code, other.eventId);
   assert.equal(foreign.result, "invalid");
   assert.match(foreign.reason, /otro organizador/);
 
   const portero = await scanner(ctx.tenant.organization.id);
-  const first = await scanTicket(db, portero, code);
+  await assert.rejects(scanTicket(db, portero, code), /Elegí el evento/);
+
+  // Otro evento del mismo cliente: no entra y la entrada sigue sin usar.
+  const otherEvent = await createEvent(db, ctx.tenant, {
+    mode: "ubicaciones",
+    venueName: "Otro lugar",
+    title: "Otro evento",
+    startsAt: future(),
+    locations: [{ name: "General", capacity: 10 }],
+  });
+  const wrong = await scanTicket(db, portero, code, otherEvent);
+  assert.equal(wrong.result, "invalid");
+  assert.match(wrong.reason, /otro evento/);
+
+  const first = await scanTicket(db, portero, code, ctx.eventId);
   assert.equal(first.result, "valid");
   assert.equal(first.ticket.holder, "Ana");
   assert.match(first.ticket.label, /Evento · Platea · Fila A Butaca \d+/);
+  assert.equal(first.ticket.eventTitle, "Evento");
+  assert.equal(first.ticket.sector, "Platea");
+  assert.equal(first.ticket.row, "A");
+  assert.equal(first.ticket.seat, ctx.seats[0].number);
+  assert.equal(first.ticket.orderCount, 1);
+  assert.ok(first.ticket.startsAt);
 
-  const second = await scanTicket(db, portero, code);
+  const second = await scanTicket(db, portero, code, ctx.eventId);
   assert.equal(second.result, "duplicate");
   assert.equal(second.ticket.checkedInBy, portero.email);
 
-  const results = await Promise.all(Array.from({ length: 5 }, () => scanTicket(db, portero, code)));
+  const results = await Promise.all(Array.from({ length: 5 }, () => scanTicket(db, portero, code, ctx.eventId)));
   assert.ok(results.every((result) => result.result === "duplicate"));
+});
+
+test("los QR del cliente: total, usados y sin usar, sin mezclar con otro cliente", async () => {
+  const ctx = await setup();
+  const other = await setup();
+  const portero = await scanner(ctx.tenant.organization.id);
+  assert.deepEqual(await getTicketCounts(db, ctx.tenant), { total: 0, used: 0, unused: 0 });
+
+  // Una reserva sin pagar todavía no tiene QR.
+  await buy(ctx, { seatIds: [ctx.seats[0].id] });
+  assert.equal((await getTicketCounts(db, ctx.tenant)).total, 0);
+
+  const token = await buy(ctx, { seatIds: [ctx.seats[1].id], general: [{ sectorId: ctx.campo.id, quantity: 2 }] });
+  await simulatePayment(db, ctx.slug, token);
+  const { id, items } = await getOrderByToken(db, ctx.slug, token);
+  await scanTicket(db, portero, items[0].code, ctx.eventId);
+  await scanTicket(db, portero, items[0].code, ctx.eventId); // repetir no cuenta dos veces
+  assert.deepEqual(await getTicketCounts(db, ctx.tenant), { total: 3, used: 1, unused: 2 });
+
+  const foreign = await buy(other, { seatIds: [other.seats[0].id] });
+  await simulatePayment(db, other.slug, foreign);
+  assert.deepEqual(await getTicketCounts(db, other.tenant), { total: 1, used: 0, unused: 1 });
+  assert.equal((await getTicketCounts(db, ctx.tenant)).total, 3);
+
+  // Devuelta o de un evento cancelado ya no sirve en la puerta.
+  await db.query("update orders set status = 'refund_pending' where id = $1", [id]);
+  assert.equal((await getTicketCounts(db, ctx.tenant)).total, 0);
+  await db.query("update orders set status = 'paid' where id = $1", [id]);
+  await setEventStatus(db, ctx.tenant, ctx.eventId, "cancelled");
+  assert.equal((await getTicketCounts(db, ctx.tenant)).total, 0);
 });
 
 test("una entrada de un evento cancelado o devuelta no pasa por el escáner", async () => {
@@ -339,9 +423,9 @@ test("una entrada de un evento cancelado o devuelta no pasa por el escáner", as
   const { id, items: [{ code }] } = await getOrderByToken(db, ctx.slug, token);
 
   await db.query("update orders set status = 'refund_pending' where id = $1", [id]);
-  assert.match((await scanTicket(db, portero, code)).reason, /no está paga/);
+  assert.match((await scanTicket(db, portero, code, ctx.eventId)).reason, /no está paga/);
   await db.query("update orders set status = 'paid' where id = $1", [id]);
 
   await setEventStatus(db, ctx.tenant, ctx.eventId, "cancelled");
-  assert.match((await scanTicket(db, portero, code)).reason, /cancelado/);
+  assert.match((await scanTicket(db, portero, code, ctx.eventId)).reason, /cancelado/);
 });

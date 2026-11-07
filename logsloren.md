@@ -7,6 +7,41 @@ Formato: fecha y hora, qué se cambió, archivos tocados y algo a tener en cuent
 
 ---
 
+## 2026-11-06 23:35: QR del cliente en el Inicio del panel
+
+- El Inicio de la cuenta del cliente muestra cuántos QR tiene en total, usados y sin usar.
+- Cuenta entradas vendidas y pagas del cliente de la sesión. No cuenta reservas sin pagar, devoluciones, eventos cancelados ni los QR de prueba de Puerta.
+- Archivos: `backend/src/qr.mjs` (`getTicketCounts`), `src/app/dashboard/panel/page.tsx`, `backend/tests/checkout.test.mjs`. Sin migración.
+
+## 2026-11-06 23:24: comisión por uso en el pago
+
+- El comprador ahora paga entradas + comisión por uso. La pantalla de pago muestra la línea "Comisión por uso · 8%" y el total con la comisión. `confirmPayment` exige ese monto completo.
+- El porcentaje sale del que tiene cada cliente en Admin → Clientes (ya existía; un cliente nuevo arranca en 8%). Cada orden guarda el suyo: cambiarlo no altera órdenes hechas.
+- `orders.total` sigue siendo el valor de las entradas. Lo que paga el comprador es `amountDue` (total + `commission_amount`). Sin migración.
+- Archivos: `backend/src/checkout.mjs`, `src/app/sites/[slug]/compra/[token]/page.tsx`, `backend/tests/checkout.test.mjs`.
+- A tener en cuenta: al elegir entradas todavía se ve el total sin comisión. Mercado Pago tiene que cobrar `amountDue`, no `total`.
+
+## 2026-11-06 19:25: el escáner muestra los datos de la entrada
+
+- Con una entrada vendida, el resultado muestra sector, fila y butaca en grande, y abajo evento, función, titular y cuántas entradas tiene la compra. Las entradas de prueba de Puerta se ven como antes.
+- Archivos: `backend/src/qr.mjs`, `src/app/scan/actions.ts`, `src/app/scan/_scanner.tsx`, `backend/tests/checkout.test.mjs`.
+- A tener en cuenta: en `scan.palcotickets.com` se ve recién cuando esto llegue a main y Vercel lo publique. Sin migración nueva.
+
+## 2026-11-06 18:51: compra de eventos solo por ubicación
+
+- Merge de main en `dashboard/marca-nightowl` (eventos por ubicación y QR por evento de Gianni), sin conflictos.
+- La compra de un evento `display: "list"` dibujaba un plano falso. Ahora muestra una lista de ubicaciones con precio y cantidad, sin plano, con los colores de la pestaña Compra. Una ubicación sin lugares dice "Agotado".
+- La entrada, el resumen y el mail dicen solo el nombre de la ubicación ("VIP", "Campo"), sin ", ubicación general".
+- Pruebas: dos del escáner seguían escaneando sin elegir evento, que ahora se rechaza. Se actualizaron y se sumó una entrada de otro evento del mismo cliente.
+- Archivos: `src/components/checkout-scene.tsx`, `src/components/venue-map.tsx`, `src/app/sites/[slug]/compra/[token]/page.tsx`, `src/app/sites/[slug]/compra/[token]/actions.ts`, `backend/tests/checkout.test.mjs`.
+- A tener en cuenta: falta confirmar si en Neon están aplicadas la 007, la 008 y la 009. No se tocó Neon.
+
+## 2026-11-06 18:35: segunda memoria en `Memoria_EntreChats`
+
+- Archivos nuevos para que Claude no pierda contexto entre chats: `STATUS.md`, `reglas-de-trabajo.md`, `preferencias-diseno.md`, `sistema-qr-gianni.md`, `mapa-del-proyecto.md`, `probar-en-local.md`, `errores-aprendidos.md` y carpeta `chats/`. Índice en el README.
+- `CLAUDE.md` manda a leer `STATUS.md` al empezar.
+- Sin cambios de código. La carpeta y `CLAUDE.md` siguen fuera del repo.
+
 ## 2026-11-06 00:51: rama actualizada con main y PR nueva
 
 - Merge de main en `dashboard/marca-nightowl`. Se mantienen las formas libres de Gianni en el plano y el plano se puede tocar en la compra, también con forma libre.

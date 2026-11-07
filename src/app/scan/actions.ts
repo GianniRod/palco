@@ -12,6 +12,8 @@ export type ScanResult =
       holder: string;
       checkedInAt: string | null;
       checkedInBy: string | null;
+      // Solo en entradas vendidas; las de prueba de Puerta no los tienen.
+      sold: { eventTitle: string; sector: string; row: string | null; seat: number | null; startsAt: string; orderCount: number } | null;
     }
   | { result: "invalid"; reason: string };
 
@@ -19,7 +21,19 @@ type Scan =
   | { result: "invalid"; reason: string }
   | {
       result: "valid" | "duplicate";
-      ticket: { number?: number; label?: string; holder: string; checkedInAt: Date | null; checkedInBy: string | null };
+      ticket: {
+        number?: number;
+        label?: string;
+        holder: string;
+        checkedInAt: Date | null;
+        checkedInBy: string | null;
+        eventTitle?: string;
+        sector?: string;
+        row?: string | null;
+        seat?: number | null;
+        startsAt?: Date;
+        orderCount?: number;
+      };
     };
 
 // Lo llama el escáner del celular con el texto leído del QR. El permiso se chequea en scanTicket:
@@ -43,5 +57,15 @@ export async function scanCodeAction(code: string, eventId: string | null = null
     holder: ticket.holder,
     checkedInAt: ticket.checkedInAt ? new Date(ticket.checkedInAt).toISOString() : null,
     checkedInBy: ticket.checkedInBy ?? null,
+    sold: ticket.sector && ticket.startsAt
+      ? {
+          eventTitle: ticket.eventTitle ?? "",
+          sector: ticket.sector,
+          row: ticket.row ?? null,
+          seat: ticket.seat ?? null,
+          startsAt: new Date(ticket.startsAt).toISOString(),
+          orderCount: ticket.orderCount ?? 1,
+        }
+      : null,
   };
 }

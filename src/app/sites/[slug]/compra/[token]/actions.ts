@@ -41,7 +41,7 @@ export async function payAction(_: PayState, data: FormData): Promise<PayState> 
           title: order.title,
           date: dateFormat.format(new Date(order.startsAt)),
           venue: order.address ? `${order.venue} · ${order.address}` : order.venue,
-          tickets: order.items.map((item: Item) => (item.row ? `${item.sector}, fila ${item.row}, butaca ${item.number}` : `${item.sector}, ubicación general`)),
+          tickets: order.items.map((item: Item) => (item.row ? `${item.sector}, fila ${item.row}, butaca ${item.number}` : item.sector)),
           link: `${publicSiteUrl(slug)}/compra/${token}`,
         });
       });
