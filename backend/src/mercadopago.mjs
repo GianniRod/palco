@@ -47,6 +47,9 @@ async function mpFetch(path, { env, fetchImpl = fetch, method = "GET", body, ide
 // Mercado Pago no acepta localhost en notification_url ni auto_return con URLs que no sean https.
 const isPublicHttps = (url) => /^https:\/\//.test(url) && !/^https:\/\/[^/]*localhost/.test(url);
 
+// Lo que el comprador ve en el resumen de la tarjeta: el boliche, o NIGHTOWL si no hay nombre usable.
+const descriptor = (siteName) => String(siteName ?? "").replace(/[^A-Za-z0-9 ]/g, "").trim().slice(0, 22) || "NIGHTOWL";
+
 // Crea la preferencia de una orden pendiente y devuelve el link de pago.
 // siteUrl: la web del cliente (ahí vuelve el comprador). apiUrl: donde vive /api (webhook y vuelta).
 export async function createPreference(db, slug, token, { siteUrl, apiUrl, siteName }, env = process.env, fetchImpl = fetch) {
@@ -95,11 +98,119 @@ export async function createPreference(db, slug, token, { siteUrl, apiUrl, siteN
       expiration_date_to: new Date(order.expiresAt).toISOString(),
       // Rapipago, Pago Fácil y cajeros tardan días; la reserva dura 10 minutos.
       payment_methods: { excluded_payment_types: [{ id: "ticket" }, { id: "atm" }], installments: 12 },
-      // Lo que el comprador ve en el resumen de la tarjeta: el boliche, o NIGHTOWL si no hay nombre usable.
-      statement_descriptor: String(siteName ?? "").replace(/[^A-Za-z0-9 ]/g, "").trim().slice(0, 22) || "NIGHTOWL",
+      statement_descriptor: descriptor(siteName),
     },
   });
   return preference.init_point;
+}
+
+// --- Checkout Pro con Orders API (la app de Nightowl está creada así) ---
+// Se prende con MP_ORDERS=true; sin eso sigue la preferencia de arriba. Mismo comprador, misma pantalla de pago:
+// cambia el pedido (POST /v1/orders), el aviso (tema "order") y cómo se consulta el resultado.
+export const usesMercadoPagoOrders = (env = process.env) => env.MP_ORDERS === "true";
+
+const MP_ORDER_ID = /^ORD[A-Z0-9]{10,40}$/;
+const money = (value) => Number(value).toFixed(2);
+
+// El cuerpo de la order, sin red ni base: lo que se le manda a Mercado Pago para una orden pendiente.
+export function mercadoPagoOrderBody(order, { siteUrl, siteName }, now = Date.now()) {
+  const back = `${siteUrl}/api/mercadopago/vuelta?token=${encodeURIComponent(order.token)}`;
+  const count = order.items.length;
+  const places = order.items.map((item) => (item.row ? `${item.sector} ${item.row}${item.number}` : item.sector));
+  const [firstName, ...lastName] = String(order.buyerName ?? "").trim().split(/\s+/);
+  // Vence con la reserva (mínimo un minuto: Mercado Pago no acepta duraciones vacías).
+  const seconds = Math.max(60, Math.floor((new Date(order.expiresAt).getTime() - now) / 1000));
+  const title = `${count} ${count === 1 ? "entrada" : "entradas"} · ${order.title}`.slice(0, 250);
+
+  return {
+    type: "online",
+    processing_mode: "manual",
+    // automatic_async: deja correr el 3DS (con "automatic" Mercado Pago lo apaga).
+    capture_mode: "automatic_async",
+    total_amount: money(order.amountDue),
+    external_reference: order.id,
+    expiration_time: `PT${seconds}S`,
+    description: title,
+    payer: {
+      email: order.buyerEmail,
+      ...(firstName ? { first_name: firstName } : {}),
+      ...(lastName.length ? { last_name: lastName.join(" ") } : {}),
+    },
+    items: [
+      {
+        external_code: order.id,
+        title,
+        description: `${order.title} · ${order.venue} · ${places.join(", ")}`.slice(0, 250),
+        // Datos de la industria "tickets y entretenimiento": ayudan al antifraude a aprobar el pago.
+        category_id: "tickets",
+        event_date: new Date(order.startsAt).toISOString(),
+        quantity: 1,
+        // Entradas más comisión: es el monto que exige confirmPayment.
+        unit_price: money(order.amountDue),
+      },
+    ],
+    config: {
+      statement_descriptor: descriptor(siteName),
+      online: {
+        success_url: back,
+        failure_url: back,
+        pending_url: back,
+        ...(isPublicHttps(back) ? { auto_return: "approved" } : {}),
+        // 3DS cuando el antifraude ve riesgo; si hay contracargo lo absorbe la red de la tarjeta.
+        transaction_security: { validation: "on_fraud_risk", liability_shift: "required" },
+      },
+      // Rapipago, Pago Fácil y cajeros tardan días; la reserva dura 10 minutos.
+      payment_method: { not_allowed_types: ["ticket", "atm"], max_installments: 12 },
+    },
+  };
+}
+
+// Crea la order de Mercado Pago de una orden pendiente y devuelve el link de pago (checkout_url).
+export async function createMercadoPagoOrder(db, slug, token, { siteUrl, siteName }, env = process.env, fetchImpl = fetch) {
+  const order = await getOrderByToken(db, slug, token);
+  if (!order) throw new ValidationError("No encontramos esa orden");
+  if (order.status === "expired") throw new ValidationError("La reserva venció. Volvé a elegir tus entradas");
+  if (order.status !== "pending") throw new ValidationError("Esta orden ya no se puede pagar");
+
+  const created = await mpFetch("/v1/orders", {
+    env,
+    fetchImpl,
+    method: "POST",
+    // Un reintento (doble clic, volver atrás) devuelve la misma order mientras dure la reserva.
+    idempotencyKey: `order-${order.id}-${new Date(order.expiresAt).getTime()}`,
+    body: mercadoPagoOrderBody({ ...order, token }, { siteUrl, siteName }),
+  });
+  if (!created?.checkout_url) throw new MercadoPagoError("Mercado Pago no devolvió el link de pago");
+  return created.checkout_url;
+}
+
+// Lo que usa la compra: order o preferencia según MP_ORDERS.
+export function createCheckout(db, slug, token, options, env = process.env, fetchImpl = fetch) {
+  return usesMercadoPagoOrders(env)
+    ? createMercadoPagoOrder(db, slug, token, options, env, fetchImpl)
+    : createPreference(db, slug, token, options, env, fetchImpl);
+}
+
+export const isMercadoPagoOrderId = (id) => MP_ORDER_ID.test(String(id ?? ""));
+
+export async function getMercadoPagoOrder(orderId, env = process.env, fetchImpl = fetch) {
+  if (!isMercadoPagoOrderId(orderId)) throw new ValidationError("Order no válida");
+  return mpFetch(`/v1/orders/${orderId}`, { env, fetchImpl });
+}
+
+// Aplica una order ya consultada a Mercado Pago (nunca lo que dice el aviso o la URL).
+// Solo "processed / accredited" es plata acreditada; un reembolso parcial o total no confirma nada.
+export async function applyMercadoPagoOrder(db, mpOrder) {
+  const orderId = String(mpOrder?.external_reference ?? "");
+  if (!UUID.test(orderId)) return null;
+  if (mpOrder.status !== "processed" || mpOrder.status_detail !== "accredited") return null;
+  if (mpOrder.currency && mpOrder.currency !== "ARS") return null;
+  return confirmPayment(db, {
+    orderId,
+    provider: "mercadopago",
+    reference: String(mpOrder.id),
+    amount: Number(mpOrder.total_paid_amount ?? mpOrder.total_amount),
+  });
 }
 
 export async function getPayment(paymentId, env = process.env, fetchImpl = fetch) {
@@ -147,7 +258,8 @@ export function isValidWebhookSignature({ xSignature, xRequestId, dataId, secret
   if (!ts || !/^\d+$/.test(ts) || !v1) return false;
 
   const parts = [];
-  if (dataId) parts.push(`id:${String(dataId).trim()}`);
+  // Las orders llegan con id alfanumérico en mayúsculas: Mercado Pago firma el id en minúsculas.
+  if (dataId) parts.push(`id:${String(dataId).trim().toLowerCase()}`);
   if (xRequestId) parts.push(`request-id:${String(xRequestId).trim()}`);
   parts.push(`ts:${ts}`);
   const expected = createHmac("sha256", secret).update(`${parts.join(";")};`).digest("hex");

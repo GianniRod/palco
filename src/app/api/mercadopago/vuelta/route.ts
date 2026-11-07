@@ -1,7 +1,7 @@
 import { after, type NextRequest } from "next/server";
 import { getDb } from "@backend/db.mjs";
 import { getOrderByToken } from "@backend/checkout.mjs";
-import { applyPayment, getPayment } from "@backend/mercadopago.mjs";
+import { applyMercadoPagoOrder, applyPayment, getMercadoPagoOrder, getPayment, isMercadoPagoOrderId } from "@backend/mercadopago.mjs";
 import { siteSlugFromHost } from "@/lib/dashboard/config";
 import { sendTicketsOnce } from "@/lib/payments";
 
@@ -20,18 +20,30 @@ export async function GET(request: NextRequest) {
   if (!order) return new Response(null, { status: 404 });
 
   let notice = "";
+  // Con Orders API vuelve order_id (ORD…); con preferencias, solo payment_id.
+  const mpOrderId = params.get("order_id");
   const paymentId = params.get("payment_id");
-  if (paymentId && /^\d+$/.test(paymentId) && order.status !== "paid") {
+  const reference = isMercadoPagoOrderId(mpOrderId) ? mpOrderId : paymentId && /^\d+$/.test(paymentId) ? paymentId : null;
+  if (reference && order.status !== "paid") {
     try {
-      const payment = await getPayment(paymentId);
-      if (payment.external_reference === order.id) {
-        const status = await applyPayment(db, payment);
-        if (status === "paid") after(() => sendTicketsOnce(slug, token));
-        if (payment.status === "rejected") notice = "rechazado";
+      if (reference === mpOrderId) {
+        const mpOrder = await getMercadoPagoOrder(mpOrderId);
+        if (mpOrder.external_reference === order.id) {
+          const status = await applyMercadoPagoOrder(db, mpOrder);
+          if (status === "paid") after(() => sendTicketsOnce(slug, token));
+          if (mpOrder.status === "failed") notice = "rechazado";
+        }
+      } else {
+        const payment = await getPayment(reference);
+        if (payment.external_reference === order.id) {
+          const status = await applyPayment(db, payment);
+          if (status === "paid") after(() => sendTicketsOnce(slug, token));
+          if (payment.status === "rejected") notice = "rechazado";
+        }
       }
     } catch (error) {
       // Si Mercado Pago no responde, el webhook lo confirma después.
-      console.error("[mercadopago] No se pudo consultar el pago al volver", paymentId, error);
+      console.error("[mercadopago] No se pudo consultar el pago al volver", reference, error);
       notice = "confirmando";
     }
   }

@@ -1,11 +1,20 @@
 import { after, type NextRequest } from "next/server";
 import { getDb } from "@backend/db.mjs";
-import { applyPayment, getOrderLink, getPayment, isValidWebhookSignature } from "@backend/mercadopago.mjs";
+import {
+  applyMercadoPagoOrder,
+  applyPayment,
+  getMercadoPagoOrder,
+  getOrderLink,
+  getPayment,
+  isMercadoPagoOrderId,
+  isValidWebhookSignature,
+} from "@backend/mercadopago.mjs";
 import { sendTicketsOnce } from "@/lib/payments";
 
-// Avisos de Mercado Pago. El aviso solo dice "cambió el pago X": el pago se consulta a Mercado Pago
-// y lo aprobado pasa por confirmPayment, que ignora lo ya confirmado. Responder rápido (espera 22 s);
-// un error devuelve 500 y Mercado Pago reintenta.
+// Avisos de Mercado Pago. El aviso solo dice "cambió el pago X" (preferencias, tema "payment") o
+// "cambió la order X" (Orders API, tema "order"): el recurso se consulta a Mercado Pago y lo aprobado
+// pasa por confirmPayment, que ignora lo ya confirmado. Responder rápido (espera 22 s); un error
+// devuelve 500 y Mercado Pago reintenta.
 export async function POST(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const body = await request.json().catch(() => null);
@@ -26,18 +35,29 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (type !== "payment" || !dataId) return new Response(null, { status: 200 });
+  if (!dataId) return new Response(null, { status: 200 });
+  const isOrder = type === "order" && isMercadoPagoOrderId(dataId);
+  if (type !== "payment" && !isOrder) return new Response(null, { status: 200 });
 
   const db = getDb();
   try {
-    const payment = await getPayment(dataId);
-    const status = await applyPayment(db, payment);
+    let status: string | null;
+    let orderId: string;
+    if (isOrder) {
+      const mpOrder = await getMercadoPagoOrder(dataId);
+      status = await applyMercadoPagoOrder(db, mpOrder);
+      orderId = mpOrder.external_reference;
+    } else {
+      const payment = await getPayment(dataId);
+      status = await applyPayment(db, payment);
+      orderId = payment.external_reference;
+    }
     if (status === "paid") {
-      const link = await getOrderLink(db, payment.external_reference);
+      const link = await getOrderLink(db, orderId);
       if (link) after(() => sendTicketsOnce(link.slug, link.token));
     }
     if (status === "refund_pending") {
-      console.warn("[mercadopago] Pago tardío sin lugar, hay que devolverlo", payment.id);
+      console.warn("[mercadopago] Pago tardío sin lugar, hay que devolverlo", dataId);
     }
   } catch (error) {
     console.error("[mercadopago] No se pudo procesar el aviso", dataId, error);

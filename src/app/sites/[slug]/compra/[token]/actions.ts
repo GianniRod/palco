@@ -6,7 +6,7 @@ import { after } from "next/server";
 import { getDb } from "@backend/db.mjs";
 import { ValidationError } from "@backend/auth.mjs";
 import { cancelOrder, simulatePayment } from "@backend/checkout.mjs";
-import { createPreference, isMercadoPagoConfigured, MercadoPagoError } from "@backend/mercadopago.mjs";
+import { createCheckout, isMercadoPagoConfigured, MercadoPagoError } from "@backend/mercadopago.mjs";
 import { getPublicSiteContent } from "@backend/sites.mjs";
 import { publicSiteUrl } from "@/lib/dashboard/config";
 import { paymentsApiUrl, sendTicketsOnce } from "@/lib/payments";
@@ -28,7 +28,7 @@ export async function payAction(_: PayState, data: FormData): Promise<PayState> 
     let url: string;
     try {
       const site = await getPublicSiteContent(db, slug);
-      url = await createPreference(db, slug, token, {
+      url = await createCheckout(db, slug, token, {
         siteUrl: publicSiteUrl(slug),
         apiUrl: paymentsApiUrl(slug),
         siteName: site?.displayName,
@@ -36,7 +36,7 @@ export async function payAction(_: PayState, data: FormData): Promise<PayState> 
     } catch (error) {
       if (error instanceof ValidationError) return { error: error.message };
       if (error instanceof MercadoPagoError) {
-        console.error("[mercadopago] No se pudo crear la preferencia", error.message);
+        console.error("[mercadopago] No se pudo crear el cobro", error.message);
         return { error: "No pudimos conectar con Mercado Pago. Probá de nuevo en un momento" };
       }
       throw error;
