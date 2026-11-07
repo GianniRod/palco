@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useMemo, useRef } from "react";
 import { Minus, Plus } from "lucide-react";
-import { FIT, formatPrice, type SiteContent } from "@/components/public-site";
+import { FIT, formatPriceWithFee, type SiteContent } from "@/components/public-site";
 import { seatLayout, VenueMap, type MapSector, type VenueMapData } from "@/components/venue-map";
 
 // El plano de la compra. Dibuja lo que se armó en Salas y mapas: mismas filas, mismos pasillos y
@@ -231,9 +231,11 @@ function LocationList({
   sectors,
   places,
   full,
+  feePercent,
   onChange,
 }: {
   sectors: CheckoutSector[];
+  feePercent: number;
   places: Record<string, number>;
   full: boolean;
   onChange: (sector: CheckoutSector, delta: number) => void;
@@ -252,7 +254,7 @@ function LocationList({
             >
               <div className={`min-w-0 flex-1 basis-28 ${soldOut ? "opacity-60" : ""}`}>
                 <h2 className={`text-lg font-bold leading-tight ${FIT}`}>{sector.name}</h2>
-                <p className="mt-0.5 font-semibold tabular-nums text-[var(--plan-muted)]">{formatPrice(sector.price)}</p>
+                <p className="mt-0.5 font-semibold tabular-nums text-[var(--plan-muted)]">{formatPriceWithFee(sector.price, feePercent)}</p>
               </div>
               {soldOut ? (
                 <p className="font-semibold text-[var(--plan-muted)]">Agotado</p>
@@ -280,7 +282,9 @@ export function CheckoutScene({
   onSelectSector,
   onToggleSeat,
   onChangePlaces,
+  feePercent = 0,
 }: {
+  feePercent?: number;
   map: VenueMapData;
   sectors: CheckoutSector[];
   seats: CheckoutSeat[];
@@ -299,7 +303,7 @@ export function CheckoutScene({
   const mapSector = map.sectors.find((sector) => sector.key === active?.mapKey);
   const activeSeats = useMemo(() => seats.filter((seat) => seat.sectorId === active?.id), [seats, active?.id]);
   if (map.display === "list") {
-    return <LocationList sectors={sectors} places={places} full={count >= max} onChange={onChangePlaces} />;
+    return <LocationList sectors={sectors} places={places} full={count >= max} feePercent={feePercent} onChange={onChangePlaces} />;
   }
   const freeInActive = activeSeats.filter((seat) => seat.available).length;
   const stage = stageSide(map, mapSector);
@@ -307,7 +311,7 @@ export function CheckoutScene({
   const freeBySector = new Map<string, number>();
   for (const seat of seats) if (seat.available) freeBySector.set(seat.sectorId, (freeBySector.get(seat.sectorId) ?? 0) + 1);
   const soldOut = (sector: CheckoutSector) => (sector.kind === "general" ? (sector.remaining ?? 0) <= 0 : !freeBySector.get(sector.id));
-  const prices = Object.fromEntries(sectors.map((sector) => [sector.mapKey, soldOut(sector) ? "Agotado" : formatPrice(sector.price)]));
+  const prices = Object.fromEntries(sectors.map((sector) => [sector.mapKey, soldOut(sector) ? "Agotado" : formatPriceWithFee(sector.price, feePercent)]));
 
   const seatSector = new Map(seats.map((seat) => [seat.id, seat.sectorId]));
   const badges: Record<string, number> = {};
@@ -353,7 +357,7 @@ export function CheckoutScene({
         <div ref={panel} className="scroll-mt-24 p-4 @xl:p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-2xl font-extrabold tracking-tight">{active.name}</h2>
-            <p className="text-lg font-bold tabular-nums">{formatPrice(active.price)}</p>
+            <p className="text-lg font-bold tabular-nums">{formatPriceWithFee(active.price, feePercent)}</p>
           </div>
 
           {active.kind === "general" ? (

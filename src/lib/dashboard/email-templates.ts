@@ -5,7 +5,7 @@ import { site } from "../site";
 const escape = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-const SIGNATURE_TEXT = `\n\n--\nMade by Nightowl\n${site.url}`;
+const SIGNATURE_TEXT = `\n\n--\nTecnología de Nightowl\n${site.url}`;
 
 function layout({ preheader, body }: { preheader: string; body: string }) {
   return `<!doctype html>
@@ -20,7 +20,7 @@ function layout({ preheader, body }: { preheader: string; body: string }) {
         </td></tr>
         <tr><td style="padding:32px 28px;font-size:16px;line-height:1.55">${body}</td></tr>
         <tr><td style="padding:18px 28px;border-top:1px solid #e4e4e7;font-size:12px;color:#71717a">
-          Made by <a href="${site.url}" style="color:#09090b;font-weight:bold;text-decoration:none">Nightowl</a>
+          Tecnología de <a href="${site.url}" style="color:#09090b;font-weight:bold;text-decoration:none">Nightowl</a>
         </td></tr>
       </table>
     </td></tr>

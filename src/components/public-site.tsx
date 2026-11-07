@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { AtSign, Globe, Mail, MapPin, Phone } from "lucide-react";
-import { MadeByNightowl, Owl } from "@/components/made-by";
+import { Owl, PoweredByNightowl } from "@/components/made-by";
 
 // Las tres plantillas de la página pública. El mismo componente pinta la página real y la
 // vista previa del editor, por eso los cortes son por ancho del contenedor y no de la pantalla.
@@ -34,10 +34,20 @@ export type SiteEvent = {
   image?: string | null;
   moreDates?: number;
   fromPrice?: number | null;
+  feePercent?: number;
 };
 
 const priceFormat = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 export const formatPrice = (price: number) => priceFormat.format(price);
+
+// Tarifa de servicio (la comisión de Nightowl), redondeada igual que hold_order en la base.
+export const serviceFee = (price: number, percent = 0) => Math.round((price * percent) / 100);
+
+// "$10.000 + $800": el precio de la entrada y, aparte, la tarifa de servicio.
+export const formatPriceWithFee = (price: number, percent = 0) => {
+  const fee = serviceFee(price, percent);
+  return fee > 0 ? `${formatPrice(price)} + ${formatPrice(fee)}` : formatPrice(price);
+};
 
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 const longDate = new Intl.DateTimeFormat("es-AR", {
@@ -202,7 +212,7 @@ function EventCard({ site, event, index, link }: { site: SiteContent; event: Sit
         <p className="mt-1 text-[15px] capitalize text-[var(--site-muted)]">{formatCard(event)}</p>
         <p className={`w-full text-[15px] text-[var(--site-muted)] ${FIT}`}>{event.venue}</p>
         {Boolean(event.moreDates) && <p className="text-[15px] text-[var(--site-muted)]">Y {event.moreDates} {event.moreDates === 1 ? "fecha más" : "fechas más"}</p>}
-        {typeof event.fromPrice === "number" && <p className="mt-2 font-semibold">Desde {formatPrice(event.fromPrice)}</p>}
+        {typeof event.fromPrice === "number" && <p className="mt-2 font-semibold">Desde {formatPriceWithFee(event.fromPrice, event.feePercent)}</p>}
         <div className="mt-4"><EventButton event={event} link={link} size="sm" /></div>
       </div>
     </li>
@@ -214,7 +224,6 @@ function EventSection({ site, events, title, linkEvents }: Props & { title: stri
     <section id="eventos" className={`${WRAP} scroll-mt-24 py-12 @3xl:py-20`}>
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
         <SectionTitle site={site}>{title}</SectionTitle>
-        <MadeByNightowl color="var(--site-fg)" />
       </div>
       {events.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--site-line)] px-6 py-14 text-center">
@@ -408,7 +417,7 @@ function Footer({ site }: { site: SiteContent }) {
             © {new Date().getFullYear()} {site.displayName}
           </p>
           {/* Crédito chico de la plataforma: lleva a la web de Nightowl */}
-          <MadeByNightowl color="var(--site-fg)" />
+          <PoweredByNightowl color="var(--site-fg)" />
         </div>
       </div>
     </footer>

@@ -212,7 +212,8 @@ export async function unpublishSite(db, tenant) {
 // Solo el contenido del sitio: la compra y las entradas no necesitan la lista de eventos.
 async function findPublishedSite(db, slug) {
   const { rows: [site] } = await db.query(
-    `select sites.published as content, organizations.id as "organizationId"
+    `select sites.published as content, organizations.id as "organizationId",
+       organizations.commission_percent as "feePercent"
      from sites
      join organizations on organizations.id = sites.organization_id
      where organizations.slug = $1
@@ -220,7 +221,13 @@ async function findPublishedSite(db, slug) {
        and organizations.suspended_at is null`,
     [slug],
   );
-  return site ? { organizationId: site.organizationId, content: { cover: "", ...CHECKOUT_DEFAULTS, ...site.content } } : null;
+  return site
+    ? {
+        organizationId: site.organizationId,
+        feePercent: Number(site.feePercent),
+        content: { cover: "", ...CHECKOUT_DEFAULTS, ...site.content },
+      }
+    : null;
 }
 
 export async function getPublicSiteContent(db, slug) {
@@ -228,11 +235,13 @@ export async function getPublicSiteContent(db, slug) {
 }
 
 // La página que ve el público, o null si no existe, no se publicó o el cliente está suspendido.
-// Solo devuelve datos públicos: nada de comisión ni contactos internos.
+// Solo devuelve datos públicos: nada de contactos internos. La comisión sí, porque el comprador
+// la ve como "tarifa de servicio" al lado de cada precio ($10.000 + $800).
 export async function getPublicSite(db, slug) {
   const site = await findPublishedSite(db, slug);
   if (!site) return null;
-  return { content: site.content, events: await upcomingEvents(db, site.organizationId) };
+  const events = await upcomingEvents(db, site.organizationId);
+  return { content: site.content, events: events.map((event) => ({ ...event, feePercent: site.feePercent })) };
 }
 
 // El precio que paga hoy el público: el del primer lote vigente con cupo o, si no hay, el del sector.
@@ -267,8 +276,9 @@ async function upcomingEvents(db, organizationId) {
 
 // La página de un evento: el sitio que lo enmarca, sus funciones y los precios por sector.
 export async function getPublicEvent(db, slug, eventId) {
-  const content = await getPublicSiteContent(db, slug);
-  if (!content) return null;
+  const site = await findPublishedSite(db, slug);
+  if (!site) return null;
+  const { content, feePercent } = site;
 
   const { rows: [event] } = await db.query(
     `select
@@ -295,6 +305,6 @@ export async function getPublicEvent(db, slug, eventId) {
   const { hasImage, updatedAt, ...rest } = event;
   return {
     content,
-    event: { ...rest, image: imageUrl({ id: event.id, hasImage, updatedAt }), performances, sectors },
+    event: { ...rest, image: imageUrl({ id: event.id, hasImage, updatedAt }), performances, sectors, feePercent },
   };
 }

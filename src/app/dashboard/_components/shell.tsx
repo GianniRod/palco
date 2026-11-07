@@ -2,7 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { KeyRound, LogOut } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { MadeByNightowl, Owl } from "@/components/made-by";
+import { Owl } from "@/components/made-by";
 import { logoutAction } from "../actions";
 import { getCurrentSession } from "@/lib/dashboard/session";
 import { MobileNav } from "./mobile-nav";
@@ -75,9 +75,6 @@ export function Shell({
       <div className="flex min-w-0 flex-1 flex-col">
         {banner}
         <main className={`mx-auto w-full max-w-5xl flex-1 p-4 md:p-10 ${fabSpace ? "pb-28 md:pb-10" : ""}`}>{children}</main>
-        <footer className={`flex justify-center px-4 pb-6 text-palco-900 ${fabSpace ? "mb-20 md:mb-0" : ""}`}>
-          <MadeByNightowl />
-        </footer>
       </div>
     </div>
   );
@@ -111,7 +108,6 @@ export function AuthCard({ title, intro, children }: { title: string; intro?: st
         {intro && <p className="mt-1 text-sm text-palco-600">{intro}</p>}
         <div className="mt-5">{children}</div>
       </div>
-      <MadeByNightowl color="#ffffff" className="mt-6" />
     </main>
   );
 }

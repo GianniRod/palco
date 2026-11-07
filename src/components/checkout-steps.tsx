@@ -1,9 +1,8 @@
 import { Check } from "lucide-react";
-import { MadeByNightowl } from "@/components/made-by";
 
 const STEPS = ["Elegí", "Pagá", "Entrá"];
 
-// Dónde está parado el comprador, con la firma siempre a la vista.
+// Dónde está parado el comprador.
 export function CheckoutSteps({ current }: { current: number }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
@@ -29,7 +28,6 @@ export function CheckoutSteps({ current }: { current: number }) {
           );
         })}
       </ol>
-      <MadeByNightowl color="var(--site-fg)" />
     </div>
   );
 }
