@@ -6,8 +6,8 @@ import { getOrderByToken } from "@backend/checkout.mjs";
 import { isMercadoPagoConfigured } from "@backend/mercadopago.mjs";
 import { getPublicSiteContent } from "@backend/sites.mjs";
 import { CheckoutSteps } from "@/components/checkout-steps";
-import { MadeByNightowl, Owl } from "@/components/made-by";
-import { formatPrice, SiteFrame, titleFont, type SiteContent } from "@/components/public-site";
+import { Owl } from "@/components/made-by";
+import { formatPrice, formatPriceWithFee, SiteFrame, titleFont, type SiteContent } from "@/components/public-site";
 import { TicketCard } from "@/components/ticket-card";
 import { brandedQrSvg } from "@/lib/branded-qr";
 import { checkoutEnabled } from "@/lib/checkout";
@@ -81,7 +81,6 @@ function Message({ title, children, eventId }: { title: string; children: string
       <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
       <p className="mt-2 text-[var(--site-muted)]">{children}</p>
       <a href={`/eventos/${eventId}`} className="mt-5 inline-block rounded-md bg-[var(--site-accent)] px-5 py-3 font-bold text-[var(--site-on-accent)]">Volver al evento</a>
-      <div className="mt-6"><MadeByNightowl color="var(--site-fg)" /></div>
     </div>
   );
 }
@@ -108,8 +107,7 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
         {order.status === "paid" && (
           <>
             <div className="mb-8"><CheckoutSteps current={2} /></div>
-            <div className="mb-6 flex items-start gap-3">
-              <Owl className="h-12 shrink-0 text-[var(--site-accent-text)]" />
+            <div className="mb-6">
               <div>
                 <h1 className={`text-3xl ${titleFont(site)}`}>¡Ya estás adentro, {order.buyerName}!</h1>
                 <p className="mt-1 text-[var(--site-muted)]">Te mandamos las entradas a {order.buyerEmail}. Mostrá el QR en la puerta: cada uno entra una sola vez. Nos vemos en la noche.</p>
@@ -141,12 +139,12 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
                   {items.map((item) => (
                     <li key={item.id} className="flex justify-between gap-3 py-3">
                       <span>{itemLabel(item)}{item.lot ? <span className="text-[var(--site-muted)]"> · {item.lot}</span> : null}</span>
-                      <span className="font-semibold tabular-nums">{formatPrice(item.unitPrice)}</span>
+                      <span className="font-semibold tabular-nums">{formatPriceWithFee(item.unitPrice, Number(order.commissionPercent))}</span>
                     </li>
                   ))}
                   {order.commissionAmount > 0 && (
                     <li className="flex justify-between gap-3 py-3">
-                      <span>Comisión por uso <span className="text-[var(--site-muted)]">· {Number(order.commissionPercent).toLocaleString("es-AR")}%</span></span>
+                      <span>Tarifa de servicio</span>
                       <span className="font-semibold tabular-nums">{formatPrice(order.commissionAmount)}</span>
                     </li>
                   )}

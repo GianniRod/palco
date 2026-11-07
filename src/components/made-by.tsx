@@ -16,20 +16,17 @@ export function Owl({ className = "" }: { className?: string }) {
   );
 }
 
-// La firma de la agencia: va en todo lo que hacemos, también en la página de cada cliente.
-export function MadeByNightowl({ color = "currentColor", className = "" }: { color?: string; className?: string }) {
+// Crédito chico de la plataforma en el pie de la web de cada cliente: lleva a la web de Nightowl.
+export function PoweredByNightowl({ color = "currentColor", className = "" }: { color?: string; className?: string }) {
   return (
     <a
       href={site.url}
       target="_blank"
       rel="noopener"
-      aria-label="Made by Nightowl"
-      style={{ color }}
-      className={`group inline-flex items-center gap-1.5 text-xs font-medium opacity-70 transition hover:opacity-100 ${className}`}
+      className={`flex items-center gap-2 opacity-80 transition hover:opacity-100 ${className}`}
     >
-      <Owl className="h-4 transition-transform duration-300 group-hover:-rotate-12" />
-      <span>Made by</span>
-      <Logo className="h-3.5" color={color} />
+      Tecnología de
+      <Logo className="h-4" color={color} />
     </a>
   );
 }

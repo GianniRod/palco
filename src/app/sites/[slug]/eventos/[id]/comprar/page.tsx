@@ -80,6 +80,7 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
           map={event.map}
           site={{ seatShape: site.seatShape, ticketStyle: site.ticketStyle, template: site.template }}
           titleClass={titleFont(site)}
+          feePercent={event.feePercent}
           summary={{
             title: event.title,
             date: longDate.format(new Date(performance.startsAt)),

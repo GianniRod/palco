@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, MapPin } from "lucide-react";
 import { getDb } from "@backend/db.mjs";
 import { getPublicEvent } from "@backend/sites.mjs";
-import { MadeByNightowl } from "@/components/made-by";
-import { FIT, SiteFrame, formatPrice } from "@/components/public-site";
+import { FIT, SiteFrame, formatPriceWithFee } from "@/components/public-site";
 import { VenueMap } from "@/components/venue-map";
 import { checkoutEnabled } from "@/lib/checkout";
 
@@ -47,7 +46,7 @@ async function Content({ params }: { params: Props["params"] }) {
   const { content: site, event } = data;
   const dark = site.background === "oscuro";
   const sectors: Sector[] = event.sectors;
-  const prices = Object.fromEntries(sectors.map((sector) => [sector.mapKey, formatPrice(sector.price)]));
+  const prices = Object.fromEntries(sectors.map((sector) => [sector.mapKey, formatPriceWithFee(sector.price, event.feePercent)]));
 
   return (
     <SiteFrame site={site} className="min-h-screen" homeHref="/">
@@ -86,7 +85,7 @@ async function Content({ params }: { params: Props["params"] }) {
                 {sectors.map((sector) => (
                   <li key={sector.mapKey} className="flex items-baseline justify-between gap-3 py-2">
                     <span className={FIT}>{sector.name}</span>
-                    <span className="shrink-0 font-semibold tabular-nums">{formatPrice(sector.price)}</span>
+                    <span className="shrink-0 font-semibold tabular-nums">{formatPriceWithFee(sector.price, event.feePercent)}</span>
                   </li>
                 ))}
               </ul>
@@ -95,7 +94,6 @@ async function Content({ params }: { params: Props["params"] }) {
               ) : (
                 <p className="mt-4 rounded-md bg-[var(--site-accent)] px-4 py-3 text-center font-bold text-[var(--site-on-accent)]">Entradas muy pronto</p>
               )}
-              <div className="mt-4 flex justify-center"><MadeByNightowl color="var(--site-fg)" /></div>
             </div>
             {/* Los eventos que se venden solo por ubicación no muestran plano */}
             {event.map?.display !== "list" && (

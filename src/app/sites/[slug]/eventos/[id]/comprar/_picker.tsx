@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Loader2, X } from "lucide-react";
 import { CheckoutScene, type CheckoutSeat, type CheckoutSector } from "@/components/checkout-scene";
-import { formatPrice, type SiteContent } from "@/components/public-site";
+import { formatPrice, formatPriceWithFee, serviceFee, type SiteContent } from "@/components/public-site";
 import type { VenueMapData } from "@/components/venue-map";
 import { startOrderAction, type CheckoutState } from "./actions";
 
@@ -42,7 +42,9 @@ export function TicketPicker({
   site,
   titleClass,
   summary,
+  feePercent,
 }: {
+  feePercent: number;
   performanceId: string;
   sectors: CheckoutSector[];
   seats: CheckoutSeat[];
@@ -93,9 +95,12 @@ export function TicketPicker({
   const selected = useMemo(() => new Set(cart.seats), [cart.seats]);
   const count = cart.seats.length + placeTotal(cart.places);
   const priceOf = (sectorId: string) => sectorById.get(sectorId)?.price ?? 0;
-  const total =
+  const subtotal =
     cart.seats.reduce((sum, id) => sum + priceOf(seatById.get(id)?.sectorId ?? ""), 0) +
     Object.entries(cart.places).reduce((sum, [sectorId, quantity]) => sum + priceOf(sectorId) * quantity, 0);
+  // Lo mismo que cobra la orden: entradas + tarifa de servicio sobre el total.
+  const fee = serviceFee(subtotal, feePercent);
+  const total = subtotal + fee;
 
   // Se actualiza a partir del valor más nuevo: dos toques seguidos cuentan los dos.
   const toggleSeat = useCallback((id: string) => {
@@ -145,6 +150,7 @@ export function TicketPicker({
         onSelectSector={setActiveId}
         onToggleSeat={toggleSeat}
         onChangePlaces={changePlaces}
+        feePercent={feePercent}
       />
 
       <aside id="resumen" className={`min-w-0 scroll-mt-24 overflow-hidden rounded-2xl bg-[var(--site-surface)] [box-shadow:var(--site-shadow)] @4xl:sticky @4xl:top-24 ${flip ? "@4xl:order-first" : ""}`}>
@@ -177,7 +183,7 @@ export function TicketPicker({
                       <span className="text-[var(--site-muted)]"> · Fila {seat.row}, butaca {seat.number}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
-                      <span className="font-semibold tabular-nums">{formatPrice(priceOf(seat.sectorId))}</span>
+                      <span className="font-semibold tabular-nums">{formatPriceWithFee(priceOf(seat.sectorId), feePercent)}</span>
                       <button type="button" aria-label={`Quitar fila ${seat.row}, butaca ${seat.number}`} onClick={() => toggleSeat(id)} className="rounded p-0.5 text-[var(--site-muted)] transition hover:text-[var(--site-fg)]">
                         <X className="size-4" aria-hidden />
                       </button>
@@ -189,7 +195,7 @@ export function TicketPicker({
                 <li key={sector.id} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--site-bg)] px-3 py-2">
                   <span className="min-w-0"><strong className="font-semibold">{cart.places[sector.id]} × {sector.name}</strong></span>
                   <span className="flex shrink-0 items-center gap-2">
-                    <span className="font-semibold tabular-nums">{formatPrice(sector.price * cart.places[sector.id])}</span>
+                    <span className="font-semibold tabular-nums">{formatPriceWithFee(sector.price * cart.places[sector.id], feePercent)}</span>
                     <button type="button" aria-label={`Quitar ${sector.name}`} onClick={() => changePlaces(sector, -cart.places[sector.id])} className="rounded p-0.5 text-[var(--site-muted)] transition hover:text-[var(--site-fg)]">
                       <X className="size-4" aria-hidden />
                     </button>
@@ -199,6 +205,12 @@ export function TicketPicker({
             </ul>
           )}
 
+          {fee > 0 && (
+            <div className="flex items-baseline justify-between text-sm">
+              <span>Tarifa de servicio</span>
+              <span className="font-semibold tabular-nums">{formatPrice(fee)}</span>
+            </div>
+          )}
           <div className="flex items-baseline justify-between">
             <span className="font-semibold">Total</span>
             <span className="text-2xl font-extrabold tabular-nums">{formatPrice(total)}</span>

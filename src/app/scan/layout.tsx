@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
-import { MadeByNightowl } from "@/components/made-by";
 
 export const metadata: Metadata = {
   title: { default: "Nightowl Scan", template: "%s · Nightowl Scan" },
@@ -15,9 +14,6 @@ export default function ScanLayout({ children }: { children: ReactNode }) {
   return (
     <div className="minimal min-h-dvh">
       {children}
-      <footer className="flex justify-center bg-palco-950 px-4 py-4">
-        <MadeByNightowl color="#ffffff" />
-      </footer>
     </div>
   );
 }
