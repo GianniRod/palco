@@ -58,7 +58,7 @@ export function CreateOrganizationForm() {
           required
           value={customSlug ?? toSlug(name)}
           onChange={(e) => setCustomSlug(e.target.value)}
-          hint="Va a ser la dirección de su página: slug.palcotickets.com. No se puede cambiar después."
+          hint="Va a ser la dirección de su página: slug.nightowl.com.ar. No se puede cambiar después."
         />
         <Field
           label="Comisión de Nightowl (%)"

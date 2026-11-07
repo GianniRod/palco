@@ -7,6 +7,7 @@ import { parseDemoRequest, type DemoRequest } from "@/lib/demo-request";
 //   DEMO_FROM       remitente de un dominio verificado en Resend,
 //                   por defecto "Nightowl Web <web@palcotickets.com>"
 
+// Siguen en palcotickets.com hasta que nightowl.com.ar esté verificado en Resend y reciba mails.
 const DEFAULT_TO = "contacto@palcotickets.com";
 const DEFAULT_FROM = "Nightowl Web <web@palcotickets.com>";
 
@@ -62,7 +63,7 @@ function renderEmail(d: DemoRequest) {
           ? `<p style="margin:20px 0 6px;color:#82263b">Qué necesita</p><p style="margin:0;white-space:pre-wrap">${escapeHtml(d.message)}</p>`
           : ""
       }
-      <p style="margin-top:24px;font-size:12px;color:#888">Enviado desde el formulario de palcotickets.com. Respondé este mail para contestarle directamente.</p>
+      <p style="margin-top:24px;font-size:12px;color:#888">Enviado desde el formulario de nightowl.com.ar. Respondé este mail para contestarle directamente.</p>
     </div>`;
   return { text, html };
 }

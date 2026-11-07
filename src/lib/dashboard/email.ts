@@ -3,6 +3,7 @@ import { DASHBOARD_URL } from "./config";
 import { passwordResetEmail, ticketsEmail, type TicketsEmailData } from "./email-templates";
 
 // Remitente de un dominio verificado en Resend, igual que el formulario de demo.
+// Sigue en palcotickets.com hasta verificar nightowl.com.ar en Resend (o cargar DASHBOARD_FROM).
 const DEFAULT_FROM = "Nightowl <no-responder@palcotickets.com>";
 
 async function send(to: string, { subject, text, html }: { subject: string; text: string; html: string }, tag: string, devNote: string) {

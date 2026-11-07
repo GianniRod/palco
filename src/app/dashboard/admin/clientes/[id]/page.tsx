@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/dashboard/session";
 import { setMemberDisabledAction, setSuspendedAction, startImpersonationAction } from "../../actions";
 import { Card, formatDate, Loading, PageTitle } from "../../../_components/shell";
 import { SubmitButton } from "../../../_components/ui";
+import { publicSiteHost } from "@/lib/dashboard/config";
 import {
   AddMemberForm,
   CommissionForm,
@@ -119,7 +120,7 @@ async function Content({ params }: { params: Props["params"] }) {
         <div className="lg:col-span-2">
           <Card title="Datos">
             <p className="mb-4 text-sm text-palco-600">
-              Página: <strong>{organization.slug}.palcotickets.com</strong>
+              Página: <strong>{publicSiteHost(organization.slug)}</strong>
             </p>
             <EditOrganizationForm organization={organization} />
           </Card>

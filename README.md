@@ -1,6 +1,6 @@
 # Nightowl
 
-https://www.palcotickets.com
+https://www.nightowl.com.ar
 
 Sitio público de Nightowl: venta de entradas y control de acceso con marca propia para teatros, salas y productoras.
 

@@ -11,7 +11,7 @@ cd backend
 npm install
 npm run db:migrate   # aplica lo pendiente de db/migrations
 npm run db:seed      # carga una función de prueba
-npm run admin:create -- nombre@palcotickets.com   # crea un admin y muestra su contraseña inicial
+npm run admin:create -- nombre@nightowl.com.ar   # crea un admin y muestra su contraseña inicial
 ```
 
 ## Pruebas

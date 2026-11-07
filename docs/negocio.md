@@ -70,7 +70,7 @@ su propio dominio. Hay tres formas, de la más integrada a la más simple:
 | **Subdominio propio** | `tickets.moscubuenosaires.com` | Agregar **un** registro DNS (CNAME) que les pasamos. | Clientes que quieren algo rápido y prolijo |
 
 Mientras el cliente lo conecta, o si no tiene web, puede vender igual desde
-**`moscu.palcotickets.com`**, que funciona desde el primer día.
+**`moscu.nightowl.com.ar`**, que funciona desde el primer día.
 
 En todos los casos el público ve la marca del cliente, y las entradas, los emails y los
 datos de los compradores son del cliente.
@@ -127,13 +127,13 @@ Se puede ofrecer cualquiera de las dos según el cliente.
 
 ## 6. Cómo trabajamos con un cliente nuevo
 
-1. **Contacto**: el teatro completa "Pedir demo" en palcotickets.com → llega a `contacto@palcotickets.com`.
+1. **Contacto**: el teatro completa "Pedir demo" en nightowl.com.ar → llega a `contacto@nightowl.com.ar`.
 2. **Demo**: le mostramos Nightowl con el plano de su sala y su marca.
 3. **Alta**: desde nuestro panel de administrador creamos su organización y su usuario.
 4. **Configuración**: el cliente (o nosotros con él) elige plantilla, sube logo y colores,
    carga el mapa de su sala y conecta su Mercado Pago.
 5. **Integración a su web**: conectamos Nightowl a su sitio (`suweb.com/tickets`, widget o
-   subdominio, ver 3.1). Hasta que esté listo, vende desde `suweb.palcotickets.com`.
+   subdominio, ver 3.1). Hasta que esté listo, vende desde `suweb.nightowl.com.ar`.
 6. **Primer evento**: crea la función, precios y lotes, y publica.
 7. **Venta**: el público compra desde la web del cliente y recibe el QR.
 8. **Día del evento**: sus porteros validan con la app.
@@ -148,7 +148,7 @@ Se puede ofrecer cualquiera de las dos según el cliente.
 | Hosting (Vercel) | Web, dashboard y páginas de clientes | Bajo al principio, crece con el tráfico |
 | Base de datos (Neon / Postgres) | Eventos, butacas, órdenes, entradas | Bajo al principio |
 | Emails (Resend) | Entradas, avisos, formulario | Gratis hasta 3.000 mails/mes, después pago |
-| Dominio y DNS (Cloudflare) | palcotickets.com | Bajo, anual |
+| Dominio (nic.ar) y DNS (Vercel) | nightowl.com.ar | Bajo, anual |
 | Comisiones de Mercado Pago | Por cada pago | Las paga cliente o comprador, no Nightowl **[A definir]** |
 | Personas | Desarrollo, ventas, soporte | El costo más grande |
 
@@ -174,8 +174,8 @@ eso lo hace Mercado Pago.
 ## 9. Qué tenemos hoy y qué sigue
 
 **Hoy**
-- Landing en **www.palcotickets.com** con demo animada del producto y formulario "Pedir demo".
-- Email de contacto `contacto@palcotickets.com`.
+- Landing en **www.nightowl.com.ar** con demo animada del producto y formulario "Pedir demo".
+- Email de contacto `contacto@nightowl.com.ar`.
 - Base del backend: salas, eventos, sectores, butacas, órdenes, entradas y reserva sin sobreventa.
 - Dashboard con login (Neon): panel admin con clientes, usuarios, comisión, auditoría y "Editar como el cliente".
 

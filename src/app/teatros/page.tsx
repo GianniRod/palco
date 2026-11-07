@@ -57,7 +57,7 @@ const faqs = [
   },
   {
     q: "¿Puedo vender desde mi propia web?",
-    a: "Sí, esa es la idea. Conectamos Nightowl a tu sitio y vendés en tusitio.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en palcotickets.com.",
+    a: "Sí, esa es la idea. Conectamos Nightowl a tu sitio y vendés en tusitio.com/tickets, con un widget o en un subdominio tuyo. Si todavía no tenés web, arrancás con una página en nightowl.com.ar.",
   },
   {
     q: "¿Quién cobra?",

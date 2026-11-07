@@ -1,12 +1,12 @@
 // Crea un admin de Palco y muestra su contraseña inicial una sola vez.
 // El panel no permite crear admins: el primero (y los siguientes) salen de acá.
-// Uso: npm run admin:create -- nombre@palcotickets.com
+// Uso: npm run admin:create -- nombre@nightowl.com.ar
 import pg from "pg";
 import { generateTemporaryPassword, hashPassword, normalizeEmail, recordAudit } from "../src/auth.mjs";
 
 const email = normalizeEmail(process.argv[2]);
 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  console.error("Uso: npm run admin:create -- nombre@palcotickets.com");
+  console.error("Uso: npm run admin:create -- nombre@nightowl.com.ar");
   process.exit(1);
 }
 

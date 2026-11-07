@@ -5,11 +5,12 @@ import {
   SCAN_HOSTS,
   SCAN_PUBLIC_PATHS,
   SESSION_COOKIE,
+  legacyRedirectHost,
   siteSlugFromHost,
 } from "@/lib/dashboard/config";
 
 // Decide qué sitio mostrar según el dominio. El panel vive en src/app/dashboard,
-// pero desde afuera se ve en la raíz de dashboard.palcotickets.com.
+// pero desde afuera se ve en la raíz de dashboard.nightowl.com.ar.
 export function proxy(request: NextRequest) {
   // x-forwarded-host primero: al redirigir desde una Server Action, Next pide la página destino
   // a su propio origen (Host: localhost) y el dominio real solo viaja en este header.
@@ -17,7 +18,14 @@ export function proxy(request: NextRequest) {
   const host = forwarded.split(",")[0].trim().split(":")[0].toLowerCase();
   const { pathname } = request.nextUrl;
 
-  // Escáner de QR: scan.palcotickets.com → src/app/scan.
+  // Nos mudamos de palcotickets.com: cada página va a la misma en nightowl.com.ar (permanente).
+  // /api queda afuera del proxy, así los avisos de Mercado Pago a la URL vieja siguen llegando.
+  const legacy = legacyRedirectHost(host);
+  if (legacy) {
+    return NextResponse.redirect(new URL(`${pathname}${request.nextUrl.search}`, `https://${legacy}`), 308);
+  }
+
+  // Escáner de QR: scan.nightowl.com.ar → src/app/scan.
   if (SCAN_HOSTS.includes(host)) {
     if (!request.cookies.has(SESSION_COOKIE) && !SCAN_PUBLIC_PATHS.includes(pathname)) {
       return NextResponse.redirect(new URL("/login", request.url));

@@ -84,8 +84,8 @@ y Nightowl se queda con su comisión mediante <code>marketplace_fee</code>. La p
     <h3>Crear la app en Mercado Pago Developers <span class="tag you">lo hacés vos</span></h3>
     <ul>
       <li>Entrar a <a href="https://www.mercadopago.com.ar/developers/panel/app">Tus integraciones</a> con la cuenta de Mercado Pago de Nightowl y crear una aplicación de <strong>Checkout Pro</strong>.</li>
-      <li>Cargar la URL de redirección de OAuth (fija), por ejemplo <code>https://app.palcotickets.com/api/mp/oauth/callback</code>.</li>
-      <li>En <strong>Webhooks → Configurar notificaciones</strong>: URL de producción <code>https://app.palcotickets.com/api/webhooks/mercadopago</code>, evento <strong>Pagos</strong> (y <strong>Vinculación de aplicaciones</strong> para enterarnos si un boliche se desconecta). Al guardar se genera la clave secreta.</li>
+      <li>Cargar la URL de redirección de OAuth (fija), por ejemplo <code>https://www.nightowl.com.ar/api/mp/oauth/callback</code>.</li>
+      <li>En <strong>Webhooks → Configurar notificaciones</strong>: URL de producción <code>https://www.nightowl.com.ar/api/webhooks/mercadopago</code>, evento <strong>Pagos</strong> (y <strong>Vinculación de aplicaciones</strong> para enterarnos si un boliche se desconecta). Al guardar se genera la clave secreta.</li>
       <li>Crear usuarios de prueba: uno <strong>vendedor</strong> (hace de boliche) y uno <strong>comprador</strong>.</li>
       <li>Cargar en Vercel y en <code>.env.local</code>:
 <pre><code>MP_CLIENT_ID=...
@@ -121,7 +121,7 @@ alter table orders add column mp_preference_id text;</code></pre>
   &amp;response_type=code
   &amp;platform_id=mp
   &amp;state=STATE
-  &amp;redirect_uri=https://app.palcotickets.com/api/mp/oauth/callback</code></pre></li>
+  &amp;redirect_uri=https://www.nightowl.com.ar/api/mp/oauth/callback</code></pre></li>
       <li>Ruta <code>/api/mp/oauth/callback</code>: verifica que <code>state</code> coincida con la cookie y canjea el <code>code</code> (vale 10 minutos):
 <pre><code>POST https://api.mercadopago.com/oauth/token
 {
@@ -129,7 +129,7 @@ alter table orders add column mp_preference_id text;</code></pre>
   "client_secret": "...",
   "grant_type": "authorization_code",
   "code": "TG-...",
-  "redirect_uri": "https://app.palcotickets.com/api/mp/oauth/callback",
+  "redirect_uri": "https://www.nightowl.com.ar/api/mp/oauth/callback",
   "test_token": "true"          // en sandbox; "false" en producción
 }</code></pre></li>
       <li>Guardar <code>access_token</code>, <code>refresh_token</code>, <code>user_id</code>, <code>public_key</code> y <code>expires_in</code> (≈ 180 días) en <code>payment_accounts</code>, cifrados.</li>
@@ -149,11 +149,11 @@ Authorization: Bearer &lt;access_token del boliche&gt;
   "payer": { "email": order.buyerEmail, "name": order.buyerName },
   "external_reference": order.id,
   "marketplace_fee": order.commissionAmount,
-  "notification_url": "https://app.palcotickets.com/api/webhooks/mercadopago?org=ORG_ID",
+  "notification_url": "https://www.nightowl.com.ar/api/webhooks/mercadopago?org=ORG_ID",
   "back_urls": {
-    "success": "https://SLUG.palcotickets.com/compra/TOKEN",
-    "failure": "https://SLUG.palcotickets.com/compra/TOKEN",
-    "pending": "https://SLUG.palcotickets.com/compra/TOKEN"
+    "success": "https://SLUG.nightowl.com.ar/compra/TOKEN",
+    "failure": "https://SLUG.nightowl.com.ar/compra/TOKEN",
+    "pending": "https://SLUG.nightowl.com.ar/compra/TOKEN"
   },
   "auto_return": "approved",
   "binary_mode": true,

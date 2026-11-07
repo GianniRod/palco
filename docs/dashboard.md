@@ -8,7 +8,7 @@ tomé por defecto y conviene confirmar.
 
 ## 1. La idea en una frase
 
-Todos entran por **`dashboard.palcotickets.com`** con usuario y contraseña.
+Todos entran por **`dashboard.nightowl.com.ar`** con usuario y contraseña.
 Según quién sea, ve uno de dos paneles:
 
 | Rol | Quién es | Qué ve |
@@ -83,7 +83,7 @@ del cliente**, por ejemplo `moscubuenosaires.com/tickets`. Formas de lograrlo (v
   configurable** (`basePath` por cliente) y con URLs relativas a ese prefijo.
 - **Widget embebido**: un `<script>` que inserta la compra en un iframe dentro de su web.
 - **Subdominio propio** (`tickets.suweb.com`): CNAME hacia nosotros; Nightowl resuelve el cliente por el `Host`.
-- **Por defecto / mientras tanto**: `slug.palcotickets.com`.
+- **Por defecto / mientras tanto**: `slug.nightowl.com.ar`.
 
 En el panel conviene una pantalla **"Conectar a mi web"** que muestre el estado de cada
 opción y las instrucciones (registro DNS a crear, código del widget, etc.).
@@ -120,7 +120,7 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
 - Exportar a Excel/CSV.
 
 ### 3.6 Puerta (control de acceso)
-**El escáner vive en `scan.palcotickets.com`** (`src/app/scan`, ruteado en `src/proxy.ts`), con su propio login
+**El escáner vive en `scan.nightowl.com.ar`** (`src/app/scan`, ruteado en `src/proxy.ts`), con su propio login
 (mismo usuario y contraseña; la cookie `__Host-` no se comparte entre subdominios). Solo en el celular.
 - **Quién escanea:** los admins de Nightowl (`is_platform_admin`) validan entradas de **todos** los clientes.
   Un usuario de cliente con **Puede escanear QR** (`memberships.can_scan`, o rol portero) valida **solo las de
@@ -135,7 +135,7 @@ Así, si el teatro cambia el mapa, no se rompen las funciones ya vendidas.
   hacerlo desde la ficha del cliente.
 - **Pruebas:** panel admin → **Puerta (prueba)**: el admin crea entradas de prueba con QR real para un **evento
   puntual** de un cliente (o generales, solo para admins; migración 009, `qr_test_tickets.event_id`) y las escanea
-  desde scan.palcotickets.com eligiendo ese evento.
+  desde scan.nightowl.com.ar eligiendo ese evento.
 - El QR lleva `NO1.<id>.<firma Ed25519>` (`backend/src/qr.mjs`). Sin datos personales; solo Nightowl puede
   fabricarlos y con la clave pública se pueden verificar sin internet (para la app offline).
 - Duplicados: la entrada se marca con un solo `update ... where checked_in_at is null`, así dos escaneos
@@ -172,14 +172,14 @@ públicas **en el mismo proyecto**, separados por dominio:
 
 | Dominio | Qué muestra |
 |---|---|
-| `www.palcotickets.com` | Landing (lo que ya existe) |
-| `dashboard.palcotickets.com` | Login + panel admin + panel cliente |
-| `*.palcotickets.com` (ej. `teatrocolon.palcotickets.com`) | Página pública de venta de cada cliente |
+| `www.nightowl.com.ar` | Landing (lo que ya existe) |
+| `dashboard.nightowl.com.ar` | Login + panel admin + panel cliente |
+| `*.nightowl.com.ar` (ej. `teatrocolon.nightowl.com.ar`) | Página pública de venta de cada cliente |
 
 - En Next.js 16 el archivo `middleware` **se llama `proxy`** (`src/proxy.ts`). Ahí se
   mira el `Host` y se reescribe internamente a `/dashboard/...` o `/sites/[slug]/...`.
-- En Vercel: agregar `dashboard.palcotickets.com` y el comodín `*.palcotickets.com` como dominios del proyecto.
-  En Cloudflare, el registro comodín en **DNS only**.
+- En Vercel: agregar `dashboard.nightowl.com.ar` y el comodín `*.nightowl.com.ar` como dominios del proyecto.
+  El DNS de nightowl.com.ar está en Vercel (nameservers `ns1/ns2.vercel-dns.com`, delegados en nic.ar): hace falta para el certificado del comodín. palcotickets.com redirige a nightowl.com.ar (`src/proxy.ts`).
 - Alternativa válida: una app aparte para el dashboard. Más aislamiento, pero dos deploys. **[A definir]**
 
 ### 4.2 Base de datos
@@ -218,7 +218,7 @@ Un cliente **jamás** puede ver ni tocar datos de otro.
 - Contraseñas con **argon2id** (o bcrypt). Nunca guardar contraseñas en texto.
 - Sesión en **cookie httpOnly, Secure, SameSite=Lax**.
 - **Límite de intentos** de login por IP y por email.
-- "Olvidé mi contraseña" por email (ya tenemos **Resend** configurado con `palcotickets.com`).
+- "Olvidé mi contraseña" por email (ya tenemos **Resend** configurado con `nightowl.com.ar`).
 - Validar todo en el servidor; los permisos se chequean en cada acción, no solo ocultando botones.
 - Se puede usar una librería de auth (Auth.js, Better Auth, Lucia) en modo email+contraseña sin registro público. **[A definir]**
 
@@ -226,8 +226,8 @@ Un cliente **jamás** puede ver ni tocar datos de otro.
 
 ## 5. Orden sugerido de trabajo
 
-1. **Login + roles**: tablas `organizations`, `users`, `memberships`; login en `dashboard.palcotickets.com`; admin crea cliente y usuario; cambio de contraseña obligatorio.
-2. **Mi página**: plantillas + branding + publicar; página pública en `slug.palcotickets.com`.
+1. **Login + roles**: tablas `organizations`, `users`, `memberships`; login en `dashboard.nightowl.com.ar`; admin crea cliente y usuario; cambio de contraseña obligatorio.
+2. **Mi página**: plantillas + branding + publicar; página pública en `slug.nightowl.com.ar`.
 3. **Salas y mapas**: editor de mapa (numerado y general).
 4. **Eventos**: funciones, precios, lotes, publicar.
 5. **Pagos**: conectar Mercado Pago (Marketplace / split), checkout, webhooks, idempotencia.

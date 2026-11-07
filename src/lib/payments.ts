@@ -3,7 +3,7 @@ import { getDb } from "@backend/db.mjs";
 import { getOrderByToken } from "@backend/checkout.mjs";
 import { claimTicketsEmail } from "@backend/mercadopago.mjs";
 import { getPublicSiteContent } from "@backend/sites.mjs";
-import { publicSiteUrl } from "@/lib/dashboard/config";
+import { publicSiteUrl, ROOT_DOMAIN } from "@/lib/dashboard/config";
 import { sendTicketsEmail } from "@/lib/dashboard/email";
 
 type Item = { sector: string; row: string | null; number: number | null };
@@ -22,7 +22,7 @@ const dateFormat = new Intl.DateTimeFormat("es-AR", {
 // (salvo un túnel en MP_WEBHOOK_BASE_URL): el pago se confirma cuando vuelve el comprador.
 export function paymentsApiUrl(slug: string) {
   if (process.env.MP_WEBHOOK_BASE_URL) return process.env.MP_WEBHOOK_BASE_URL.replace(/\/$/, "");
-  return process.env.NODE_ENV === "production" ? "https://www.palcotickets.com" : publicSiteUrl(slug);
+  return process.env.NODE_ENV === "production" ? `https://www.${ROOT_DOMAIN}` : publicSiteUrl(slug);
 }
 
 // Manda el mail con las entradas una sola vez, lo pida quien lo pida (webhook, vuelta o pago de prueba).

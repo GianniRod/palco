@@ -3,7 +3,7 @@
 import { ScanLine } from "lucide-react";
 import { SCAN_URL } from "@/lib/dashboard/config";
 
-// En el celular, un botón fijo que abre el escáner (scan.palcotickets.com) desde cualquier pantalla del admin.
+// En el celular, un botón fijo que abre el escáner (scan.nightowl.com.ar) desde cualquier pantalla del admin.
 export function ScanFab() {
   return (
     <a

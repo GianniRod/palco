@@ -5,6 +5,7 @@ import { getDb } from "@backend/db.mjs";
 import { getTicketCounts } from "@backend/qr.mjs";
 import { requireTenant } from "@/lib/dashboard/session";
 import { Card, Loading, PageTitle } from "../_components/shell";
+import { publicSiteHost } from "@/lib/dashboard/config";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -19,7 +20,7 @@ async function Content() {
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-palco-500">Dirección de tu página</dt>
-            <dd className="font-medium text-palco-900">{organization.slug}.palcotickets.com</dd>
+            <dd className="font-medium text-palco-900">{publicSiteHost(organization.slug)}</dd>
           </div>
           <div>
             <dt className="text-palco-500">Comisión de Nightowl por venta</dt>
