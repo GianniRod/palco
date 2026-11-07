@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Check, Mail } from "lucide-react";
+import { MercadoPagoLogo, MercadoPagoMark } from "./mercado-pago-logo";
 import { FakeQr } from "./qr";
 import { useInView, useInterval, useReducedMotion } from "./hooks";
 
@@ -39,7 +40,7 @@ export function CheckoutFlow({ variant = "boliche" }: { variant?: Variant }) {
   const c = content[variant];
   const steps = [
     { title: "Elige", text: c.choose },
-    { title: "Paga", text: "Con tarjeta o Mercado Pago. El dinero se acredita en tu cuenta." },
+    { title: "Paga", text: "Con Mercado Pago: tarjeta o dinero en cuenta. El dinero se acredita en tu cuenta." },
     { title: "Recibe", text: "Su entrada con QR por email, al instante." },
   ];
   const [ref, inView] = useInView<HTMLDivElement>();
@@ -218,10 +219,14 @@ function StepPay({ c }: { c: Content }) {
       </div>
       <p className="mt-6 text-xs text-black/50">Medio de pago</p>
       <div className="mt-2 space-y-2">
-        <PayOption selected title="Tarjeta de crédito o débito" sub="Visa · Mastercard · Amex · Cabal" />
-        <PayOption title="Mercado Pago" sub="Dinero en cuenta o tarjetas guardadas" />
+        {/* Igual que la compra real: un solo medio, Mercado Pago (tarjetas o dinero en cuenta). */}
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-palco-800 bg-white p-3">
+          <MercadoPagoLogo className="h-8 shrink-0" />
+          <span className="text-right text-[11px] leading-snug text-black/50">Crédito, débito<br />o dinero en cuenta</span>
+        </div>
       </div>
-      <div className="mt-auto rounded-xl bg-palco-800 py-3 text-center text-sm font-medium text-white">
+      <div className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-palco-800 py-3 text-sm font-medium text-white">
+        <MercadoPagoMark className="size-5" />
         Pagar {c.total}
       </div>
     </div>
@@ -246,28 +251,6 @@ function StepReceive({ c }: { c: Content }) {
         </div>
       </div>
       <p className="mt-auto text-xs text-black/40">Mostrá este QR en la entrada</p>
-    </div>
-  );
-}
-
-function PayOption({ title, sub, selected }: { title: string; sub: string; selected?: boolean }) {
-  return (
-    <div
-      className={`flex items-center gap-3 rounded-xl border p-3 ${
-        selected ? "border-palco-800 bg-palco-50" : "border-black/10"
-      }`}
-    >
-      <span
-        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-          selected ? "border-palco-800" : "border-black/25"
-        }`}
-      >
-        {selected && <span className="h-1.5 w-1.5 rounded-full bg-palco-800" />}
-      </span>
-      <span>
-        <span className="block text-sm font-medium">{title}</span>
-        <span className="block text-[11px] text-black/50">{sub}</span>
-      </span>
     </div>
   );
 }
