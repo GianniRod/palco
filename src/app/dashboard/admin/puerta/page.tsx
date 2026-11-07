@@ -8,7 +8,8 @@ import { brandedQrSvg } from "@/lib/branded-qr";
 import { SCAN_URL } from "@/lib/dashboard/config";
 import { Card, formatDate, Loading, PageTitle } from "../../_components/shell";
 import { SubmitButton } from "../../_components/ui";
-import { deleteTestTicketsAction, resetTestTicketsAction } from "./actions";
+import { testPayAdmin } from "@/lib/test-pay";
+import { activateTestPayAction, deactivateTestPayAction, deleteTestTicketsAction, resetTestTicketsAction } from "./actions";
 import { CreateTestTicketsForm } from "./_forms";
 import { AutoRefresh } from "./_auto-refresh";
 
@@ -38,6 +39,22 @@ function Status({ ticket }: { ticket: TestTicket }) {
   );
 }
 
+// PAGO-PRUEBA-ADMIN: temporal. Vale para este navegador, por unas horas.
+function TestPayCard({ active }: { active: boolean }) {
+  return (
+    <Card title="Pago de prueba">
+      <p className="text-sm text-palco-700">
+        {active
+          ? "Activado en este navegador. Al comprar en la página de un cliente vas a ver el medio de pago “Prueba · solo admin”: no cobra nada y te lleva directo a las entradas. Dura 12 horas."
+          : "Activalo para comprar sin pagar en la página de cualquier cliente. Solo lo ves vos, en este navegador, durante 12 horas."}
+      </p>
+      <form action={active ? deactivateTestPayAction : activateTestPayAction} className="mt-4">
+        <SubmitButton variant={active ? "secondary" : undefined}>{active ? "Desactivar" : "Activar pago de prueba"}</SubmitButton>
+      </form>
+    </Card>
+  );
+}
+
 function ScanLink() {
   return (
     <a
@@ -57,9 +74,10 @@ async function Content() {
   const actor = await requireAdmin();
   const db = getDb();
   type EventOption = { id: string; title: string; status: string; organizationName: string };
-  const [tickets, events]: [TestTicket[], EventOption[]] = await Promise.all([
+  const [tickets, events, testPay]: [TestTicket[], EventOption[], Awaited<ReturnType<typeof testPayAdmin>>] = await Promise.all([
     listTestTickets(db, actor),
     listEventsForTests(db, actor),
+    testPayAdmin(),
   ]);
   const qrs = tickets.map((t) => brandedQrSvg(t.code));
   const used = tickets.filter((t) => t.checkedInAt).length;
@@ -68,6 +86,7 @@ async function Content() {
     <>
       <PageTitle>Puerta (prueba)</PageTitle>
       <AutoRefresh />
+      <div className="mb-6"><TestPayCard active={testPay !== null} /></div>
 
       {/* ---------- Celular: el escáner está en su propio subdominio ---------- */}
       <div className="space-y-6 md:hidden">

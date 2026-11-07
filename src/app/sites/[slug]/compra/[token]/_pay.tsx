@@ -3,8 +3,8 @@
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { CreditCard, Loader2 } from "lucide-react";
-import { payAction, type PayState } from "./actions";
+import { CreditCard, FlaskConical, Loader2 } from "lucide-react";
+import { payAction, testPayAction, type PayState } from "./actions";
 
 function PayButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -38,6 +38,34 @@ export function PayForm({ slug, token, total, mercadoPago }: { slug: string; tok
       </div>
       {state.error && <p role="alert" className="rounded-lg bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{state.error}</p>}
       <PayButton label={mercadoPago ? `Pagar ${total} con Mercado Pago` : `Pagar ${total}`} />
+    </form>
+  );
+}
+
+function TestPayRow() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} className="flex w-full items-center gap-3 rounded-lg border-2 border-dashed border-[var(--site-line)] p-3 text-left transition hover:border-[var(--site-accent-text)] disabled:opacity-60">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--site-line)]">
+        {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FlaskConical className="size-4" aria-hidden />}
+      </span>
+      <span>
+        <span className="block text-sm font-semibold">Prueba · solo admin</span>
+        <span className="block text-xs text-[var(--site-muted)]">No se cobra nada. Te lleva directo a las entradas.</span>
+      </span>
+    </button>
+  );
+}
+
+// PAGO-PRUEBA-ADMIN: temporal. Solo se muestra con el permiso activado desde el panel.
+export function TestPayForm({ slug, token }: { slug: string; token: string }) {
+  const [state, action] = useActionState(testPayAction, {} as PayState);
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="token" value={token} />
+      <TestPayRow />
+      {state.error && <p role="alert" className="rounded-lg bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{state.error}</p>}
     </form>
   );
 }

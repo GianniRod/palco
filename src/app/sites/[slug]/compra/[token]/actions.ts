@@ -10,6 +10,8 @@ import { createPreference, isMercadoPagoConfigured, MercadoPagoError } from "@ba
 import { getPublicSiteContent } from "@backend/sites.mjs";
 import { publicSiteUrl } from "@/lib/dashboard/config";
 import { paymentsApiUrl, sendTicketsOnce } from "@/lib/payments";
+import { payWithTestPass } from "@backend/test-payment.mjs";
+import { readTestPayPass } from "@/lib/test-pay";
 
 export type PayState = { error?: string };
 
@@ -44,6 +46,21 @@ export async function payAction(_: PayState, data: FormData): Promise<PayState> 
 
   try {
     const status = await simulatePayment(db, slug, token);
+    if (status === "paid") after(() => sendTicketsOnce(slug, token));
+  } catch (error) {
+    if (error instanceof ValidationError) return { error: error.message };
+    throw error;
+  }
+  refresh();
+  return {};
+}
+
+// PAGO-PRUEBA-ADMIN: temporal. Da la orden por pagada sin cobrar, solo con el permiso de un admin.
+export async function testPayAction(_: PayState, data: FormData): Promise<PayState> {
+  const slug = field(data, "slug");
+  const token = field(data, "token");
+  try {
+    const status = await payWithTestPass(getDb(), await readTestPayPass(), slug, token);
     if (status === "paid") after(() => sendTicketsOnce(slug, token));
   } catch (error) {
     if (error instanceof ValidationError) return { error: error.message };

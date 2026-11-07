@@ -12,7 +12,8 @@ import { TicketCard } from "@/components/ticket-card";
 import { brandedQrSvg } from "@/lib/branded-qr";
 import { checkoutEnabled } from "@/lib/checkout";
 import { cancelAction } from "./actions";
-import { Countdown, PayForm } from "./_pay";
+import { testPayAdmin } from "@/lib/test-pay";
+import { Countdown, PayForm, TestPayForm } from "./_pay";
 
 // El link de la orden es privado: no se indexa ni se manda como referencia a otros sitios.
 export const metadata: Metadata = {
@@ -98,6 +99,7 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
   const db = getDb();
   const [order, site] = await Promise.all([getOrderByToken(db, slug, token), getPublicSiteContent(db, slug)]);
   if (!order || !site) notFound();
+  const showTestPay = order.status === "pending" && (await testPayAdmin()) !== null;
   const items: Item[] = order.items;
   const date = dateFormat.format(new Date(order.startsAt));
   const venue = order.address ? `${order.venue} · ${order.address}` : order.venue;
@@ -161,6 +163,7 @@ async function Content({ params, searchParams }: { params: Props["params"]; sear
                 <Countdown expiresAt={new Date(order.expiresAt).toISOString()} />
                 {notice && <p role="status" className="rounded-lg bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{notice}</p>}
                 <PayForm slug={slug} token={token} total={formatPrice(order.amountDue)} mercadoPago={isMercadoPagoConfigured()} />
+                {showTestPay && <TestPayForm slug={slug} token={token} />}
                 <form action={cancelAction} className="text-center">
                   <input type="hidden" name="slug" value={slug} />
                   <input type="hidden" name="token" value={token} />
