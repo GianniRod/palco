@@ -19,7 +19,8 @@ Formato: fecha y hora, qué se cambió, archivos tocados y algo a tener en cuent
 - El porcentaje sale del que tiene cada cliente en Admin → Clientes (ya existía; un cliente nuevo arranca en 8%). Cada orden guarda el suyo: cambiarlo no altera órdenes hechas.
 - `orders.total` sigue siendo el valor de las entradas. Lo que paga el comprador es `amountDue` (total + `commission_amount`). Sin migración.
 - Archivos: `backend/src/checkout.mjs`, `src/app/sites/[slug]/compra/[token]/page.tsx`, `backend/tests/checkout.test.mjs`.
-- A tener en cuenta: al elegir entradas todavía se ve el total sin comisión. Mercado Pago tiene que cobrar `amountDue`, no `total`.
+- A tener en cuenta: al elegir entradas todavía se ve el total sin comisión.
+- **Ojo Gianni:** tu plan `docs/pagos-mercadopago.html` usa `order.total` como `unit_price`. Con este cambio Mercado Pago tiene que cobrar `order.amountDue`: `confirmPayment` rechaza un pago de `order.total` cuando hay comisión.
 
 ## 2026-11-06 19:25: el escáner muestra los datos de la entrada
 
