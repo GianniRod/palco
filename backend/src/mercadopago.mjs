@@ -60,6 +60,9 @@ export async function createPreference(db, slug, token, { siteUrl, apiUrl, siteN
   // source_news=webhooks: solo avisos nuevos (firmados), sin los IPN viejos duplicados.
   const notification = `${apiUrl}/api/webhooks/mercadopago?source_news=webhooks`;
   const count = order.items.length;
+  const places = order.items.map((item) => (item.row ? `${item.sector} ${item.row}${item.number}` : item.sector));
+  // Mercado Pago pide nombre y apellido por separado (mejora la aprobación); el resto del nombre va como apellido.
+  const [firstName, ...lastName] = String(order.buyerName ?? "").trim().split(/\s+/);
 
   const preference = await mpFetch("/checkout/preferences", {
     env,
@@ -71,13 +74,17 @@ export async function createPreference(db, slug, token, { siteUrl, apiUrl, siteN
         {
           id: order.id,
           title: `${count} ${count === 1 ? "entrada" : "entradas"} · ${order.title}`.slice(0, 250),
+          description: `${order.title} · ${order.venue} · ${places.join(", ")}`.slice(0, 250),
+          // Datos de la industria "tickets y entretenimiento": ayudan al antifraude a aprobar el pago.
+          category_id: "tickets",
+          event_date: new Date(order.startsAt).toISOString(),
           quantity: 1,
           // Entradas más comisión: es el monto que exige confirmPayment.
           unit_price: order.amountDue,
           currency_id: "ARS",
         },
       ],
-      payer: { email: order.buyerEmail, name: order.buyerName },
+      payer: { email: order.buyerEmail, name: firstName || undefined, surname: lastName.join(" ") || undefined },
       external_reference: order.id,
       back_urls: { success: back, failure: back, pending: back },
       ...(isPublicHttps(back) ? { auto_return: "approved" } : {}),
@@ -88,7 +95,8 @@ export async function createPreference(db, slug, token, { siteUrl, apiUrl, siteN
       expiration_date_to: new Date(order.expiresAt).toISOString(),
       // Rapipago, Pago Fácil y cajeros tardan días; la reserva dura 10 minutos.
       payment_methods: { excluded_payment_types: [{ id: "ticket" }, { id: "atm" }], installments: 12 },
-      statement_descriptor: String(siteName ?? "").replace(/[^A-Za-z0-9 ]/g, "").slice(0, 22) || undefined,
+      // Lo que el comprador ve en el resumen de la tarjeta: el boliche, o NIGHTOWL si no hay nombre usable.
+      statement_descriptor: String(siteName ?? "").replace(/[^A-Za-z0-9 ]/g, "").trim().slice(0, 22) || "NIGHTOWL",
     },
   });
   return preference.init_point;

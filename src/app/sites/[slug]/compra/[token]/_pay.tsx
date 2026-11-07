@@ -3,14 +3,15 @@
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Loader2, Lock } from "lucide-react";
+import { MercadoPagoLogo, MercadoPagoMark } from "@/components/mercado-pago-logo";
 import { payAction, type PayState } from "./actions";
 
-function PayButton({ label }: { label: string }) {
+function PayButton({ label, mercadoPago }: { label: string; mercadoPago: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--site-accent)] px-4 py-3.5 font-bold text-[var(--site-on-accent)] transition hover:opacity-90 disabled:opacity-60">
-      {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+      {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : mercadoPago && <MercadoPagoMark className="size-6" />}
       {label}
     </button>
   );
@@ -23,21 +24,31 @@ export function PayForm({ slug, token, total, mercadoPago }: { slug: string; tok
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="token" value={token} />
       <p className="text-sm font-semibold">Medio de pago</p>
-      <div className="flex items-center gap-3 rounded-lg border-2 border-[var(--site-accent-text)] p-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--site-line)]">
-          <CreditCard className="size-4" aria-hidden />
-        </span>
-        <span>
-          <span className="block text-sm font-semibold">{mercadoPago ? "Mercado Pago" : "Pago de prueba"}</span>
-          <span className="block text-xs text-[var(--site-muted)]">
-            {mercadoPago
-              ? "Te llevamos a Mercado Pago para pagar con tarjeta de crédito, débito o dinero en cuenta."
-              : "Modo de prueba: no se cobra nada."}
+      {mercadoPago ? (
+        <div className="rounded-lg border-2 border-[var(--site-accent-text)] p-3">
+          {/* Fondo blanco fijo: el logo de Mercado Pago se tiene que leer igual en webs oscuras. */}
+          <div className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2">
+            <MercadoPagoLogo className="h-9 shrink-0" />
+            <span className="text-right text-xs font-medium leading-snug text-neutral-600">Tarjeta de crédito, débito<br />o dinero en cuenta</span>
+          </div>
+          <p className="mt-2.5 flex items-start gap-1.5 text-xs text-[var(--site-muted)]">
+            <Lock className="mt-px size-3.5 shrink-0" aria-hidden />
+            Pagás en Mercado Pago: nunca vemos los datos de tu tarjeta. Hasta 12 cuotas según tu banco.
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 rounded-lg border-2 border-[var(--site-accent-text)] p-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--site-line)]">
+            <CreditCard className="size-4" aria-hidden />
           </span>
-        </span>
-      </div>
+          <span>
+            <span className="block text-sm font-semibold">Pago de prueba</span>
+            <span className="block text-xs text-[var(--site-muted)]">Modo de prueba: no se cobra nada.</span>
+          </span>
+        </div>
+      )}
       {state.error && <p role="alert" className="rounded-lg bg-[var(--site-line)] px-3 py-2 text-sm font-medium">{state.error}</p>}
-      <PayButton label={mercadoPago ? `Pagar ${total} con Mercado Pago` : `Pagar ${total}`} />
+      <PayButton mercadoPago={mercadoPago} label={mercadoPago ? `Pagar ${total} con Mercado Pago` : `Pagar ${total}`} />
     </form>
   );
 }
