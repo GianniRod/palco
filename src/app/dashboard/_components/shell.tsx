@@ -2,12 +2,18 @@ import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { KeyRound, LogOut } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { MadeByNightowl, Owl } from "@/components/made-by";
 import { logoutAction } from "../actions";
 import { getCurrentSession } from "@/lib/dashboard/session";
 import { MobileNav } from "./mobile-nav";
 
 export function Loading() {
-  return <p className="p-6 text-sm text-palco-500 md:p-10">Cargando…</p>;
+  return (
+    <p role="status" className="flex items-center gap-2 p-6 text-sm text-palco-500 md:p-10">
+      <Owl className="h-5 animate-pulse" />
+      Un segundo…
+    </p>
+  );
 }
 
 async function Account() {
@@ -66,9 +72,12 @@ export function Shell({
         <nav className="flex flex-1 flex-col gap-1">{nav}</nav>
         <AccountLinks />
       </aside>
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         {banner}
-        <main className={`mx-auto w-full max-w-5xl p-4 md:p-10 ${fabSpace ? "pb-28 md:pb-10" : ""}`}>{children}</main>
+        <main className={`mx-auto w-full max-w-5xl flex-1 p-4 md:p-10 ${fabSpace ? "pb-28 md:pb-10" : ""}`}>{children}</main>
+        <footer className={`flex justify-center px-4 pb-6 text-palco-900 ${fabSpace ? "mb-20 md:mb-0" : ""}`}>
+          <MadeByNightowl />
+        </footer>
       </div>
     </div>
   );
@@ -102,6 +111,7 @@ export function AuthCard({ title, intro, children }: { title: string; intro?: st
         {intro && <p className="mt-1 text-sm text-palco-600">{intro}</p>}
         <div className="mt-5">{children}</div>
       </div>
+      <MadeByNightowl color="#ffffff" className="mt-6" />
     </main>
   );
 }

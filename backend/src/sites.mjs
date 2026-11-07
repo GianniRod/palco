@@ -6,11 +6,22 @@ import { ForbiddenError } from "./admin.mjs";
 const TEMPLATES = ["dividida", "portada", "cartelera"];
 const BACKGROUNDS = ["claro", "oscuro"];
 const FONTS = ["clasica", "moderna"];
+const PLAN_THEMES = ["oscuro", "claro", "marca"];
+const SEAT_SHAPES = ["butaca", "redonda"];
+const TICKET_STYLES = ["troquelado", "marca"];
 const EDITOR_ROLES = ["owner", "editor", "soporte"];
+
+// Un sitio publicado antes de que existieran estas opciones las toma de acá.
+const CHECKOUT_DEFAULTS = {
+  planTheme: PLAN_THEMES[0],
+  seatShape: SEAT_SHAPES[0],
+  ticketStyle: TICKET_STYLES[0],
+  checkoutTitle: "",
+};
 
 const MAX_LOGO_BYTES = 400 * 1024;
 const MAX_COVER_BYTES = 1600 * 1024; // portada nítida en pantallas grandes (hasta 2400 px)
-const LIMITS = { displayName: 80, tagline: 140, about: 1000, address: 160, phone: 40, email: 120 };
+const LIMITS = { displayName: 80, tagline: 140, about: 1000, address: 160, phone: 40, email: 120, checkoutTitle: 60 };
 
 export const canEditSite = (tenant) => EDITOR_ROLES.includes(tenant?.role);
 
@@ -104,6 +115,10 @@ function parseSite(data) {
     email: parseEmail(data.email),
     website: parseWebsite(data.website),
     instagram: parseInstagram(data.instagram),
+    planTheme: oneOf(data.planTheme, PLAN_THEMES, CHECKOUT_DEFAULTS.planTheme),
+    seatShape: oneOf(data.seatShape, SEAT_SHAPES, CHECKOUT_DEFAULTS.seatShape),
+    ticketStyle: oneOf(data.ticketStyle, TICKET_STYLES, CHECKOUT_DEFAULTS.ticketStyle),
+    checkoutTitle: text(data.checkoutTitle, "checkoutTitle", "El título de la compra"),
   };
 }
 
@@ -122,6 +137,7 @@ const defaultDraft = (organization) => ({
   email: "",
   website: "",
   instagram: "",
+  ...CHECKOUT_DEFAULTS,
 });
 
 // Lo que muestra el editor. Si el cliente nunca guardó, arranca con su nombre.
@@ -193,9 +209,8 @@ export async function unpublishSite(db, tenant) {
   });
 }
 
-// La página que ve el público, o null si no existe, no se publicó o el cliente está suspendido.
-// Solo devuelve datos públicos: nada de comisión ni contactos internos.
-export async function getPublicSite(db, slug) {
+// Solo el contenido del sitio: la compra y las entradas no necesitan la lista de eventos.
+async function findPublishedSite(db, slug) {
   const { rows: [site] } = await db.query(
     `select sites.published as content, organizations.id as "organizationId"
      from sites
@@ -205,8 +220,19 @@ export async function getPublicSite(db, slug) {
        and organizations.suspended_at is null`,
     [slug],
   );
+  return site ? { organizationId: site.organizationId, content: { cover: "", ...CHECKOUT_DEFAULTS, ...site.content } } : null;
+}
+
+export async function getPublicSiteContent(db, slug) {
+  return (await findPublishedSite(db, slug))?.content ?? null;
+}
+
+// La página que ve el público, o null si no existe, no se publicó o el cliente está suspendido.
+// Solo devuelve datos públicos: nada de comisión ni contactos internos.
+export async function getPublicSite(db, slug) {
+  const site = await findPublishedSite(db, slug);
   if (!site) return null;
-  return { content: { cover: "", ...site.content }, events: await upcomingEvents(db, site.organizationId) };
+  return { content: site.content, events: await upcomingEvents(db, site.organizationId) };
 }
 
 // El precio que paga hoy el público: el del primer lote vigente con cupo o, si no hay, el del sector.
@@ -241,8 +267,8 @@ async function upcomingEvents(db, organizationId) {
 
 // La página de un evento: el sitio que lo enmarca, sus funciones y los precios por sector.
 export async function getPublicEvent(db, slug, eventId) {
-  const site = await getPublicSite(db, slug);
-  if (!site) return null;
+  const content = await getPublicSiteContent(db, slug);
+  if (!content) return null;
 
   const { rows: [event] } = await db.query(
     `select
@@ -268,7 +294,7 @@ export async function getPublicEvent(db, slug, eventId) {
   );
   const { hasImage, updatedAt, ...rest } = event;
   return {
-    content: site.content,
+    content,
     event: { ...rest, image: imageUrl({ id: event.id, hasImage, updatedAt }), performances, sectors },
   };
 }

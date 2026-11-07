@@ -72,7 +72,8 @@ export async function createPreference(db, slug, token, { siteUrl, apiUrl, siteN
           id: order.id,
           title: `${count} ${count === 1 ? "entrada" : "entradas"} · ${order.title}`.slice(0, 250),
           quantity: 1,
-          unit_price: order.total,
+          // Entradas más comisión: es el monto que exige confirmPayment.
+          unit_price: order.amountDue,
           currency_id: "ARS",
         },
       ],

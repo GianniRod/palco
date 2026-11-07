@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { MadeByNightowl } from "@/components/made-by";
 
 // Página 404 para cualquier ruta que no existe.
 export default function NotFound() {
@@ -78,6 +79,10 @@ export default function NotFound() {
           </Link>
         </div>
       </main>
+
+      <footer className="flex justify-center px-6 pb-6">
+        <MadeByNightowl />
+      </footer>
     </div>
   );
 }

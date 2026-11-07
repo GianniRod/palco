@@ -17,7 +17,7 @@ async function Content() {
   if (events.length === 0) {
     return (
       <p className="rounded-xl border border-palco-100 bg-white p-8 text-center text-sm text-palco-600">
-        Todavía no creaste eventos. Primero armá el mapa de tu sala y después creá tu primer evento.
+        La agenda está vacía. Armá el mapa de tu sala y creá tu primer evento.
       </p>
     );
   }

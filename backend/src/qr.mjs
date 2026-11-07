@@ -229,6 +229,21 @@ export async function getScanEvent(db, session, eventId) {
   }
 }
 
+// Los QR de entradas vendidas de un cliente: solo los que sirven en la puerta.
+// Sin reservas sin pagar, devoluciones ni eventos cancelados.
+export async function getTicketCounts(db, tenant) {
+  const { rows: [counts] } = await db.query(
+    `select count(*)::int as total, count(tickets.checked_in_at)::int as used
+     from tickets
+     join orders on orders.id = tickets.order_id
+     join performances on performances.id = orders.performance_id
+     join events on events.id = performances.event_id
+     where events.organization_id = $1 and orders.status = 'paid' and events.status <> 'cancelled'`,
+    [tenant.organization.id],
+  );
+  return { ...counts, unused: counts.total - counts.used };
+}
+
 const TICKET_COLUMNS = `t.id, t.number, t.holder, t.organization_id as "organizationId",
   t.checked_in_at as "checkedInAt", u.email as "checkedInBy"`;
 
@@ -269,7 +284,10 @@ async function scanSoldTicket(db, session, access, event, id) {
     `select
        tickets.id, orders.buyer_name as holder, tickets.checked_in_at as "checkedInAt", users.email as "checkedInBy",
        events.organization_id as "organizationId",
-       concat_ws(' · ', events.title, sectors.name, case when seats.id is not null then 'Fila ' || seats.row_label || ' Butaca ' || seats.number end) as label
+       concat_ws(' · ', events.title, sectors.name, case when seats.id is not null then 'Fila ' || seats.row_label || ' Butaca ' || seats.number end) as label,
+       events.title as "eventTitle", sectors.name as sector, seats.row_label as row, seats.number as seat,
+       performances.starts_at as "startsAt",
+       (select count(*)::int from tickets others where others.order_id = tickets.order_id) as "orderCount"
      from tickets
      join orders on orders.id = tickets.order_id
      join performances on performances.id = orders.performance_id

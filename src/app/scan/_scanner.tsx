@@ -16,6 +16,16 @@ const time = new Intl.DateTimeFormat("es-AR", {
   timeZone: "America/Argentina/Buenos_Aires",
 });
 
+const showDate = new Intl.DateTimeFormat("es-AR", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "America/Argentina/Buenos_Aires",
+});
+
 // Vibra distinto según el resultado, para que el portero no tenga que mirar la pantalla.
 const VIBRATION: Record<ScanResult["result"], number[]> = {
   valid: [120],
@@ -130,6 +140,33 @@ export function Scanner({ light = false, eventId = null }: { light?: boolean; ev
   );
 }
 
+// Lo que el portero necesita ver de una entrada vendida: primero dónde va, después el resto.
+function SoldDetails({ sold, holder }: { sold: NonNullable<Extract<ScanResult, { sold: unknown }>["sold"]>; holder: string }) {
+  return (
+    <>
+      <p className="break-words text-2xl font-bold leading-tight">{sold.sector}</p>
+      {sold.row !== null && (
+        <p className="mt-1 text-2xl font-bold leading-tight">
+          Fila {sold.row} · Butaca {sold.seat}
+        </p>
+      )}
+      <dl className="mt-3 space-y-1 border-t border-white/25 pt-3">
+        {[
+          ["Evento", sold.eventTitle],
+          ["Función", showDate.format(new Date(sold.startsAt))],
+          ["Titular", holder],
+          ["Compra", sold.orderCount === 1 ? "1 entrada" : `${sold.orderCount} entradas`],
+        ].map(([label, value]) => (
+          <div key={label} className="flex justify-between gap-4">
+            <dt className="shrink-0 text-white/75">{label}</dt>
+            <dd className="min-w-0 break-words text-right font-medium first-letter:uppercase">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
+  );
+}
+
 function ResultScreen({ scan, onAgain, onClose }: { scan: ScanResult; onAgain: () => void; onClose: () => void }) {
   const look = {
     valid: { bg: "bg-emerald-600", Icon: CheckCircle2, title: "Entrada válida", sub: "Puede pasar" },
@@ -150,15 +187,19 @@ function ResultScreen({ scan, onAgain, onClose }: { scan: ScanResult; onAgain: (
             <p>{scan.reason}</p>
           ) : (
             <>
-              <p className="text-lg font-semibold">
-                {scan.label ?? `Prueba ${scan.number}`}
-                {scan.holder && ` · ${scan.holder}`}
-              </p>
+              {scan.sold ? (
+                <SoldDetails sold={scan.sold} holder={scan.holder} />
+              ) : (
+                <p className="text-lg font-semibold">
+                  {scan.label ?? `Prueba ${scan.number}`}
+                  {scan.holder && ` · ${scan.holder}`}
+                </p>
+              )}
               {scan.result === "valid" && scan.checkedInAt && (
-                <p className="mt-1 text-white/85">Ingresó a las {time.format(new Date(scan.checkedInAt))}</p>
+                <p className="mt-3 text-white/85">Ingresó a las {time.format(new Date(scan.checkedInAt))}</p>
               )}
               {scan.result === "duplicate" && (
-                <p className="mt-1 text-white/90">
+                <p className="mt-3 text-white/90">
                   Ya había entrado a las{" "}
                   <strong>{scan.checkedInAt ? time.format(new Date(scan.checkedInAt)) : "—"}</strong>
                   {scan.checkedInBy && <> · escaneó {scan.checkedInBy}</>}

@@ -14,7 +14,7 @@ async function RedirectIfLoggedIn() {
 
 export default function LoginPage() {
   return (
-    <AuthCard title="Ingresar a Nightowl">
+    <AuthCard title="Ingresar a Nightowl" intro="Qué bueno verte de nuevo.">
       <Suspense>
         <RedirectIfLoggedIn />
       </Suspense>
