@@ -7,6 +7,14 @@ Formato: fecha y hora, qué se cambió, archivos tocados y algo a tener en cuent
 
 ---
 
+## 2026-11-07 00:53: pago de prueba solo para admins (temporal)
+
+- Medio de pago "Prueba · solo admin" en la pantalla de pago: no cobra, marca la orden como paga y muestra los QR. Funciona en producción, aunque Mercado Pago esté encendido.
+- Se activa en Panel → Puerta (prueba) → "Activar pago de prueba". Vale para ese navegador durante 12 horas. La sesión del panel no llega a las páginas de clientes (`__Host-`), por eso es una cookie aparte, para `nightowl.com.ar`, firmada, que solo sirve para esto. Se revisa contra la base en cada uso: si el admin se desactiva o cambia la contraseña, deja de valer.
+- Las órdenes quedan con `payment_provider = 'prueba_admin'` y cada pago en auditoría (`order.test_paid`). Sale el mail normal al email de la compra. Sin migración ni variables nuevas.
+- Archivos: `backend/src/test-payment.mjs`, `backend/tests/test-payment.test.mjs`, `src/lib/test-pay.ts` (nuevos), `src/app/sites/[slug]/compra/[token]/_pay.tsx`, `actions.ts`, `page.tsx`, `src/app/dashboard/admin/puerta/page.tsx`, `actions.ts`.
+- **Antes de publicar, hay que sacarlo:** borrar los tres archivos nuevos y todo lo marcado `PAGO-PRUEBA-ADMIN` (buscar también `testPay`, `TestPay` y `test-pay`). Después, revisar las órdenes con `payment_provider = 'prueba_admin'`: sus QR son válidos en la puerta y suman en los contadores del cliente hasta que se borren.
+
 ## 2026-11-07 00:27: main con Mercado Pago adentro de la rama de la PR #7
 
 - Merge de main: se mantiene el diseño de la compra (pasos, reserva, comisión, firma) y se suma el cobro con Mercado Pago de Gianni: botón, medio de pago y aviso de pago rechazado o en confirmación.
