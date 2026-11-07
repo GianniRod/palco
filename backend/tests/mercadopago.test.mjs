@@ -76,6 +76,8 @@ test("la order lleva lo que pide el checklist de calidad", () => {
   assert.equal(body.items[0].event_date, "2026-11-14T03:00:00.000Z");
   assert.equal(body.items[0].description, "Noche de Prueba · Moscú · Pista, Platea D6");
   assert.equal(body.external_reference, pending.id);
+  assert.equal(body.items[0].external_code, "8f6c1f0e3d2b4a599a3e2f1c0b7d6e");
+  assert.ok(body.items[0].external_code.length <= 30);
   assert.equal(body.expiration_time, "PT600S");
   assert.deepEqual(body.payer, { email: "juana@example.com", first_name: "Juana", last_name: "María Pérez" });
   assert.equal(body.config.statement_descriptor, "Mosc Bs As");

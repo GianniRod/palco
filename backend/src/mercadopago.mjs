@@ -146,7 +146,8 @@ export function mercadoPagoOrderBody(order, { siteUrl, siteName }, now = Date.no
     },
     items: [
       {
-        external_code: order.id,
+        // Mercado Pago acepta hasta 30 caracteres: el id sin guiones, recortado.
+        external_code: order.id.replace(/-/g, "").slice(0, 30),
         title,
         description: `${order.title} · ${order.venue} · ${places.join(", ")}`.slice(0, 250),
         // Datos de la industria "tickets y entretenimiento": ayudan al antifraude a aprobar el pago.
