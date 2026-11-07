@@ -39,7 +39,9 @@ async function mpFetch(path, { env, fetchImpl = fetch, method = "GET", body, ide
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new MercadoPagoError(`Mercado Pago respondió ${res.status}: ${data?.message ?? "sin detalle"}`, res.status);
+    // Preferencias y pagos responden { message }; la Orders API responde { errors: [{ code, message, details }] }.
+    const detail = Array.isArray(data?.errors) && data.errors.length ? JSON.stringify(data.errors).slice(0, 1500) : data?.message;
+    throw new MercadoPagoError(`Mercado Pago respondió ${res.status} en ${method} ${path.split("?")[0]}: ${detail ?? "sin detalle"}`, res.status);
   }
   return data;
 }
